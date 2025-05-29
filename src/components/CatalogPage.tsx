@@ -63,6 +63,7 @@ export function CatalogPage() {
           title,
           artist,
           genres,
+          sub_genres,
           moods,
           bpm,
           audio_url,
@@ -135,30 +136,36 @@ export function CatalogPage() {
 
       if (data) {
         const formattedTracks = data
-  .filter(track => track && track.id) // Ensure valid track entries
-  .map(track => ({
-    id: track.id,
-    title: track.title || 'Untitled',
-    artist:
-      track.producer?.first_name ||
-      track.producer?.email?.split('@')[0] ||
-      'Unknown Artist',
-    genre: track.genres?.split(',').map(g => g.trim()) || [],
-    moods: track.moods?.split(',').map(m => m.trim()) || [],
-    duration: track.duration || '3:30',
-    bpm: track.bpm,
-    audioUrl: track.audio_url,
-    image:
-      track.image_url ||
-      'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-    hasStingEnding: track.has_sting_ending,
-    isOneStop: track.is_one_stop,
-    mp3Url: track.mp3_url,
-    trackoutsUrl: track.trackouts_url,
-    hasVocals: track.has_vocals,
-    vocalsUsageType: track.vocals_usage_type
-  }));
-
+          .filter(track => track && track.id)
+          .map(track => ({
+            id: track.id,
+            title: track.title || 'Untitled',
+            artist:
+              track.producer?.first_name ||
+              track.producer?.email?.split('@')[0] ||
+              'Unknown Artist',
+            genres: Array.isArray(track.genres) 
+              ? track.genres 
+              : track.genres?.split(',').map(g => g.trim()) || [],
+            subGenres: Array.isArray(track.sub_genres)
+              ? track.sub_genres
+              : track.sub_genres?.split(',').map(g => g.trim()) || [],
+            moods: Array.isArray(track.moods)
+              ? track.moods
+              : track.moods?.split(',').map(m => m.trim()) || [],
+            duration: track.duration || '3:30',
+            bpm: track.bpm,
+            audioUrl: track.audio_url,
+            image:
+              track.image_url ||
+              'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+            hasStingEnding: track.has_sting_ending,
+            isOneStop: track.is_one_stop,
+            mp3Url: track.mp3_url,
+            trackoutsUrl: track.trackouts_url,
+            hasVocals: track.has_vocals,
+            vocalsUsageType: track.vocals_usage_type
+          }));
 
         if (currentPage === 1) {
           setTracks(formattedTracks);
@@ -265,15 +272,14 @@ export function CatalogPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tracks.map((track) =>
-  track && track.id ? (
-    <TrackCard
-      key={track.id}
-      track={track}
-      onSelect={() => user ? navigate(`/license/${track.id}`) : navigate('/login')}
-    />
-  ) : null
-)}
-
+              track && track.id ? (
+                <TrackCard
+                  key={track.id}
+                  track={track}
+                  onSelect={() => user ? navigate(`/license/${track.id}`) : navigate('/login')}
+                />
+              ) : null
+            )}
           </div>
 
           {hasMore && (

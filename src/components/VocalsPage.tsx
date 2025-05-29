@@ -98,9 +98,15 @@ export function VocalsPage() {
           id: track.id,
           title: track.title,
           artist: track.producer.first_name || track.producer.email.split('@')[0],
-          genre: Array.isArray(track.genres) ? track.genres : track.genres.split(',').map(g => g.trim()),
-          subGenres: Array.isArray(track.sub_genres) ? track.sub_genres : (track.sub_genres || '').split(',').filter(Boolean).map(g => g.trim()),
-          moods: Array.isArray(track.moods) ? track.moods : (track.moods || '').split(',').filter(Boolean).map(m => m.trim()),
+          genres: Array.isArray(track.genres)
+            ? track.genres
+            : track.genres?.split(',').map(g => g.trim()) || [],
+          subGenres: Array.isArray(track.sub_genres)
+            ? track.sub_genres
+            : track.sub_genres?.split(',').map(g => g.trim()) || [],
+          moods: Array.isArray(track.moods)
+            ? track.moods
+            : track.moods?.split(',').map(m => m.trim()) || [],
           duration: track.duration || '3:30',
           bpm: track.bpm,
           audioUrl: track.audio_url,
