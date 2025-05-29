@@ -306,31 +306,6 @@ export function ClientDashboard() {
           }));
         }
 
-        const testLicenses = [
-          {
-            track_id: '123e4567-e89b-12d3-a456-426614174000',
-            buyer_id: user.id,
-            license_type: 'Single Track',
-            amount: 7.99,
-            payment_method: 'test_data',
-            created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
-            expiry_date: new Date(Date.now() + 65 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            track_id: '123e4567-e89b-12d3-a456-426614174001',
-            buyer_id: user.id,
-            license_type: 'Gold Access',
-            amount: 24.99,
-            payment_method: 'test_data',
-            created_at: new Date(Date.now() - 350 * 24 * 60 * 60 * 1000).toISOString(),
-            expiry_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-
-        for (const license of testLicenses) {
-          await supabase.from('sales').insert(license);
-        }
-
         const { data: licensesData } = await supabase
           .from('sales')
           .select(`
@@ -784,6 +759,7 @@ export function ClientDashboard() {
                 return (
                   <div
                     key={license.id}
+                
                     className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
                       expiryStatus === 'expired' ? 'border-red-500/20' :
                       expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
