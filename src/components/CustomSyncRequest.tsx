@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar, Music, Link as LinkIcon, Users, FileText, Mail } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { GENRES, SUB_GENRES } from '../types';
-
-interface Producer {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string;
-}
+import { ProducerSearch } from './ProducerSearch';
 
 export function CustomSyncRequest() {
   const { user } = useAuth();
@@ -25,45 +19,11 @@ export function CustomSyncRequest() {
   const [isOpenRequest, setIsOpenRequest] = useState(false);
   const [hasPreferredProducer, setHasPreferredProducer] = useState(false);
   const [selectedProducer, setSelectedProducer] = useState('');
-  const [producers, setProducers] = useState<Producer[]>([]);
   const [submissionInstructions, setSubmissionInstructions] = useState('');
   const [submissionEmail, setSubmissionEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    fetchProducers();
-  }, []);
-
-  const fetchProducers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .eq('account_type', 'producer')
-        .order('first_name', { ascending: true });
-
-      if (error) throw error;
-
-      if (data) {
-        // Filter out any producers without names or email
-        const validProducers = data.filter(p => p.email && (p.first_name || p.last_name));
-        setProducers(validProducers);
-      }
-    } catch (err) {
-      console.error('Error fetching producers:', err);
-      setError('Failed to load producer list');
-    }
-  };
-
-  const getProducerDisplayName = (producer: Producer): string => {
-    const name = [producer.first_name, producer.last_name]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
-    return name ? `${name} (${producer.email})` : producer.email;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,29 +297,17 @@ export function CustomSyncRequest() {
               <span className="text-gray-300">Select Preferred Producer</span>
             </label>
 
-            {hasPreferredProducer && (
-              <div className="pl-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Choose Producer
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    value={selectedProducer}
-                    onChange={(e) => setSelectedProducer(e.target.value)}
-                    className="w-full pl-10"
-                    required={hasPreferredProducer}
-                  >
-                    <option value="">Select a producer</option>
-                    {producers.map((producer) => (
-                      <option key={producer.id} value={producer.id}>
-                        {getProducerDisplayName(producer)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
+            <div className="pl-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Choose Producer
+              </label>
+              <ProducerSearch
+                value={selectedProducer}
+                onChange={setSelectedProducer}
+                disabled={!hasPreferredProducer}
+                required={hasPreferredProducer}
+              />
+            </div>
           </div>
 
           <div className="space-y-6">
