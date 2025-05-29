@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Music, Upload, X, Calendar, ArrowUpDown, AlertCircle, Edit, Trash2, Plus, UserCog, RefreshCw, BarChart3, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Music, Upload, X, Calendar, ArrowUpDown, AlertCircle, Edit, Trash2, Plus, UserCog, RefreshCw, BarChart3, DollarSign, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -9,6 +9,7 @@ import { EditTrackModal } from './EditTrackModal';
 import { DeleteTrackDialog } from './DeleteTrackDialog';
 import { ProducerProfile } from './ProducerProfile';
 import { ProposalAnalytics } from './ProposalAnalytics';
+import { calculateTimeRemaining } from '../utils/dateUtils';
 
 export function ProducerDashboard() {
   const { user } = useAuth();
@@ -176,6 +177,22 @@ export function ProducerDashboard() {
     }
   };
 
+  const handleNegotiate = async (proposal) => {
+    // Implementation for negotiation
+  };
+
+  const handleViewHistory = async (proposalId) => {
+    // Implementation for viewing history
+  };
+
+  const handleAccept = async (proposal) => {
+    // Implementation for accepting proposal
+  };
+
+  const handleReject = async (proposal) => {
+    // Implementation for rejecting proposal
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -280,30 +297,87 @@ export function ProducerDashboard() {
               {proposals.map((proposal) => (
                 <div
                   key={proposal.id}
-                  className="bg-white/5 rounded-lg p-4 border border-blue-500/20"
+                  className={`bg-white/5 rounded-lg p-6 border ${
+                    proposal.is_urgent ? 'border-yellow-500/20' : 'border-blue-500/20'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">
-                        {proposal.track.title}
-                      </h3>
-                      <p className="text-gray-400">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-lg font-semibold text-white">
+                          {proposal.track.title}
+                        </h3>
+                        {proposal.is_urgent && (
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">
+                            URGENT
+                          </span>
+                        )}
+                      </div>
+                      
+                      <p className="text-gray-300">
                         From: {proposal.client.first_name} {proposal.client.last_name}
                       </p>
-                      <p className="text-gray-400">
-                        Sync Fee: ${proposal.sync_fee.toFixed(2)}
-                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-400">
+                        <div>
+                          <span className="font-medium">Project Type:</span> {proposal.project_type}
+                        </div>
+                        <div>
+                          <span className="font-medium">Duration:</span> {proposal.duration}
+                        </div>
+                        <div>
+                          <span className="font-medium">Rights:</span>{' '}
+                          {proposal.is_exclusive ? 'Exclusive' : 'Non-exclusive'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Sync Fee:</span>{' '}
+                          ${proposal.sync_fee.toFixed(2)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className="text-blue-400">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {calculateTimeRemaining(proposal.expiration_date)} remaining
+                        </div>
+                        <div className="text-gray-400">
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          Expires: {new Date(proposal.expiration_date).toLocaleDateString()}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        proposal.status === 'pending'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : proposal.status === 'accepted'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {proposal.status.toUpperCase()}
-                      </span>
+
+                    <div className="flex flex-col space-y-2">
+                      <button
+                        onClick={() => handleNegotiate(proposal)}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                      >
+                        Negotiate
+                      </button>
+                      
+                      <button
+                        onClick={() => handleViewHistory(proposal.id)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                      >
+                        <Eye className="w-4 h-4 inline mr-1" />
+                        View History
+                      </button>
+                      
+                      <button
+                        onClick={() => handleAccept(proposal)}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4 inline mr-1" />
+                        Accept
+                      </button>
+                      
+                      <button
+                        onClick={() => handleReject(proposal)}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                      >
+                        <XCircle className="w-4 h-4 inline mr-1" />
+                        Reject
+                      </button>
                     </div>
                   </div>
                 </div>
