@@ -73,6 +73,7 @@ export function ProducerDashboard() {
     trackTitle: string;
     clientName: string;
   } | null>(null);
+  const [newTracks] = useState<Track[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -484,70 +485,109 @@ export function ProducerDashboard() {
           </div>
         )}
 
-        <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
-          <h2 className="text-xl font-bold text-white mb-6">Your Tracks</h2>
-          <div className="space-y-4">
-            {tracks.length === 0 ? (
-              <div className="text-center py-12">
-                <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">No tracks uploaded yet</p>
-                <Link
-                  to="/producer/upload"
-                  className="inline-block mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                >
-                  Upload Your First Track
-                </Link>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+              <h2 className="text-xl font-bold text-white mb-6">Your Tracks</h2>
+              <div className="space-y-4">
+                {tracks.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400">No tracks uploaded yet</p>
+                    <Link
+                      to="/producer/upload"
+                      className="inline-block mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                    >
+                      Upload Your First Track
+                    </Link>
+                  </div>
+                ) : (
+                  tracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="flex items-center space-x-4 p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <div className="relative w-16 h-16 flex-shrink-0">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => {
+                            setSelectedTrackId(track.id);
+                            setIsImageModalOpen(true);
+                          }}
+                          className="absolute top-0 right-0 p-1 bg-black/50 rounded-bl-lg rounded-tr-lg hover:bg-black/70 transition-colors"
+                        >
+                          <Edit className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-white truncate">{track.title}</h3>
+                        <p className="text-sm text-gray-400">
+                          {track.genres.join(', ')} • {track.bpm} BPM
+                        </p>
+                      </div>
+                      <div className="w-1/3">
+                        <AudioPlayer url={track.audioUrl} title={track.title} />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setEditingTrack(track)}
+                          className="btn-secondary flex items-center space-x-2 px-4 py-2"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => setDeleteTrackId(track.id)}
+                          className="btn-secondary flex items-center space-x-2 px-4 py-2 text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ) : (
-              tracks.map((track) => (
-                <div
-                  key={track.id}
-                  className="flex items-center space-x-4 p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <img
-                      src={track.image}
-                      alt={track.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      onClick={() => {
-                        setSelectedTrackId(track.id);
-                        setIsImageModalOpen(true);
-                      }}
-                      className="absolute top-0 right-0 p-1 bg-black/50 rounded-bl-lg rounded-tr-lg hover:bg-black/70 transition-colors"
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                <Music className="w-5 h-5 mr-2 text-purple-500" />
+                New Releases
+              </h3>
+              <div className="space-y-2">
+                {newTracks.length === 0 ? (
+                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                    <p className="text-gray-400">No new tracks available</p>
+                  </div>
+                ) : (
+                  newTracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/20 flex items-center space-x-3"
                     >
-                      <Edit className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white truncate">{track.title}</h3>
-                    <p className="text-sm text-gray-400">
-                      {track.genres.join(', ')} • {track.bpm} BPM
-                    </p>
-                  </div>
-                  <div className="w-1/3">
-                    <AudioPlayer url={track.audioUrl} title={track.title} />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setEditingTrack(track)}
-                      className="btn-secondary flex items-center space-x-2 px-4 py-2"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => setDeleteTrackId(track.id)}
-                      className="btn-secondary flex items-center space-x-2 px-4 py-2 text-red-400 hover:text-red-300"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+                      <img
+                        src={track.image}
+                        alt={track.title}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-white truncate">{track.title}</div>
+                        <div className="text-sm text-gray-400 truncate">
+                          {track.genres.join(', ')} • {track.bpm} BPM
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
