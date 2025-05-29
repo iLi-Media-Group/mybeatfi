@@ -104,7 +104,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>Music Synchronization License Agreement</Text>
-        
+
         <Text style={styles.trackTitle}>"{license.trackTitle}"</Text>
 
         <View style={styles.section}>
