@@ -62,7 +62,14 @@ export function ProducerDashboard() {
 
       const { data: tracksData, error: tracksError } = await supabase
         .from('tracks')
-        .select('*')
+        .select(`
+          *,
+          producer:profiles!producer_id(
+            first_name,
+            last_name,
+            email
+          )
+        `)
         .eq('producer_id', user?.id)
         .order('created_at', { ascending: false });
 
@@ -71,10 +78,29 @@ export function ProducerDashboard() {
         const formattedTracks = tracksData.map(track => ({
           id: track.id,
           title: track.title,
-          genres: Array.isArray(track.genres) ? track.genres : track.genres.split(',').map(g => g.trim()),
-          audioUrl: track.audio_url,
+          artist: track.artist || '',
+          genres: Array.isArray(track.genres) ? track.genres : (track.genres?.split(',').map(g => g.trim()) || []),
+          subGenres: Array.isArray(track.sub_genres) ? track.sub_genres : (track.sub_genres?.split(',').map(g => g.trim()) || []),
+          moods: Array.isArray(track.moods) ? track.moods : (track.moods?.split(',').map(m => m.trim()) || []),
+          bpm: track.bpm || 0,
+          key: track.key || '',
+          duration: track.duration || '',
+          audioUrl: track.audio_url || '',
+          mp3Url: track.mp3_url || '',
+          trackoutsUrl: track.trackouts_url || '',
           image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-          deleted_at: track.deleted_at
+          hasStingEnding: track.has_sting_ending || false,
+          isOneStop: track.is_one_stop || false,
+          hasVocals: track.has_vocals || false,
+          vocalsUsageType: track.vocals_usage_type || null,
+          producer: {
+            id: track.producer_id,
+            firstName: track.producer?.first_name || '',
+            lastName: track.producer?.last_name || '',
+            email: track.producer?.email || ''
+          },
+          deleted_at: track.deleted_at || null,
+          created_at: track.created_at || new Date().toISOString()
         }));
 
         setTracks(formattedTracks.filter(t => !t.deleted_at));
