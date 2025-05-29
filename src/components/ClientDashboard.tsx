@@ -149,6 +149,21 @@ function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequestDial
   );
 }
 
+const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
+  const date = new Date(purchaseDate);
+  switch (membershipType) {
+    case 'Ultimate Access':
+      date.setFullYear(date.getFullYear() + 100);
+      break;
+    case 'Platinum Access':
+      date.setFullYear(date.getFullYear() + 3);
+      break;
+    default: // Single Track and Gold Access
+      date.setFullYear(date.getFullYear() + 1);
+  }
+  return date.toISOString();
+};
+
 export function ClientDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -156,6 +171,7 @@ export function ClientDashboard() {
   const [favorites, setFavorites] = useState<Track[]>([]);
   const [newTracks, setNewTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [sortField, setSortField] = useState<'renewal' | 'title' | 'genre' | 'bpm'>('renewal');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -196,7 +212,7 @@ export function ClientDashboard() {
           }));
         }
 
-        // Fetch licenses
+        // Fetch licenses with track details
         const { data: licensesData } = await supabase
           .from('sales')
           .select(`
@@ -204,7 +220,19 @@ export function ClientDashboard() {
             license_type,
             created_at,
             expiry_date,
-            track:tracks (*)
+            track:tracks (
+              id,
+              title,
+              genres,
+              bpm,
+              audio_url,
+              image_url,
+              producer:profiles!producer_id (
+                first_name,
+                last_name,
+                email
+              )
+            )
           `)
           .eq('buyer_id', user.id)
           .order('created_at', { ascending: false });
@@ -215,10 +243,10 @@ export function ClientDashboard() {
             track: {
               ...license.track,
               genres: license.track.genres.split(',').map((g: string) => g.trim()),
-              moods: license.track.moods ? license.track.moods.split(',').map((m: string) => m.trim()) : []
+              image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
             }
           }));
-          setLicenses(formattedLicenses as License[]);
+          setLicenses(formattedLicenses);
         }
 
         // Fetch favorites
@@ -282,8 +310,9 @@ export function ClientDashboard() {
           setSyncRequests(syncRequestsData);
         }
 
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -622,17 +651,29 @@ export function ClientDashboard() {
                   key={license.id}
                   className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
-                    <div className="flex items-center text-sm">
-                      <Calendar className="w-4 h-4 mr-1 text-purple-400" />
-                      <span className="text-purple-400">
-                        {calculateTimeRemaining(license.expiry_date)}
-                      </span>
+                  <div className="flex items-start space-x-4">
+                    <img
+                      src={license.track.image}
+                      alt={license.track.title}
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
+                      <div className="text-sm text-gray-400 space-y-1">
+                        <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
+                        <div className="flex items-center space-x-4">
+                          <span className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1 text-purple-400" />
+                            Licensed: {new Date(license.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center">
+                            <Clock className="w-4 h-4 mr-1 text-purple-400" />
+                            Expires: {new Date(license.expiry_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {license.track.genres.join(', ')} • {license.track.bpm} BPM
+                    <AudioPlayer url={license.track.audio_url} title={license.track.title} />
                   </div>
                   {new Date(license.expiry_date) <= new Date() && (
                     <div className="mt-2 flex items-center text-yellow-500 text-sm">
