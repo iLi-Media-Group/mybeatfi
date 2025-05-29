@@ -32,20 +32,32 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       setLoading(true);
       setError(null);
 
-      // Validate and format genres
-      const formattedGenres = selectedGenres
-        .map(genre => genre.toLowerCase().trim())
-        .filter(genre => GENRES.map(g => g.toLowerCase()).includes(genre));
+      // Validate genres
+      if (selectedGenres.length === 0) {
+        throw new Error('At least one genre is required');
+      }
+
+      // Ensure genres match the database constraint pattern
+      const formattedGenres = selectedGenres.map(genre => 
+        genre.toLowerCase().trim()
+      ).filter(genre => 
+        GENRES.includes(genre as typeof GENRES[number])
+      );
 
       if (formattedGenres.length === 0) {
         throw new Error('At least one valid genre from the provided list is required');
       }
 
+      // Format moods to be lowercase
+      const formattedMoods = selectedMoods.map(mood => 
+        mood.toLowerCase().trim()
+      );
+
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
           genres: formattedGenres,
-          moods: selectedMoods,
+          moods: formattedMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
@@ -58,7 +70,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       onClose();
     } catch (err) {
       console.error('Error updating track:', err);
-      setError('Failed to update track. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to update track. Please try again.');
     } finally {
       setLoading(false);
     }
