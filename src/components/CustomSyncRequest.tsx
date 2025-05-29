@@ -299,7 +299,7 @@ export function CustomSyncRequest() {
 
             <div className="pl-6">
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Choose Producer
+                Start Typing the Producer Name and Choose
               </label>
               <ProducerSearch
                 value={selectedProducer}
