@@ -258,7 +258,7 @@ export function LicenseAgreement() {
 
           <h2 className="text-xl font-bold text-white mt-8">5. COMPENSATION</h2>
           <p className="text-gray-300">
-            Licensee has paid the amount of ${license.price.toFixed(2)} USD for this license.
+            Licensee has paid the membership service fee for this license.
           </p>
 
           <div className="bg-white/5 rounded-lg p-6 my-8">
