@@ -205,19 +205,29 @@ export function ClientDashboard() {
   };
 
   const handleLicenseTrack = (track: Track) => {
-  setSelectedTrackToLicense(track);
-    if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
-      navigate('/pricing');
-      return;
-    }
+  // Check if membershipType is missing or user has no licenses on a subscription plan
+  if (!userStats.membershipType) {
+    navigate('/pricing');
+    return;
+  }
 
-    if (userStats.membershipType === 'Gold Access' && userStats.remainingLicenses <= 0) {
-      navigate('/upgrade');
-      return;
-    }
-
+  if (userStats.membershipType === 'Single Track') {
+    // Still allow them to license the track (e.g. for pay-per-license model)
     setSelectedTrackToLicense(track);
-  };
+    return;
+  }
+
+  if (
+    userStats.membershipType === 'Gold Access' &&
+    userStats.remainingLicenses <= 0
+  ) {
+    navigate('/upgrade');
+    return;
+  }
+
+  // All good — open licensing dialog
+  setSelectedTrackToLicense(track);
+};
 
   const handleDeleteLicense = async () => {
     if (!selectedLicenseToDelete) return;
