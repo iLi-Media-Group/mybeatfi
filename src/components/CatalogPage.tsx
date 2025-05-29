@@ -80,7 +80,9 @@ export function CatalogPage() {
             last_name,
             email
           )
-        `);
+        `)
+        // Exclude sync_only tracks
+        .or('vocals_usage_type.neq.sync_only,has_vocals.eq.false');
 
       // Build search conditions
       const searchConditions = [];
