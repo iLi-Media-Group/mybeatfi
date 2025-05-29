@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -42,6 +42,89 @@ interface EditRequestDialogProps {
   onClose: () => void;
   request: CustomSyncRequest;
   onSave: (updatedRequest: Partial<CustomSyncRequest>) => Promise<void>;
+}
+
+interface DeleteLicenseDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  license: License;
+  onConfirm: () => Promise<void>;
+}
+
+function DeleteLicenseDialog({ isOpen, onClose, license, onConfirm }: DeleteLicenseDialogProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      console.error('Error deleting license:', err);
+      setError('Failed to delete license');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isExpired = new Date(license.expiry_date) <= new Date();
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+        <h3 className="text-xl font-bold text-white mb-4">Delete License</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="mb-6">
+          <p className="text-gray-300 mb-4">
+            Are you sure you want to delete your license for "{license.track.title}"?
+          </p>
+          
+          {!isExpired && (
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-yellow-400 text-sm">
+                This license is still valid until {new Date(license.expiry_date).toLocaleDateString()}.
+                Deleting it will revoke your rights to use this track.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center">
+                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                Deleting...
+              </span>
+            ) : (
+              <span>Delete License</span>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequestDialogProps) {
@@ -199,6 +282,7 @@ export function ClientDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<CustomSyncRequest | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -408,6 +492,21 @@ export function ClientDashboard() {
     } catch (err) {
       console.error('Error deleting request:', err);
     }
+  };
+
+  const handleDeleteLicense = async () => {
+    if (!selectedLicenseToDelete) return;
+
+    const { error } = await supabase
+      .from('sales')
+      .update({
+        deleted_at: new Date().toISOString()
+      })
+      .eq('id', selectedLicenseToDelete.id);
+
+    if (error) throw error;
+
+    setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
   };
 
   const sortedAndFilteredLicenses = licenses
@@ -663,6 +762,7 @@ export function ClientDashboard() {
                       expiryStatus === 'expired' ? 'border-red-500/20' :
                       expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
                       'border-purple-500/20'
+                    
                     }`}
                   >
                     <div className="flex items-start space-x-4">
@@ -692,6 +792,25 @@ export function ClientDashboard() {
                         </div>
                       </div>
                       <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                    </div>
+
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="text-sm">
+                        {expiryStatus === 'expired' ? (
+                          <span className="text-red-400">License expired</span>
+                        ) : (
+                          <span className="text-gray-400">
+                            {calculateTimeRemaining(license.expiry_date)} remaining
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setSelectedLicenseToDelete(license)}
+                        className="px-3 py-1.5 text-sm bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded-lg transition-colors flex items-center"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1.5" />
+                        Delete License
+                      </button>
                     </div>
 
                     {expiryStatus === 'expired' && (
@@ -837,6 +956,15 @@ export function ClientDashboard() {
           }}
           request={selectedRequest}
           onSave={(updates) => handleUpdateRequest(selectedRequest.id, updates)}
+        />
+      )}
+
+      {selectedLicenseToDelete && (
+        <DeleteLicenseDialog
+          isOpen={true}
+          onClose={() => setSelectedLicenseToDelete(null)}
+          license={selectedLicenseToDelete}
+          onConfirm={handleDeleteLicense}
         />
       )}
 
