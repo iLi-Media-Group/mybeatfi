@@ -205,6 +205,7 @@ export function ClientDashboard() {
   };
 
   const handleLicenseTrack = (track: Track) => {
+  setSelectedTrackToLicense(track);
     if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
       navigate('/pricing');
       return;
