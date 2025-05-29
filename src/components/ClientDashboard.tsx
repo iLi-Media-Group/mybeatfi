@@ -349,86 +349,26 @@ export function ClientDashboard() {
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
               <div className="space-y-4">
-                {licenses.map((license) => {
-                  const expiryDate = new Date(license.expiry_date);
-                  const isExpired = expiryDate <= new Date();
-                  const isExpiringSoon = !isExpired && expiryDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-                  
-                  return (
-                    <div
-                      key={license.id}
-                      className={`bg-white/5 rounded-lg p-4 border ${
-                        isExpired ? 'border-red-500/20' :
-                        isExpiringSoon ? 'border-yellow-500/20' :
-                        'border-purple-500/20'
-                      }`}
-                    >
-                      <div className="flex items-start space-x-4">
-                        <img
-                          src={license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'}
-                          alt={license.track.title}
-                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
-                            <button
-                              onClick={() => setSelectedLicenseToDelete(license)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
-                              title="Delete License"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="text-sm text-gray-400 space-y-1">
-                            <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
-                            <div className="flex items-center space-x-4">
-                              <span className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-1 text-purple-400" />
-                                Licensed: {new Date(license.created_at).toLocaleDateString()}
-                              </span>
-                              <span className="flex items-center">
-                                <Clock className={`w-4 h-4 mr-1 ${
-                                  isExpired ? 'text-red-400' :
-                                  isExpiringSoon ? 'text-yellow-400' :
-                                  'text-purple-400'
-                                }`} />
-                                Expires: {new Date(license.expiry_date).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                {licenses.map((license) => (
+                  <div
+                    key={license.id}
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
+                        <p className="text-gray-400">Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
                       </div>
-
-                      {isExpired && (
-                        <div className="mt-2 flex items-center text-red-400 text-sm">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          License expired
-                        </div>
-                      )}
-                      {isExpiringSoon && (
-                        <div className="mt-2 flex items-center text-yellow-400 text-sm">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          License expires soon
-                        </div>
-                      )}
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                      <button
+                        onClick={() => setSelectedLicenseToDelete(license)}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
-                  );
-                })}
-
-                {licenses.length === 0 && (
-                  <div className="text-center py-12">
-                    <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No licensed tracks found</p>
-                    <Link
-                      to="/catalog"
-                      className="inline-block mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                    >
-                      Browse Catalog
-                    </Link>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
