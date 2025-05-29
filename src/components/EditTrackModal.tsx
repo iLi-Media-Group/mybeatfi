@@ -35,8 +35,8 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
-          genres: selectedGenres,
-          moods: selectedMoods,
+          genres: selectedGenres.join(','), // Convert array to comma-separated string
+          moods: selectedMoods.join(','), // Also fix moods format for consistency
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
