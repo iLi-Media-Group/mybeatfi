@@ -67,25 +67,39 @@ const styles = StyleSheet.create({
   }
 });
 
-const getExpirationDate = (licenseType: string, purchaseDate: string): string => {
+const getLicenseDurationInfo = (licenseType: string, purchaseDate: string) => {
   const purchase = new Date(purchaseDate);
+  let durationText = '';
+  let expirationDate: string;
 
   switch (licenseType) {
-    case 'Ultimate Access':
-      return 'Perpetual (No Expiration)';
-    case 'Platinum Access':
-      purchase.setFullYear(purchase.getFullYear() + 3); // 3 years
-      break;
-    case 'Gold Access':
     case 'Single Track':
+    case 'Gold Access':
+      purchase.setFullYear(purchase.getFullYear() + 1);
+      expirationDate = purchase.toLocaleDateString();
+      durationText = '1 year';
+      break;
+    case 'Platinum Access':
+      purchase.setFullYear(purchase.getFullYear() + 3);
+      expirationDate = purchase.toLocaleDateString();
+      durationText = '3 years';
+      break;
+    case 'Ultimate Access':
+      expirationDate = 'Perpetual (No Expiration)';
+      durationText = 'Unlimited';
+      break;
     default:
-      purchase.setFullYear(purchase.getFullYear() + 1); // 1 year
+      purchase.setFullYear(purchase.getFullYear() + 1);
+      expirationDate = purchase.toLocaleDateString();
+      durationText = '1 year';
   }
 
-  return purchase.toLocaleDateString();
+  return { expirationDate, durationText };
 };
 
 export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFProps) {
+  const { expirationDate, durationText } = getLicenseDurationInfo(license.licenseType, license.purchaseDate);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -112,10 +126,9 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.sectionTitle}>License Summary</Text>
           <Text style={styles.text}>Track: {license.trackTitle}</Text>
           <Text style={styles.text}>License Type: {license.licenseType}</Text>
+          <Text style={styles.text}>Duration: {durationText}</Text>
           <Text style={styles.text}>Purchase Date: {new Date(license.purchaseDate).toLocaleDateString()}</Text>
-          <Text style={styles.text}>
-            Expiration Date: {getExpirationDate(license.licenseType, license.purchaseDate)}
-          </Text>
+          <Text style={styles.text}>Expiration Date: {expirationDate}</Text>
           <Text style={styles.text}>License Fee: ${license.price.toFixed(2)} USD</Text>
         </View>
 
