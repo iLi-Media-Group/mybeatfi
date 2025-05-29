@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface TrackCardProps {
   track: Track;
-  onSelect: () => void;
+  onSelect: (track: Track) => void;
 }
 
 export function TrackCard({ track, onSelect }: TrackCardProps) {
@@ -102,7 +102,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
           </button>
         )}
 
-        /{/* Play Button Overlay */}
+        {/* Play Button Overlay */}
         <button
           onClick={() => setIsPlaying(!isPlaying)}
           className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
@@ -111,7 +111,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             <Play className="w-6 h-6 text-white" />
           </div>
         </button>
-      </div>/
+      </div>
 
       {/* Content Section */}
       <div className="p-3 space-y-2">
@@ -161,7 +161,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
         {/* Action Button */}
         <button
-          onClick={onSelect}
+          onClick={() => onSelect(track)}
           className={`w-full py-2 px-4 rounded text-sm font-medium transition-all duration-300 flex items-center justify-center ${
             isSyncOnly 
               ? 'bg-purple-600 hover:bg-purple-700 text-white'
