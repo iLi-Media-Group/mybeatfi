@@ -224,7 +224,6 @@ export function ProducerDashboard() {
     }
   };
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -379,55 +378,51 @@ export function ProducerDashboard() {
                       </div>
                     </div>
 
-                   <div className="flex items-center justify-end space-x-3">
-                        <button
-                          onClick={() => {
-                            setSelectedProposal(proposal);
-                            setShowNegotiationDialog(true);
-                          }}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                        >
-                          Negotiate
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedProposalId(proposal.id);
-                            setShowHistoryDialog(true);
-                          }}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                        >
-                          View History
-                        </button>
-                        <button 
-                          onClick={() => setConfirmAction({
-                            action: 'accept',
-                            proposalId: proposal.id,
-                            trackTitle: proposal.track.title,
-                            clientName: `${proposal.client.first_name} ${proposal.client.last_name}`
-                          })}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          Accept
-                        </button>
-                        <button 
-                          onClick={() => setConfirmAction({
-                            action: 'reject',
-                            proposalId: proposal.id,
-                            trackTitle: proposal.track.title,
-                            clientName: `${proposal.client.first_name} ${proposal.client.last_name}`
-                          })}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
+                    <div className="flex items-center justify-end space-x-3">
+                      <button
+                        onClick={() => {
+                          setSelectedProposal(proposal);
+                          setShowNegotiationDialog(true);
+                        }}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                      >
+                        Negotiate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedProposalId(proposal.id);
+                          setShowHistoryDialog(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                      >
+                        View History
+                      </button>
+                      <button 
+                        onClick={() => setConfirmAction({
+                          action: 'accept',
+                          proposalId: proposal.id,
+                          trackTitle: proposal.track.title,
+                          clientName: `${proposal.client.first_name} ${proposal.client.last_name}`
+                        })}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        Accept
+                      </button>
+                      <button 
+                        onClick={() => setConfirmAction({
+                          action: 'reject',
+                          proposalId: proposal.id,
+                          trackTitle: proposal.track.title,
+                          clientName: `${proposal.client.first_name} ${proposal.client.last_name}`
+                        })}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                      >
+                        Reject
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
 
               {proposals.length === 0 && (
                 <div className="text-center py-8">
