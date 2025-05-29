@@ -1,7 +1,24 @@
-Here's the fixed version with all closing brackets added:
+import { AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { EditRequestDialog } from './EditRequestDialog';
+import { ClientProfile } from './ClientProfile';
+import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
-```javascript
-if (loading) {
+export default function ClientDashboard({ loading, error, profile, userStats }) {
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState(null);
+
+  const handleUpdateRequest = async (id, updates) => {
+    // Implementation would go here
+  };
+
+  const handleDeleteLicense = async () => {
+    // Implementation would go here
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
         <div className="text-white text-center">
@@ -58,4 +75,3 @@ if (loading) {
     </div>
   );
 }
-```
