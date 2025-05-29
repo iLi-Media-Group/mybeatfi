@@ -177,21 +177,53 @@ export function ProducerDashboard() {
     }
   };
 
-  const handleNegotiate = async (proposal) => {
-    // Implementation for negotiation
+  const handleProposalAction = async (proposalId: string, action: 'accept' | 'reject') => {
+    try {
+      const { error } = await supabase
+        .from('sync_proposals')
+        .update({
+          status: action === 'accept' ? 'accepted' : 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', proposalId);
+
+      if (error) throw error;
+
+      // Add to proposal history
+      const { error: historyError } = await supabase
+        .from('proposal_history')
+        .insert({
+          proposal_id: proposalId,
+          previous_status: 'pending',
+          new_status: action === 'accept' ? 'accepted' : 'rejected',
+          changed_by: user?.id,
+          changed_at: new Date().toISOString()
+        });
+
+      if (historyError) throw historyError;
+
+      setProposals(proposals.filter(p => p.id !== proposalId));
+      setConfirmAction(null);
+
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-proposal-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          proposalId,
+          action,
+          trackTitle: proposals.find(p => p.id === proposalId)?.track.title,
+          clientEmail: proposals.find(p => p.id === proposalId)?.client.email
+        })
+      });
+    } catch (err) {
+      console.error('Error updating proposal:', err);
+      setError('Failed to update proposal status');
+    }
   };
 
-  const handleViewHistory = async (proposalId) => {
-    // Implementation for viewing history
-  };
-
-  const handleAccept = async (proposal) => {
-    // Implementation for accepting proposal
-  };
-
-  const handleReject = async (proposal) => {
-    // Implementation for rejecting proposal
-  };
 
   if (loading) {
     return (
