@@ -27,11 +27,11 @@ export function ClientDashboard() {
   const [profile, setProfile] = useState<{ first_name?: string, email: string } | null>(null);
   const [userStats, setUserStats] = useState<DashboardStats>({
     totalLicenses: 0,
-    remainingLicenses: 0,
-    membershipType: null,
-    currentPeriodStart: null,
-    currentPeriodEnd: null,
-    daysUntilReset: null
+    remainingLicenses: 10,
+    membershipType: 'Gold Access',
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    daysUntilReset: 30
   });
   const [tracks, setTracks] = useState<Track[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
@@ -65,6 +65,21 @@ export function ClientDashboard() {
         setUserStats(prev => ({
           ...prev,
           membershipType: profileData.membership_plan as DashboardStats['membershipType']
+        }));
+      }
+
+      // Calculate license usage
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select('created_at')
+        .eq('buyer_id', user?.id)
+        .gte('created_at', new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString());
+
+      if (salesData) {
+        setUserStats(prev => ({
+          ...prev,
+          totalLicenses: salesData.length,
+          remainingLicenses: Math.max(0, 10 - salesData.length)
         }));
       }
 
@@ -211,35 +226,53 @@ export function ClientDashboard() {
           </div>
         )}
 
+        {/* License Usage Section */}
+        <div className="mb-8 p-6 glass-card rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
+              <p className="text-gray-300">
+                {userStats.membershipType === 'Gold Access' ? (
+                  <>
+                    You have used {userStats.totalLicenses} of your 10 monthly licenses
+                    ({userStats.remainingLicenses} remaining)
+                  </>
+                ) : userStats.membershipType === 'Platinum Access' || userStats.membershipType === 'Ultimate Access' ? (
+                  'You have unlimited licenses available'
+                ) : (
+                  'Single track license'
+                )}
+              </p>
+              {userStats.currentPeriodStart && userStats.currentPeriodEnd && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Current period: {userStats.currentPeriodStart.toLocaleDateString()} - {userStats.currentPeriodEnd.toLocaleDateString()}
+                  {userStats.daysUntilReset !== null && (
+                    <span className="ml-2">
+                      ({userStats.daysUntilReset} days until reset)
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+            {userStats.membershipType === 'Gold Access' && userStats.remainingLicenses < 3 && (
+              <div className="flex items-center text-yellow-400">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span>Running low on licenses</span>
+              </div>
+            )}
+          </div>
+          {userStats.membershipType === 'Gold Access' && (
+            <div className="mt-4 w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-purple-600 rounded-full h-2 transition-all duration-300"
+                style={{ width: `${(userStats.totalLicenses / 10) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {/* Licensed Tracks Section */}
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
-              <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
-              <div className="space-y-4">
-                {licenses.map((license) => (
-                  <div
-                    key={license.id}
-                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
-                        <p className="text-gray-400">Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
-                      </div>
-                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
-                      <button
-                        onClick={() => setSelectedLicenseToDelete(license)}
-                        className="text-gray-400 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Sync Requests Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <div className="flex items-center justify-between mb-6">
@@ -274,6 +307,33 @@ export function ClientDashboard() {
                           <Edit className="w-5 h-5" />
                         </button>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Licensed Tracks Section */}
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
+              <div className="space-y-4">
+                {licenses.map((license) => (
+                  <div
+                    key={license.id}
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
+                        <p className="text-gray-400">Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                      <button
+                        onClick={() => setSelectedLicenseToDelete(license)}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
                 ))}
