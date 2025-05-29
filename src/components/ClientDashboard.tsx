@@ -93,7 +93,7 @@ function DeleteLicenseDialog({ isOpen, onClose, license, onConfirm }: DeleteLice
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
               <p className="text-yellow-400 text-sm">
                 This license is still valid until {new Date(license.expiry_date).toLocaleDateString()}.
-                Deleting it will revoke your rights to use this track.
+                Deleting it will revoke your rights to use this track after the expiration date.
               </p>
             </div>
           )}
@@ -306,6 +306,29 @@ export function ClientDashboard() {
           }));
         }
 
+        const testLicenses = [
+          {
+            track_id: '123e4567-e89b-12d3-a456-426614174000',
+            buyer_id: user.id,
+            license_type: 'Single Track',
+            amount: 7.99,
+            created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
+            expiry_date: new Date(Date.now() + 65 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            track_id: '123e4567-e89b-12d3-a456-426614174001',
+            buyer_id: user.id,
+            license_type: 'Gold Access',
+            amount: 24.99,
+            created_at: new Date(Date.now() - 350 * 24 * 60 * 60 * 1000).toISOString(),
+            expiry_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+
+        for (const license of testLicenses) {
+          await supabase.from('sales').insert(license);
+        }
+
         const { data: licensesData } = await supabase
           .from('sales')
           .select(`
@@ -328,6 +351,7 @@ export function ClientDashboard() {
             )
           `)
           .eq('buyer_id', user.id)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
 
         if (licensesData) {
@@ -762,7 +786,6 @@ export function ClientDashboard() {
                       expiryStatus === 'expired' ? 'border-red-500/20' :
                       expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
                       'border-purple-500/20'
-                    
                     }`}
                   >
                     <div className="flex items-start space-x-4">
