@@ -68,7 +68,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   };
 
   return (
-    <div className="group relative bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10">
+    <div className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10">
       {/* Image Section */}
       <div className="relative aspect-square overflow-hidden">
         <img
@@ -83,11 +83,11 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
           <button
             onClick={toggleFavorite}
             disabled={loading}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-10 opacity-0 group-hover:opacity-100"
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-10 opacity-0 group-hover:opacity-100"
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Star
-              className={`w-5 h-5 ${
+              className={`w-4 h-4 ${
                 isFavorite ? 'text-yellow-400 fill-current' : 'text-white'
               }`}
             />
@@ -99,78 +99,62 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
           onClick={() => setIsPlaying(!isPlaying)}
           className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
         >
-          <div className="p-4 rounded-full bg-blue-600/90 hover:bg-blue-600 transform transition-transform duration-300 hover:scale-110">
-            <Play className="w-8 h-8 text-white" />
+          <div className="p-3 rounded-full bg-blue-600/90 hover:bg-blue-600 transform transition-transform duration-300 hover:scale-110">
+            <Play className="w-6 h-6 text-white" />
           </div>
         </button>
       </div>
 
       {/* Content Section */}
-      <div className="p-6 space-y-4">
+      <div className="p-3 space-y-2">
         <div>
-          <h3 className="text-xl font-bold text-white mb-1 truncate">{track.title}</h3>
-          <p className="text-gray-400">{track.artist}</p>
-        </div>
-
-        {/* Tags Section */}
-        <div className="flex flex-wrap gap-2">
-          {track.genres.slice(0, 3).map((genre) => (
-            <span key={genre} className="tag text-blue-300">
-              <Music className="w-3 h-3 mr-1" />
-              {genre}
-            </span>
-          ))}
-          {track.moods.slice(0, 2).map((mood) => (
-            <span key={mood} className="tag text-purple-300">
-              <Tag className="w-3 h-3 mr-1" />
-              {mood}
-            </span>
-          ))}
+          <h3 className="text-sm font-bold text-white mb-0.5 truncate">{track.title}</h3>
+          <p className="text-xs text-gray-400 truncate">{track.artist}</p>
         </div>
 
         {/* Track Details */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center text-gray-400">
-            <Clock className="w-4 h-4 mr-2" />
+        <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center">
+            <Clock className="w-3 h-3 mr-1" />
             {track.duration}
           </div>
-          <div className="flex items-center text-gray-400">
-            <Hash className="w-4 h-4 mr-2" />
+          <div className="flex items-center">
+            <Hash className="w-3 h-3 mr-1" />
             {track.bpm} BPM
           </div>
         </div>
 
         {/* Features */}
-        <div className="flex flex-wrap gap-3 text-sm">
+        <div className="flex flex-wrap gap-1.5 text-xs">
           {track.hasVocals && (
             <div className="flex items-center text-purple-400">
-              <Mic className="w-4 h-4 mr-1" />
-              <span>{isSyncOnly ? 'Sync Only' : 'Full Vocals'}</span>
+              <Mic className="w-3 h-3 mr-0.5" />
+              <span>{isSyncOnly ? 'Sync' : 'Vocals'}</span>
             </div>
           )}
           {track.mp3Url && (
             <div className="flex items-center text-green-400">
-              <FileMusic className="w-4 h-4 mr-1" />
+              <FileMusic className="w-3 h-3 mr-0.5" />
               <span>MP3</span>
             </div>
           )}
           {track.trackoutsUrl && (
             <div className="flex items-center text-blue-400">
-              <Layers className="w-4 h-4 mr-1" />
+              <Layers className="w-3 h-3 mr-0.5" />
               <span>Stems</span>
             </div>
           )}
         </div>
 
         {/* Audio Player */}
-        <div className="pt-2">
+        <div className="pt-1">
           <AudioPlayer url={track.audioUrl} title={track.title} />
         </div>
 
         {/* Action Button */}
         <button
           onClick={onSelect}
-          className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 ${
+          className={`w-full py-2 px-4 rounded text-sm font-medium transition-all duration-300 flex items-center justify-center ${
             isSyncOnly 
               ? 'bg-purple-600 hover:bg-purple-700 text-white'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
