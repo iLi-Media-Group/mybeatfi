@@ -21,6 +21,23 @@ interface ProfileInfo {
   email: string;
 }
 
+const calculateExpiryDate = (membershipType: string): Date => {
+  const now = new Date();
+  switch (membershipType) {
+    case 'Ultimate Access':
+      now.setFullYear(now.getFullYear() + 100); // Effectively perpetual
+      break;
+    case 'Platinum Access':
+      now.setFullYear(now.getFullYear() + 3); // 3 years
+      break;
+    case 'Gold Access':
+    case 'Single Track':
+    default:
+      now.setFullYear(now.getFullYear() + 1); // 1 year
+  }
+  return now;
+};
+
 export function LicenseDialog({
   isOpen,
   onClose,
@@ -105,18 +122,7 @@ export function LicenseDialog({
       setLoading(true);
       setError('');
 
-      // Calculate expiry date based on membership type
-      const expiryDate = new Date();
-      switch (membershipType) {
-        case 'Ultimate Access':
-          expiryDate.setFullYear(expiryDate.getFullYear() + 100);
-          break;
-        case 'Platinum Access':
-          expiryDate.setFullYear(expiryDate.getFullYear() + 3);
-          break;
-        default:
-          expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-      }
+      const expiryDate = calculateExpiryDate(membershipType);
 
       // Create license record
       const { data: license, error: licenseError } = await supabase
