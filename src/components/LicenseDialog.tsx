@@ -8,7 +8,7 @@ interface LicenseDialogProps {
   isOpen: boolean;
   onClose: () => void;
   track: Track;
-  membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
+  membershipType: string;
   remainingLicenses: number;
 }
 
@@ -22,22 +22,47 @@ interface LicenseTerms {
 interface ProfileUpdateDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (firstName: string, lastName: string, email: string) => void;
+  onSubmit: (firstName: string, lastName: string, email: string) => Promise<void>;
+  initialData?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
-function ProfileUpdateDialog({ isOpen, onClose, onSubmit }: ProfileUpdateDialogProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+function ProfileUpdateDialog({ isOpen, onClose, onSubmit, initialData }: ProfileUpdateDialogProps) {
+  const [firstName, setFirstName] = useState(initialData?.firstName || '');
+  const [lastName, setLastName] = useState(initialData?.lastName || '');
+  const [email, setEmail] = useState(initialData?.email || '');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      setError('All fields are required');
-      return;
+    
+    try {
+      setLoading(true);
+      setError('');
+
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        setError('All fields are required');
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+      if (!emailRegex.test(email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+
+      await onSubmit(firstName.trim(), lastName.trim(), email.trim());
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setLoading(false);
     }
-    onSubmit(firstName, lastName, email);
   };
 
   if (!isOpen) return null;
@@ -66,6 +91,7 @@ function ProfileUpdateDialog({ isOpen, onClose, onSubmit }: ProfileUpdateDialogP
                 onChange={(e) => setFirstName(e.target.value)}
                 className="w-full pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -82,6 +108,7 @@ function ProfileUpdateDialog({ isOpen, onClose, onSubmit }: ProfileUpdateDialogP
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -98,6 +125,7 @@ function ProfileUpdateDialog({ isOpen, onClose, onSubmit }: ProfileUpdateDialogP
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -107,14 +135,16 @@ function ProfileUpdateDialog({ isOpen, onClose, onSubmit }: ProfileUpdateDialogP
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              disabled={loading}
             >
-              Save & Continue
+              {loading ? 'Saving...' : 'Save & Continue'}
             </button>
           </div>
         </form>
@@ -210,7 +240,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [profile, setProfile] = useState<{
+  const [profileData, setProfileData] = useState<{
     firstName: string;
     lastName: string;
     email: string;
@@ -219,25 +249,62 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
   const terms = LICENSE_TERMS[membershipType];
   const expirationDate = calculateExpiryDate(membershipType);
 
-  const handleProfileUpdate = async (firstName: string, lastName: string, email: string) => {
+  const checkProfileCompletion = async () => {
     try {
-      const { error: updateError } = await supabase
+      const { data, error: profileError } = await supabase
         .from('profiles')
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user?.id);
+        .select('first_name, last_name, email')
+        .eq('id', user?.id)
+        .single();
 
-      if (updateError) throw updateError;
+      if (profileError) throw profileError;
 
-      setProfile({ firstName, lastName, email });
-      setStep('confirm');
+      if (!data.first_name || !data.last_name || !data.email) {
+        setProfileData({
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          email: data.email || ''
+        });
+        setStep('profile');
+        return false;
+      }
+
+      return true;
     } catch (err) {
-      console.error('Error updating profile:', err);
-      setError('Failed to update profile');
+      console.error('Error checking profile:', err);
+      setError('Failed to verify profile information');
+      return false;
+    }
+  };
+
+  const handleProfileUpdate = async (firstName: string, lastName: string, email: string) => {
+    if (!user) return;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
+
+    setProfileData({ firstName, lastName, email });
+    setStep('confirm');
+  };
+
+  const handleProceed = async () => {
+    if (!acceptedTerms) {
+      setError('Please accept the license terms to continue');
+      return;
+    }
+
+    const isProfileComplete = await checkProfileCompletion();
+    if (isProfileComplete) {
+      setStep('confirm');
     }
   };
 
@@ -248,21 +315,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
       setLoading(true);
       setError('');
 
-      // Check if profile is complete
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, email')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (!profileData.first_name || !profileData.last_name || !profileData.email) {
-        setStep('profile');
-        return;
-      }
-
-      // Create license record with simulated payment
+      // Create license record
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
@@ -270,31 +323,13 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
           buyer_id: user.id,
           license_type: membershipType,
           amount: 0, // Free with membership
-          payment_method: 'membership_included', // Simulated payment
-          expiry_date: expirationDate.toISOString(),
-          created_at: new Date().toISOString()
+          payment_method: 'membership',
+          expiry_date: expirationDate.toISOString()
         })
         .select()
         .single();
 
       if (licenseError) throw licenseError;
-
-      // Send email notification
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-license-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          clientName: `${profileData.first_name} ${profileData.last_name}`,
-          clientEmail: profileData.email,
-          trackTitle: track.title,
-          licenseTier: membershipType,
-          licenseDate: new Date().toISOString(),
-          expirationDate: expirationDate.toISOString()
-        })
-      });
 
       // Redirect to license agreement page
       window.location.href = `/license-agreement/${license.id}`;
@@ -339,6 +374,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
         isOpen={true}
         onClose={onClose}
         onSubmit={handleProfileUpdate}
+        initialData={profileData}
       />
     );
   }
@@ -355,6 +391,12 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-center font-medium">{error}</p>
+          </div>
+        )}
 
         {step === 'terms' ? (
           <>
@@ -416,7 +458,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
                 Cancel
               </button>
               <button
-                onClick={() => setStep('confirm')}
+                onClick={handleProceed}
                 disabled={!acceptedTerms}
                 className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
@@ -435,12 +477,6 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
                 You are about to license "{track.title}" under the {membershipType} plan.
               </p>
             </div>
-
-            {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-red-400 text-center">{error}</p>
-              </div>
-            )}
 
             <div className="flex justify-end space-x-4">
               <button
