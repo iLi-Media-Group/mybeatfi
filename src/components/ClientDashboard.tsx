@@ -19,7 +19,7 @@ interface License {
 interface UserStats {
   totalLicenses: number;
   remainingLicenses: number;
-  membershipType: 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | 'Single Track' | null;
+  membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null;
   currentPeriodStart: Date | null;
   currentPeriodEnd: Date | null;
   daysUntilReset: number | null;
@@ -158,10 +158,20 @@ const calculateExpiryDate = (purchaseDate: string, membershipType: string): stri
     case 'Platinum Access':
       date.setFullYear(date.getFullYear() + 3);
       break;
-    default: // Single Track and Gold Access
+    default:
       date.setFullYear(date.getFullYear() + 1);
   }
   return date.toISOString();
+};
+
+const getExpiryStatus = (expiryDate: string): 'expired' | 'expiring-soon' | 'active' => {
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry <= 0) return 'expired';
+  if (daysUntilExpiry <= 30) return 'expiring-soon';
+  return 'active';
 };
 
 export function ClientDashboard() {
@@ -196,8 +206,8 @@ export function ClientDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError('');
 
-        // Fetch profile and membership info
         const { data: profileData } = await supabase
           .from('profiles')
           .select('first_name, email, membership_plan')
@@ -212,7 +222,6 @@ export function ClientDashboard() {
           }));
         }
 
-        // Fetch licenses with track details
         const { data: licensesData } = await supabase
           .from('sales')
           .select(`
@@ -240,6 +249,7 @@ export function ClientDashboard() {
         if (licensesData) {
           const formattedLicenses = licensesData.map(license => ({
             ...license,
+            expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
             track: {
               ...license.track,
               genres: license.track.genres.split(',').map((g: string) => g.trim()),
@@ -249,7 +259,6 @@ export function ClientDashboard() {
           setLicenses(formattedLicenses);
         }
 
-        // Fetch favorites
         const { data: favoritesData } = await supabase
           .from('favorites')
           .select(`
@@ -283,7 +292,6 @@ export function ClientDashboard() {
           setFavorites(formattedFavorites);
         }
 
-        // Fetch new tracks
         const { data: newTracksData } = await supabase
           .from('tracks')
           .select('*')
@@ -299,7 +307,6 @@ export function ClientDashboard() {
           setNewTracks(formattedNewTracks);
         }
 
-        // Fetch sync requests
         const { data: syncRequestsData } = await supabase
           .from('custom_sync_requests')
           .select('*')
@@ -646,43 +653,62 @@ export function ClientDashboard() {
                 </Link>
               </div>
             ) : (
-              sortedAndFilteredLicenses.map((license) => (
-                <div
-                  key={license.id}
-                  className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
-                >
-                  <div className="flex items-start space-x-4">
-                    <img
-                      src={license.track.image}
-                      alt={license.track.title}
-                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
-                      <div className="text-sm text-gray-400 space-y-1">
-                        <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
-                        <div className="flex items-center space-x-4">
-                          <span className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1 text-purple-400" />
-                            Licensed: {new Date(license.created_at).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1 text-purple-400" />
-                            Expires: {new Date(license.expiry_date).toLocaleDateString()}
-                          </span>
+              sortedAndFilteredLicenses.map((license) => {
+                const expiryStatus = getExpiryStatus(license.expiry_date);
+                
+                return (
+                  <div
+                    key={license.id}
+                    className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
+                      expiryStatus === 'expired' ? 'border-red-500/20' :
+                      expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
+                      'border-purple-500/20'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={license.track.image}
+                        alt={license.track.title}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1 text-purple-400" />
+                              Licensed: {new Date(license.created_at).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className={`w-4 h-4 mr-1 ${
+                                expiryStatus === 'expired' ? 'text-red-400' :
+                                expiryStatus === 'expiring-soon' ? 'text-yellow-400' :
+                                'text-purple-400'
+                              }`} />
+                              Expires: {new Date(license.expiry_date).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
                     </div>
-                    <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+
+                    {expiryStatus === 'expired' && (
+                      <div className="mt-2 flex items-center text-red-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        License expired
+                      </div>
+                    )}
+                    {expiryStatus === 'expiring-soon' && (
+                      <div className="mt-2 flex items-center text-yellow-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        License expires soon
+                      </div>
+                    )}
                   </div>
-                  {new Date(license.expiry_date) <= new Date() && (
-                    <div className="mt-2 flex items-center text-yellow-500 text-sm">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      License expired
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
