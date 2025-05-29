@@ -491,5 +491,3 @@ export function TrackUploadForm() {
     </div>
   );
 }
-
-export { TrackUploadForm }
