@@ -51,10 +51,12 @@ export function ClientDashboard() {
         date.setFullYear(date.getFullYear() + 100); // Effectively perpetual
         break;
       case 'Platinum Access':
-        date.setFullYear(date.getFullYear() + 3);
+        date.setFullYear(date.getFullYear() + 3); // 3 years
         break;
+      case 'Gold Access':
+      case 'Single Track':
       default:
-        date.setFullYear(date.getFullYear() + 1);
+        date.setFullYear(date.getFullYear() + 1); // 1 year
     }
     return date.toISOString();
   };

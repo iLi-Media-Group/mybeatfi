@@ -74,12 +74,12 @@ const getExpirationDate = (licenseType: string, purchaseDate: string): string =>
     case 'Ultimate Access':
       return 'Perpetual (No Expiration)';
     case 'Platinum Access':
-      purchase.setFullYear(purchase.getFullYear() + 3);
+      purchase.setFullYear(purchase.getFullYear() + 3); // 3 years
       break;
     case 'Gold Access':
     case 'Single Track':
     default:
-      purchase.setFullYear(purchase.getFullYear() + 1);
+      purchase.setFullYear(purchase.getFullYear() + 1); // 1 year
   }
 
   return purchase.toLocaleDateString();
