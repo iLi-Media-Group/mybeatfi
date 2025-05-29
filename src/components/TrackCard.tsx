@@ -1,35 +1,22 @@
 import React, { useState } from 'react';
 import { Play, Pause, Heart, Download } from 'lucide-react';
 import { formatDuration } from '../utils/dateUtils';
+import { Track } from '../types';
 
 interface TrackCardProps {
-  id: string;
-  title: string;
-  artist: string;
-  imageUrl: string;
-  audioUrl: string;
-  duration: string;
-  bpm: number;
-  genres?: string[];  // Make genres optional
+  track: Track;
   isPlaying?: boolean;
-  onPlay?: (id: string) => void;
+  onPlay?: (track: Track) => void;
   onPause?: () => void;
-  onLicense?: (id: string) => void;
+  onSelect?: (track: Track) => void;
 }
 
 export function TrackCard({
-  id,
-  title,
-  artist,
-  imageUrl,
-  audioUrl,
-  duration,
-  bpm,
-  genres = [], // Provide default empty array
+  track,
   isPlaying = false,
   onPlay,
   onPause,
-  onLicense
+  onSelect
 }: TrackCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -37,12 +24,12 @@ export function TrackCard({
     if (isPlaying) {
       onPause?.();
     } else {
-      onPlay?.(id);
+      onPlay?.(track);
     }
   };
 
-  const handleLicense = () => {
-    onLicense?.(id);
+  const handleSelect = () => {
+    onSelect?.(track);
   };
 
   const toggleFavorite = () => {
@@ -53,8 +40,8 @@ export function TrackCard({
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <img 
-          src={imageUrl} 
-          alt={title} 
+          src={track.image} 
+          alt={track.title} 
           className="w-full h-48 object-cover"
         />
         <button
@@ -68,8 +55,8 @@ export function TrackCard({
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{title}</h3>
-            <p className="text-sm text-gray-600">{artist}</p>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{track.title}</h3>
+            <p className="text-sm text-gray-600">{track.artist}</p>
           </div>
           <button
             onClick={toggleFavorite}
@@ -82,7 +69,7 @@ export function TrackCard({
         </div>
 
         <div className="flex flex-wrap gap-2 mb-3">
-          {genres.map((genre, index) => (
+          {track.genres?.map((genre, index) => (
             <span
               key={index}
               className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full"
@@ -93,12 +80,12 @@ export function TrackCard({
         </div>
 
         <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-          <span>{formatDuration(duration)}</span>
-          <span>{bpm} BPM</span>
+          <span>{track.duration ? formatDuration(track.duration) : '--:--'}</span>
+          <span>{track.bpm} BPM</span>
         </div>
 
         <button
-          onClick={handleLicense}
+          onClick={handleSelect}
           className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
         >
           <Download size={16} />

@@ -219,7 +219,7 @@ export function VocalsPage() {
             <TrackCard
               key={track.id}
               track={track}
-              onSelect={() => handleTrackSelect(track)}
+              onSelect={handleTrackSelect}
             />
           ))}
         </div>

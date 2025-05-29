@@ -276,7 +276,7 @@ export function CatalogPage() {
                 <TrackCard
                   key={track.id}
                   track={track}
-                  onSelect={() => user ? navigate(`/license/${track.id}`) : navigate('/login')}
+                  onSelect={(track) => user ? navigate(`/license/${track.id}`) : navigate('/login')}
                 />
               ) : null
             )}
