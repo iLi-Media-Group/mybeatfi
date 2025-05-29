@@ -85,6 +85,21 @@ const LICENSE_TERMS: Record<string, LicenseTerms> = {
   }
 };
 
+const calculateExpiryDate = (membershipType: string): Date => {
+  const now = new Date();
+  switch (membershipType) {
+    case 'Ultimate Access':
+      now.setFullYear(now.getFullYear() + 100); // Effectively perpetual
+      break;
+    case 'Platinum Access':
+      now.setFullYear(now.getFullYear() + 3);
+      break;
+    default: // Single Track and Gold Access
+      now.setFullYear(now.getFullYear() + 1);
+  }
+  return now;
+};
+
 export function LicenseDialog({ isOpen, onClose, track, membershipType, remainingLicenses }: LicenseDialogProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'terms' | 'confirm'>('terms');
@@ -95,18 +110,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
   if (!isOpen || !user) return null;
 
   const terms = LICENSE_TERMS[membershipType];
-  const expirationDate = new Date();
-  
-  switch (membershipType) {
-    case 'Ultimate Access':
-      expirationDate.setFullYear(expirationDate.getFullYear() + 100); // Effectively perpetual
-      break;
-    case 'Platinum Access':
-      expirationDate.setFullYear(expirationDate.getFullYear() + 3);
-      break;
-    default:
-      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-  }
+  const expirationDate = calculateExpiryDate(membershipType);
 
   const handleLicense = async () => {
     if (!user) return;
@@ -124,7 +128,8 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
           license_type: membershipType,
           amount: 0, // Free with membership
           payment_method: 'membership',
-          expiry_date: expirationDate.toISOString()
+          expiry_date: expirationDate.toISOString(),
+          created_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -136,7 +141,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
       onClose();
     } catch (err) {
       console.error('Error creating license:', err);
-      setError('Failed to create license. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create license');
     } finally {
       setLoading(false);
     }
