@@ -31,6 +31,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Helvetica-Bold'
   },
+  trackTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: 'center',
+    fontFamily: 'Helvetica-Bold'
+  },
   section: {
     marginBottom: 20
   },
@@ -67,6 +73,8 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>Music Synchronization License Agreement</Text>
+        
+        <Text style={styles.trackTitle}>"{license.trackTitle}"</Text>
 
         <View style={styles.section}>
           <Text style={styles.text}>
@@ -109,7 +117,9 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.sectionTitle}>2. TERM OF LICENSE</Text>
           <Text style={styles.text}>
             The license commenced on {new Date(license.purchaseDate).toLocaleDateString()} and will
-            expire on {new Date(license.expiryDate).toLocaleDateString()}.
+            {license.licenseType === 'Ultimate Access' 
+              ? ' remain valid in perpetuity.'
+              : ` expire on ${new Date(license.expiryDate).toLocaleDateString()}.`}
           </Text>
         </View>
 
