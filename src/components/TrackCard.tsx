@@ -15,7 +15,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync';
+  const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync_only';
 
   useEffect(() => {
     if (user && track?.id) {
@@ -137,7 +137,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
           {track.hasVocals && (
             <div className="flex items-center text-purple-400">
               <Mic className="w-3 h-3 mr-0.5" />
-              <span>{isSyncOnly ? 'Sync' : 'Vocals'}</span>
+              <span>{isSyncOnly ? 'Sync Only' : 'Vocals'}</span>
             </div>
           )}
           {track.mp3Url && (
