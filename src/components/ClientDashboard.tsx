@@ -384,32 +384,34 @@ export function ClientDashboard() {
                 {favorites.map((track) => (
                   <div
                     key={track.id}
-                    className="flex items-center space-x-4 bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
                   >
-                    <img
-                      src={track.image}
-                      alt={track.title}
-                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-medium truncate">{track.title}</h3>
-                      <AudioPlayer url={track.audioUrl} title={track.title} />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleLicenseTrack(track.id)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
-                      >
-                        <DollarSign className="w-4 h-4 mr-1" />
-                        License
-                      </button>
-                      <button
-                        onClick={() => handleRemoveFavorite(track.id)}
-                        disabled={removingFavorite === track.id}
-                        className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={track.image}
+                        alt={track.title}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-white font-medium truncate">{track.title}</h3>
+                          <button
+                            onClick={() => handleRemoveFavorite(track.id)}
+                            disabled={removingFavorite === track.id}
+                            className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <AudioPlayer url={track.audioUrl} title={track.title} />
+                        <button
+                          onClick={() => handleLicenseTrack(track.id)}
+                          className="mt-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          License Track
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -439,24 +441,26 @@ export function ClientDashboard() {
                 {newTracks.map((track) => (
                   <div
                     key={track.id}
-                    className="flex items-center space-x-4 bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
                   >
-                    <img
-                      src={track.image}
-                      alt={track.title}
-                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-medium truncate">{track.title}</h3>
-                      <AudioPlayer url={track.audioUrl} title={track.title} />
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={track.image}
+                        alt={track.title}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-medium truncate mb-2">{track.title}</h3>
+                        <AudioPlayer url={track.audioUrl} title={track.title} />
+                        <button
+                          onClick={() => handleLicenseTrack(track.id)}
+                          className="mt-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          License Track
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleLicenseTrack(track.id)}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
-                    >
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      License
-                    </button>
                   </div>
                 ))}
 
