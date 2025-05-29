@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, FileText, DollarSign, Loader2 } from 'lucide-react';
+import { X, AlertCircle, FileText, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Track } from '../types';
@@ -135,16 +135,17 @@ export function LicenseDialog({
 
       if (licenseError) throw licenseError;
 
-      // Generate and send license email
-      await sendLicenseEmail({
-        clientName: `${profile.first_name} ${profile.last_name}`,
-        clientEmail: profile.email,
-        trackName: track.title,
-        licenseTier: membershipType,
-        licenseDate: new Date().toISOString(),
-        expirationDate: expiryDate.toISOString(),
-        pdfUrl: `${window.location.origin}/license-agreement/${license.id}`
-      });
+      // Email sending temporarily disabled until Edge Function is set up
+      // TODO: Uncomment once email service is configured
+      // await sendLicenseEmail({
+      //   clientName: `${profile.first_name} ${profile.last_name}`,
+      //   clientEmail: profile.email,
+      //   trackName: track.title,
+      //   licenseTier: membershipType,
+      //   licenseDate: new Date().toISOString(),
+      //   expirationDate: expiryDate.toISOString(),
+      //   pdfUrl: `${window.location.origin}/license-agreement/${license.id}`
+      // });
 
       onClose();
     } catch (err) {
