@@ -54,6 +54,7 @@ export interface SyncProposal {
   createdAt: string;
 }
 
+// Updated genres to be lowercase and match database constraint pattern
 export const GENRES = [
   'hiphop',
   'rnb',
@@ -64,7 +65,7 @@ export const GENRES = [
   'classical',
   'world',
   'religious',
-  'childrens music'
+  'childrens'
 ] as const;
 
 export const SUB_GENRES = {
@@ -77,7 +78,7 @@ export const SUB_GENRES = {
   'classical': ['orchestral', 'chamber', 'contemporary', 'minimalist'],
   'world': ['latin', 'african', 'asian', 'middle eastern'],
   'religious': ['gospel', 'contemporary christian', 'worship', 'sacred', 'spiritual'],
-  'childrens music': [
+  'childrens': [
     'playful',
     'whimsical',
     'educational',
