@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Music } from 'lucide-react';
-import { GENRES, MOODS_CATEGORIES } from '../types';
+import { GENRES, MOODS_CATEGORIES, MOODS } from '../types';
 import { supabase } from '../lib/supabase';
 
 interface EditTrackModalProps {
@@ -48,16 +48,20 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
         throw new Error('At least one valid genre from the provided list is required');
       }
 
-      // Format moods to be lowercase
-      const formattedMoods = selectedMoods.map(mood => 
-        mood.toLowerCase().trim()
-      );
+      // Format and validate moods
+      const formattedMoods = selectedMoods
+        .map(mood => mood.toLowerCase().trim())
+        .filter(mood => MOODS.includes(mood));
+
+      // Validate that moods match the database pattern
+      const moodPattern = /^[a-z][a-z0-9\s]*$/;
+      const validMoods = formattedMoods.filter(mood => moodPattern.test(mood));
 
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
           genres: formattedGenres,
-          moods: formattedMoods,
+          moods: validMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
