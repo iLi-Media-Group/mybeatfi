@@ -50,22 +50,72 @@ export function ClientDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const [userStatsData, dashboardStatsData, favoritesData, newTracksData] = await Promise.all([
-          supabase.from('user_stats').select('*').eq('user_id', user.id).single(),
-          supabase.from('dashboard_stats').select('*').single(),
-          supabase.from('favorite_tracks').select('*').eq('user_id', user.id),
-          supabase.from('tracks').select('*').order('created_at', { ascending: false }).limit(5),
-        ]);
+        // Get user profile data
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('membership_plan, updated_at')
+          .eq('id', user.id)
+          .single();
 
-        if (userStatsData.error) throw userStatsData.error;
-        if (dashboardStatsData.error) throw dashboardStatsData.error;
-        if (favoritesData.error) throw favoritesData.error;
-        if (newTracksData.error) throw newTracksData.error;
+        if (profileError) throw profileError;
 
-        setUserStats(userStatsData.data);
-        setDashboardStats(dashboardStatsData.data);
-        setFavoriteTracks(favoritesData.data);
-        setNewTracks(newTracksData.data);
+        // Get count of licensed tracks
+        const { count: tracksLicensed, error: salesError } = await supabase
+          .from('sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('buyer_id', user.id);
+
+        if (salesError) throw salesError;
+
+        // Get dashboard statistics from tracks table
+        const { data: tracksData, error: tracksError } = await supabase
+          .from('tracks')
+          .select('bpm, genres');
+
+        if (tracksError) throw tracksError;
+
+        // Calculate dashboard stats
+        const totalTracks = tracksData?.length || 0;
+        const allGenres = new Set(tracksData?.flatMap(track => track.genres) || []);
+        const avgBpm = tracksData?.reduce((sum, track) => sum + track.bpm, 0) / totalTracks || 0;
+
+        // Get latest tracks
+        const { data: newTracksData, error: newTracksError } = await supabase
+          .from('tracks')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (newTracksError) throw newTracksError;
+
+        // Get favorite tracks through favorites table
+        const { data: favoritesData, error: favoritesError } = await supabase
+          .from('favorites')
+          .select(`
+            track_id,
+            tracks (*)
+          `)
+          .eq('user_id', user.id);
+
+        if (favoritesError) throw favoritesError;
+
+        // Update state with fetched data
+        setUserStats({
+          membershipType: profileData?.membership_plan || 'Single Track',
+          tracksLicensed: tracksLicensed || 0,
+          favoriteGenres: Array.from(allGenres).slice(0, 5), // Take top 5 genres
+          lastLoginDate: profileData?.updated_at || new Date().toISOString(),
+        });
+
+        setDashboardStats({
+          totalTracks,
+          totalGenres: allGenres.size,
+          avgBpm: Math.round(avgBpm),
+        });
+
+        setNewTracks(newTracksData || []);
+        setFavoriteTracks(favoritesData?.map(fav => fav.tracks) || []);
+
       } catch (err) {
         setError('Failed to load dashboard data');
         console.error('Dashboard data fetch error:', err);
