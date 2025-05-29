@@ -136,19 +136,12 @@ export function VocalsPage() {
   };
 
   const handleTrackSelect = (track: Track) => {
-    // Validate track ID before navigation
-    if (!track?.id) {
-      console.error('Invalid track ID');
-      setError('Invalid track selection');
-      return;
-    }
-
     if (!user) {
       navigate('/login');
       return;
     }
 
-    if (track.hasVocals && track.vocalsUsageType === 'sync') {
+    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
       setSelectedTrack(track);
       setShowProposalDialog(true);
     } else {
