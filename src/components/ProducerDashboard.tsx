@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, AlertCircle, Clock, Edit, Pencil, UserCog } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -12,6 +12,7 @@ import { ProposalHistoryDialog } from './ProposalHistoryDialog';
 import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 import { ProducerProfile } from './ProducerProfile';
 import { calculateTimeRemaining } from '../utils/dateUtils';
+import { LicenseDialog } from './LicenseDialog';
 
 interface DashboardStats {
   totalTracks: number;
@@ -74,6 +75,7 @@ export function ProducerDashboard() {
     clientName: string;
   } | null>(null);
   const [newTracks] = useState<Track[]>([]);
+  const [selectedLicenseTrack, setSelectedLicenseTrack] = useState<Track | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -263,6 +265,10 @@ export function ProducerDashboard() {
       console.error('Error updating proposal:', err);
       setError('Failed to update proposal status');
     }
+  };
+
+  const handleLicenseTrack = (track: Track) => {
+    setSelectedLicenseTrack(track);
   };
 
   if (loading) {
@@ -561,7 +567,7 @@ export function ProducerDashboard() {
                 <Music className="w-5 h-5 mr-2 text-purple-500" />
                 New Releases
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {newTracks.length === 0 ? (
                   <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
                     <p className="text-gray-400">No new tracks available</p>
@@ -570,19 +576,31 @@ export function ProducerDashboard() {
                   newTracks.map((track) => (
                     <div
                       key={track.id}
-                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/20 flex items-center space-x-3"
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20 space-y-3"
                     >
-                      <img
-                        src={track.image}
-                        alt={track.title}
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-white truncate">{track.title}</div>
-                        <div className="text-sm text-gray-400 truncate">
-                          {track.genres.join(', ')} • {track.bpm} BPM
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">{track.title}</div>
+                          <div className="text-sm text-gray-400 truncate">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </div>
                         </div>
                       </div>
+                      
+                      <AudioPlayer url={track.audioUrl} title={track.title} />
+                      
+                      <button
+                        onClick={() => handleLicenseTrack(track)}
+                        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        License Track
+                      </button>
                     </div>
                   ))
                 )}
@@ -655,6 +673,16 @@ export function ProducerDashboard() {
             action={confirmAction.action}
             trackTitle={confirmAction.trackTitle}
             clientName={confirmAction.clientName}
+          />
+        )}
+
+        {selectedLicenseTrack && (
+          <LicenseDialog
+            isOpen={true}
+            onClose={() => setSelectedLicenseTrack(null)}
+            track={selectedLicenseTrack}
+            membershipType="Ultimate Access"
+            remainingLicenses={999}
           />
         )}
 
