@@ -48,21 +48,14 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
         throw new Error('At least one valid genre from the provided list is required');
       }
 
-      // Format and validate moods
-      // Convert moods to lowercase, trim spaces, and replace spaces with underscores
-      const formattedMoods = selectedMoods
-        .map(mood => mood.toLowerCase().trim().replace(/\s+/g, '_'))
-        .filter(mood => {
-          // Ensure mood starts with a letter and only contains letters, numbers, and underscores
-          const moodPattern = /^[a-z][a-z0-9_]*$/;
-          return moodPattern.test(mood) && MOODS.includes(mood);
-        });
+      // Only filter moods to ensure they're valid, but don't transform them
+      const validMoods = selectedMoods.filter(mood => MOODS.includes(mood));
 
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
           genres: formattedGenres,
-          moods: formattedMoods,
+          moods: validMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
