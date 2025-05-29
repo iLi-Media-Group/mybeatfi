@@ -281,10 +281,10 @@ export function OpenSyncBriefs() {
             filteredAndSortedBriefs.map((brief) => (
               <div
                 key={brief.id}
-                className="p-8 hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-6 hover:bg-white/5 transition-colors cursor-pointer mb-4"
                 onClick={() => setSelectedBrief(brief)}
               >
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-2">
                       {brief.project_title}
