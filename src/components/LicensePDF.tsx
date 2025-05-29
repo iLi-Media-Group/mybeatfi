@@ -129,7 +129,12 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.text}>Duration: {durationText}</Text>
           <Text style={styles.text}>Purchase Date: {new Date(license.purchaseDate).toLocaleDateString()}</Text>
           <Text style={styles.text}>Expiration Date: {expirationDate}</Text>
-          <Text style={styles.text}>License Fee: ${license.price.toFixed(2)} USD</Text>
+          <Text style={styles.text}>
+  License Fee:{' '}
+  {license.membershipType === 'Single Track'
+    ? '$7.99 USD'
+    : `Included with ${license.membershipType}`}
+</Text>
         </View>
 
         <View style={styles.section}>
