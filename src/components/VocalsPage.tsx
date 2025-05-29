@@ -94,10 +94,13 @@ export function VocalsPage() {
       if (error) throw error;
 
       if (data) {
-        const formattedTracks = data.map(track => ({
+        // Filter out any tracks with undefined IDs before mapping
+        const validTracks = data.filter(track => track && track.id);
+        
+        const formattedTracks = validTracks.map(track => ({
           id: track.id,
           title: track.title,
-          artist: track.producer.first_name || track.producer.email.split('@')[0],
+          artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
           genres: Array.isArray(track.genres)
             ? track.genres
             : track.genres?.split(',').map(g => g.trim()) || [],
@@ -133,6 +136,13 @@ export function VocalsPage() {
   };
 
   const handleTrackSelect = (track: Track) => {
+    // Validate track ID before navigation
+    if (!track?.id) {
+      console.error('Invalid track ID');
+      setError('Invalid track selection');
+      return;
+    }
+
     if (!user) {
       navigate('/login');
       return;
