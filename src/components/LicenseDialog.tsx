@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { generateLicenseAgreement } from '../lib/pdf';
-import { sendLicenseEmail } from '../lib/email';
+import { useNavigate } from 'react-router-dom';
 
 export function LicenseDialog({ 
   isOpen, 
@@ -20,6 +19,7 @@ export function LicenseDialog({
   price: number;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,23 +75,10 @@ export function LicenseDialog({
 
       if (saleError) throw saleError;
 
-      // Generate PDF
-      const pdfBuffer = await generateLicenseAgreement({
-        track,
-        license: licenseType,
-        buyer: profile,
-        sale
-      });
-
-      // Send email
-      await sendLicenseEmail({
-        to: profile.email,
-        trackTitle: track.title,
-        licenseType,
-        pdfBuffer
-      });
-
+      // Close the dialog and navigate to the license agreement page
       onClose();
+      navigate(`/license-agreement/${sale.id}`);
+      
     } catch (err) {
       console.error('Purchase error:', err);
       setError('An error occurred during purchase. Please try again.');
