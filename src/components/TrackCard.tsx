@@ -10,7 +10,7 @@ interface TrackCardProps {
   audioUrl: string;
   duration: string;
   bpm: number;
-  genres: string[];
+  genres?: string[];  // Make genres optional
   isPlaying?: boolean;
   onPlay?: (id: string) => void;
   onPause?: () => void;
@@ -25,7 +25,7 @@ export function TrackCard({
   audioUrl,
   duration,
   bpm,
-  genres,
+  genres = [], // Provide default empty array
   isPlaying = false,
   onPlay,
   onPause,
