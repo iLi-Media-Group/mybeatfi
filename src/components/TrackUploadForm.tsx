@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Loader2, Music, Hash, Image } from 'lucide-react';
 import { GENRES, SUB_GENRES, MOODS_CATEGORIES, MUSICAL_KEYS } from '../types';
 import { supabase } from '../lib/supabase';
@@ -7,28 +7,88 @@ import { useNavigate } from 'react-router-dom';
 import { uploadFile, validateAudioFile } from '../lib/storage';
 import { AudioPlayer } from './AudioPlayer';
 
+const FORM_STORAGE_KEY = 'trackUploadFormData';
+
+interface FormData {
+  title: string;
+  bpm: string;
+  key: string;
+  hasStingEnding: boolean;
+  isOneStop: boolean;
+  selectedGenres: string[];
+  selectedSubGenres: string[];
+  selectedMoods: string[];
+  mp3Url: string;
+  trackoutsUrl: string;
+  hasVocals: boolean;
+  vocalsUsageType: 'normal' | 'sync_only';
+}
+
 export function TrackUploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
+  
+  const loadSavedFormData = (): FormData | null => {
+    const saved = localStorage.getItem(FORM_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  };
+
+  const savedData = loadSavedFormData();
+
+  const [title, setTitle] = useState(savedData?.title || '');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [bpm, setBpm] = useState('');
-  const [key, setKey] = useState('');
-  const [hasStingEnding, setHasStingEnding] = useState(false);
-  const [isOneStop, setIsOneStop] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedSubGenres, setSelectedSubGenres] = useState<string[]>([]);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-  const [mp3Url, setMp3Url] = useState('');
-  const [trackoutsUrl, setTrackoutsUrl] = useState('');
-  const [hasVocals, setHasVocals] = useState(false);
-  const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>('normal');
+  const [bpm, setBpm] = useState(savedData?.bpm || '');
+  const [key, setKey] = useState(savedData?.key || '');
+  const [hasStingEnding, setHasStingEnding] = useState(savedData?.hasStingEnding || false);
+  const [isOneStop, setIsOneStop] = useState(savedData?.isOneStop || false);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(savedData?.selectedGenres || []);
+  const [selectedSubGenres, setSelectedSubGenres] = useState<string[]>(savedData?.selectedSubGenres || []);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>(savedData?.selectedMoods || []);
+  const [mp3Url, setMp3Url] = useState(savedData?.mp3Url || '');
+  const [trackoutsUrl, setTrackoutsUrl] = useState(savedData?.trackoutsUrl || '');
+  const [hasVocals, setHasVocals] = useState(savedData?.hasVocals || false);
+  const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(savedData?.vocalsUsageType || 'normal');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const formData: FormData = {
+      title,
+      bpm,
+      key,
+      hasStingEnding,
+      isOneStop,
+      selectedGenres,
+      selectedSubGenres,
+      selectedMoods,
+      mp3Url,
+      trackoutsUrl,
+      hasVocals,
+      vocalsUsageType
+    };
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+  }, [
+    title,
+    bpm,
+    key,
+    hasStingEnding,
+    isOneStop,
+    selectedGenres,
+    selectedSubGenres,
+    selectedMoods,
+    mp3Url,
+    trackoutsUrl,
+    hasVocals,
+    vocalsUsageType
+  ]);
+
+  const clearSavedFormData = () => {
+    localStorage.removeItem(FORM_STORAGE_KEY);
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -115,6 +175,7 @@ export function TrackUploadForm() {
 
       if (trackError) throw trackError;
 
+      clearSavedFormData();
       navigate('/producer/dashboard');
     } catch (err) {
       console.error('Submission error:', err);
