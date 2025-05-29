@@ -20,6 +20,22 @@ interface DashboardStats {
   daysUntilReset: number | null;
 }
 
+interface License {
+  id: string;
+  track: {
+    id: string;
+    title: string;
+    genres: string[];
+    bpm: number;
+    audio_url: string;
+    image_url: string;
+  };
+  license_type: string;
+  created_at: string;
+  expiry_date: string;
+  deleted_at: string | null;
+}
+
 export function ClientDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +61,7 @@ export function ClientDashboard() {
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<any | null>(null);
   const [removingFavorite, setRemovingFavorite] = useState<string | null>(null);
   const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
+  const [deletedLicenses, setDeletedLicenses] = useState<License[]>([]);
 
   const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
     const date = new Date(purchaseDate);
@@ -103,7 +120,7 @@ export function ClientDashboard() {
         }));
       }
 
-      // Fetch licenses
+      // Fetch both active and deleted licenses
       const { data: licensesData } = await supabase
         .from('sales')
         .select(`
@@ -111,6 +128,7 @@ export function ClientDashboard() {
           license_type,
           created_at,
           expiry_date,
+          deleted_at,
           track:tracks (
             id,
             title,
@@ -120,11 +138,15 @@ export function ClientDashboard() {
             image_url
           )
         `)
-        .eq('buyer_id', user?.id)
-        .is('deleted_at', null);
+        .eq('buyer_id', user?.id);
 
       if (licensesData) {
-        setLicenses(licensesData);
+        // Split licenses into active and deleted
+        const active = licensesData.filter(l => !l.deleted_at);
+        const deleted = licensesData.filter(l => l.deleted_at);
+        
+        setLicenses(active);
+        setDeletedLicenses(deleted);
       }
 
       // Fetch favorites
@@ -205,29 +227,26 @@ export function ClientDashboard() {
   };
 
   const handleLicenseTrack = (track: Track) => {
-  // Check if membershipType is missing or user has no licenses on a subscription plan
-  if (!userStats.membershipType) {
-    navigate('/pricing');
-    return;
-  }
+    if (!userStats.membershipType) {
+      navigate('/pricing');
+      return;
+    }
 
-  if (userStats.membershipType === 'Single Track') {
-    // Still allow them to license the track (e.g. for pay-per-license model)
+    if (userStats.membershipType === 'Single Track') {
+      setSelectedTrackToLicense(track);
+      return;
+    }
+
+    if (
+      userStats.membershipType === 'Gold Access' &&
+      userStats.remainingLicenses <= 0
+    ) {
+      navigate('/upgrade');
+      return;
+    }
+
     setSelectedTrackToLicense(track);
-    return;
-  }
-
-  if (
-    userStats.membershipType === 'Gold Access' &&
-    userStats.remainingLicenses <= 0
-  ) {
-    navigate('/upgrade');
-    return;
-  }
-
-  // All good — open licensing dialog
-  setSelectedTrackToLicense(track);
-};
+  };
 
   const handleDeleteLicense = async () => {
     if (!selectedLicenseToDelete) return;
@@ -243,6 +262,43 @@ export function ClientDashboard() {
 
     setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
     setSelectedLicenseToDelete(null);
+  };
+
+  const handleRenewLicense = async (license: License) => {
+    try {
+      const expiryDate = new Date(license.expiry_date);
+      if (expiryDate <= new Date()) {
+        const { data: trackData } = await supabase
+          .from('tracks')
+          .select('*')
+          .eq('id', license.track.id)
+          .single();
+
+        if (trackData) {
+          setSelectedTrackToLicense({
+            id: trackData.id,
+            title: trackData.title,
+            genres: trackData.genres.split(','),
+            audioUrl: trackData.audio_url,
+            image: trackData.image_url,
+          });
+        }
+        return;
+      }
+
+      const { error } = await supabase
+        .from('sales')
+        .update({ deleted_at: null })
+        .eq('id', license.id);
+
+      if (error) throw error;
+
+      setDeletedLicenses(prev => prev.filter(l => l.id !== license.id));
+      setLicenses(prev => [...prev, license]);
+    } catch (err) {
+      console.error('Error renewing license:', err);
+      setError('Failed to renew license');
+    }
   };
 
   if (loading) {
@@ -288,7 +344,6 @@ export function ClientDashboard() {
           </div>
         )}
 
-        {/* License Usage Section */}
         <div className="mb-8 p-6 glass-card rounded-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -335,7 +390,6 @@ export function ClientDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {/* Sync Requests Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Your Sync Requests</h2>
@@ -375,7 +429,6 @@ export function ClientDashboard() {
               </div>
             </div>
 
-            {/* Licensed Tracks Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
               <div className="space-y-4">
@@ -426,7 +479,6 @@ export function ClientDashboard() {
           </div>
 
           <div className="space-y-8">
-            {/* Favorites Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center">
                 <Star className="w-5 h-5 mr-2 text-yellow-400" />
@@ -483,7 +535,6 @@ export function ClientDashboard() {
               </div>
             </div>
 
-            {/* New Releases Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center">
                 <Music className="w-5 h-5 mr-2 text-purple-500" />
@@ -526,6 +577,48 @@ export function ClientDashboard() {
             </div>
           </div>
         </div>
+
+        {deletedLicenses.length > 0 && (
+          <div className="mt-8 bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-red-500/20">
+            <h2 className="text-xl font-bold text-white mb-6">Deleted Licenses</h2>
+            <div className="space-y-4">
+              {deletedLicenses.map((license) => {
+                const expiryDate = license.expiry_date || calculateExpiryDate(license.created_at, license.license_type);
+                const isExpired = new Date(expiryDate) <= new Date();
+                
+                return (
+                  <div
+                    key={license.id}
+                    className="bg-white/5 rounded-lg p-4 border border-red-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
+                          <p>Expires on {new Date(expiryDate).toLocaleDateString()}</p>
+                          <p>Deleted on {new Date(license.deleted_at!).toLocaleDateString()}</p>
+                          {isExpired && (
+                            <p className="text-red-400">License expired</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                        <button
+                          onClick={() => handleRenewLicense(license)}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                        >
+                          {isExpired ? 'Purchase New License' : 'Restore License'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedRequest && showEditDialog && (
