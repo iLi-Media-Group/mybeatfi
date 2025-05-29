@@ -76,13 +76,18 @@ export function ClientDashboard() {
 
         // Calculate dashboard stats
         const totalTracks = tracksData?.length || 0;
-        const allGenres = new Set(tracksData?.flatMap(track => track.genres) || []);
+        const allGenres = new Set(tracksData?.flatMap(track => track.genres ? track.genres.split(',') : []) || []);
         const avgBpm = tracksData?.reduce((sum, track) => sum + track.bpm, 0) / totalTracks || 0;
 
         // Get latest tracks
         const { data: newTracksData, error: newTracksError } = await supabase
           .from('tracks')
-          .select('*')
+          .select(`
+            *,
+            producer:producer_id(
+              full_name
+            )
+          `)
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -93,11 +98,27 @@ export function ClientDashboard() {
           .from('favorites')
           .select(`
             track_id,
-            tracks (*)
+            tracks (
+              *,
+              producer:producer_id(
+                full_name
+              )
+            )
           `)
           .eq('user_id', user.id);
 
         if (favoritesError) throw favoritesError;
+
+        // Process tracks to ensure correct data structure
+        const processTrack = (track: any): Track => ({
+          ...track,
+          genres: track.genres ? track.genres.split(',') : [],
+          subGenres: track.sub_genres ? track.sub_genres.split(',') : [],
+          moods: track.moods ? track.moods.split(',') : [],
+          artist: track.producer?.full_name || 'Unknown Artist',
+          image: track.image_url || 'https://via.placeholder.com/150',
+          audioUrl: track.audio_url || track.mp3_url
+        });
 
         // Update state with fetched data
         setUserStats({
@@ -113,8 +134,8 @@ export function ClientDashboard() {
           avgBpm: Math.round(avgBpm),
         });
 
-        setNewTracks(newTracksData || []);
-        setFavoriteTracks(favoritesData?.map(fav => fav.tracks) || []);
+        setNewTracks(newTracksData ? newTracksData.map(processTrack) : []);
+        setFavoriteTracks(favoritesData ? favoritesData.map(fav => processTrack(fav.tracks)) : []);
 
       } catch (err) {
         setError('Failed to load dashboard data');
