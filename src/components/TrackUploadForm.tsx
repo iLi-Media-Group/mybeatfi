@@ -49,13 +49,11 @@ export function TrackUploadForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please upload an image file');
       return;
     }
 
-    // Validate file size (2MB limit)
     if (file.size > 2 * 1024 * 1024) {
       setError('Image size must be less than 2MB');
       return;
@@ -74,26 +72,22 @@ export function TrackUploadForm() {
       setIsSubmitting(true);
       setError('');
 
-      // Validate BPM
       const bpmNumber = parseInt(bpm);
       if (isNaN(bpmNumber) || bpmNumber < 1 || bpmNumber > 999) {
         throw new Error('Please provide a valid BPM value between 1 and 999');
       }
 
-      // Upload audio file
       const audioUrl = await uploadFile(audioFile, 'track-audio', (progress) => {
         setUploadProgress(progress);
       });
 
       setUploadedUrl(audioUrl);
 
-      // Upload image file if provided
       let imageUrl = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop';
       if (imageFile) {
         imageUrl = await uploadFile(imageFile, 'track-images');
       }
 
-      // Create track record in database
       const { data: track, error: trackError } = await supabase
         .from('tracks')
         .insert({
@@ -131,20 +125,19 @@ export function TrackUploadForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white/5 backdrop-blur-sm p-8 rounded-xl border border-blue-500/20">
-          <h2 className="text-2xl font-bold text-white mb-8 sticky top-0 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 py-4 z-10">
-            Add New Track
-          </h2>
-          
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="sticky top-0 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 pt-8 pb-4 z-20">
+          <h2 className="text-2xl font-bold text-white">Add New Track</h2>
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
               {error}
             </div>
           )}
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 mt-4 mb-24">
+          <form id="track-upload-form" onSubmit={handleSubmit} className="p-8 space-y-8">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
                 Track Title
@@ -467,29 +460,32 @@ export function TrackUploadForm() {
                 ))}
               </div>
             </div>
-
-            <div className="sticky bottom-0 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 py-4 z-10">
-              <button
-                type="submit"
-                className="btn-primary w-full flex items-center justify-center space-x-2"
-                disabled={isSubmitting || !audioFile}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>
-                      {uploadProgress > 0 ? `Uploading... ${uploadProgress.toFixed(0)}%` : 'Saving...'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5" />
-                    <span>Save Track</span>
-                  </>
-                )}
-              </button>
-            </div>
           </form>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent py-6 z-20">
+          <div className="max-w-4xl mx-auto px-4">
+            <button
+              type="submit"
+              form="track-upload-form"
+              className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+              disabled={isSubmitting || !audioFile}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>
+                    {uploadProgress > 0 ? `Uploading... ${uploadProgress.toFixed(0)}%` : 'Saving...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" />
+                  <span>Save Track</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
