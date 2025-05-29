@@ -141,6 +141,15 @@ export function TrackUploadForm() {
         throw new Error('Please select at least one genre');
       }
 
+      // Convert genres to lowercase and ensure they start with a letter
+      const formattedGenres = selectedGenres.map(genre => 
+        genre.toLowerCase().trim()
+      ).filter(genre => /^[a-z][a-z0-9\s,]*$/.test(genre));
+
+      if (formattedGenres.length === 0) {
+        throw new Error('At least one valid genre is required');
+      }
+
       const audioUrl = await uploadFile(audioFile, 'track-audio', (progress) => {
         setUploadProgress(progress);
       });
@@ -158,7 +167,7 @@ export function TrackUploadForm() {
           producer_id: user.id,
           title,
           artist: user.email?.split('@')[0] || 'Unknown Artist',
-          genres: selectedGenres,
+          genres: formattedGenres,
           sub_genres: selectedSubGenres,
           moods: selectedMoods,
           bpm: bpmNumber,

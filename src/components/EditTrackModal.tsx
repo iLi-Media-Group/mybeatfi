@@ -32,8 +32,14 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       setLoading(true);
       setError(null);
 
-      // Convert genres to lowercase to match database constraint
-      const formattedGenres = selectedGenres.map(genre => genre.toLowerCase());
+      // Convert genres to lowercase and ensure they start with a letter
+      const formattedGenres = selectedGenres.map(genre => 
+        genre.toLowerCase().trim()
+      ).filter(genre => /^[a-z][a-z0-9\s,]*$/.test(genre));
+
+      if (formattedGenres.length === 0) {
+        throw new Error('At least one valid genre is required');
+      }
 
       const { error: updateError } = await supabase
         .from('tracks')
