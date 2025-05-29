@@ -11,3 +11,15 @@ export function calculateTimeRemaining(expiryDate: string): string {
 
   return `${days}d ${hours}h ${minutes}m`;
 }
+
+export function formatDuration(duration: string): string {
+  // If duration is in PostgreSQL interval format (e.g. "00:03:30"), return formatted string
+  if (duration.includes(':')) {
+    const [hours, minutes, seconds] = duration.split(':').map(Number);
+    if (minutes === 0 && seconds === 0) return `${hours}:00`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+  
+  // If duration is already formatted, return as is
+  return duration;
+}
