@@ -119,7 +119,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
       setLoading(true);
       setError('');
 
-      // Create license record
+      // Create license record with explicit payment_method value
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
@@ -127,7 +127,7 @@ export function LicenseDialog({ isOpen, onClose, track, membershipType, remainin
           buyer_id: user.id,
           license_type: membershipType,
           amount: 0, // Free with membership
-          payment_method: 'membership',
+          payment_method: 'membership_included', // Explicit value for payment_method
           expiry_date: expirationDate.toISOString(),
           created_at: new Date().toISOString()
         })
