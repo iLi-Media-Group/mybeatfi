@@ -9,6 +9,7 @@ import { calculateTimeRemaining } from '../utils/dateUtils';
 import { EditRequestDialog } from './EditRequestDialog';
 import { ClientProfile } from './ClientProfile';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
+import { LicenseDialog } from './LicenseDialog';
 
 interface DashboardStats {
   totalLicenses: number;
@@ -43,6 +44,7 @@ export function ClientDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<any | null>(null);
   const [removingFavorite, setRemovingFavorite] = useState<string | null>(null);
+  const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
 
   const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
     const date = new Date(purchaseDate);
@@ -202,7 +204,7 @@ export function ClientDashboard() {
     }
   };
 
-  const handleLicenseTrack = (trackId: string) => {
+  const handleLicenseTrack = (track: Track) => {
     if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
       navigate('/pricing');
       return;
@@ -213,7 +215,7 @@ export function ClientDashboard() {
       return;
     }
 
-    navigate(`/license/${trackId}`);
+    setSelectedTrackToLicense(track);
   };
 
   const handleDeleteLicense = async () => {
@@ -444,7 +446,7 @@ export function ClientDashboard() {
                         </div>
                         <AudioPlayer url={track.audioUrl} title={track.title} />
                         <button
-                          onClick={() => handleLicenseTrack(track.id)}
+                          onClick={() => handleLicenseTrack(track)}
                           className="mt-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
@@ -492,7 +494,7 @@ export function ClientDashboard() {
                         <h3 className="text-white font-medium truncate mb-2">{track.title}</h3>
                         <AudioPlayer url={track.audioUrl} title={track.title} />
                         <button
-                          onClick={() => handleLicenseTrack(track.id)}
+                          onClick={() => handleLicenseTrack(track)}
                           className="mt-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
@@ -533,6 +535,16 @@ export function ClientDashboard() {
           onClose={() => setSelectedLicenseToDelete(null)}
           license={selectedLicenseToDelete}
           onConfirm={handleDeleteLicense}
+        />
+      )}
+
+      {selectedTrackToLicense && (
+        <LicenseDialog
+          isOpen={true}
+          onClose={() => setSelectedTrackToLicense(null)}
+          track={selectedTrackToLicense}
+          membershipType={userStats.membershipType || 'Single Track'}
+          remainingLicenses={userStats.remainingLicenses}
         />
       )}
 
