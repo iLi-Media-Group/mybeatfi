@@ -75,3 +75,5 @@ export default function ClientDashboard({ loading, error, profile, userStats }) 
     </div>
   );
 }
+
+export { ClientDashboard }
