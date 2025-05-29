@@ -94,14 +94,11 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-10"
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <Star
-               ${isFavorite ? (
-                 <Star 'text-yellow-400 fill-current' : 'text-white'
-               />
-    ) : (  
-              <Star className={`w-4 h-4 transition-colors' />
-              )}
-            
+            <Star 
+              className={`w-4 h-4 transition-colors ${
+                isFavorite ? 'text-yellow-400 fill-current' : 'text-white'
+              }`}
+            />
           </button>
         )}
 
