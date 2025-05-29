@@ -16,7 +16,6 @@ interface LicenseDetails {
   };
   licenseType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
   purchaseDate: string;
-  expiryDate: string;
   price: number;
 }
 
@@ -43,7 +42,6 @@ export function LicenseAgreement() {
             license_type,
             amount,
             created_at,
-            expiry_date,
             track:tracks (
               title,
               producer:profiles (
@@ -73,7 +71,6 @@ export function LicenseAgreement() {
             },
             licenseType: data.license_type,
             purchaseDate: data.created_at,
-            expiryDate: data.expiry_date,
             price: data.amount
           });
         }
@@ -211,10 +208,37 @@ export function LicenseAgreement() {
           </p>
 
           <h2 className="text-xl font-bold text-white mt-8">2. TERM OF LICENSE</h2>
-          <p className="text-gray-300">
-            The license commenced on {new Date(license.purchaseDate).toLocaleDateString()} and will
-            expire on {new Date(license.expiryDate).toLocaleDateString()}.
-          </p>
+          {(() => {
+            const purchaseDate = new Date(license.purchaseDate);
+            let expiryDateText = '';
+
+            switch (license.licenseType) {
+              case 'Single Track':
+              case 'Gold Access': {
+                const expiry = new Date(purchaseDate);
+                expiry.setFullYear(purchaseDate.getFullYear() + 1);
+                expiryDateText = expiry.toLocaleDateString();
+                break;
+              }
+              case 'Platinum Access': {
+                const expiry = new Date(purchaseDate);
+                expiry.setFullYear(purchaseDate.getFullYear() + 3);
+                expiryDateText = expiry.toLocaleDateString();
+                break;
+              }
+              case 'Ultimate Access':
+                expiryDateText = 'Perpetual (No Expiration)';
+                break;
+              default:
+                expiryDateText = 'Unknown';
+            }
+
+            return (
+              <p className="text-gray-300">
+                The license commenced on {purchaseDate.toLocaleDateString()} and will expire on {expiryDateText}.
+              </p>
+            );
+          })()}
 
           <h2 className="text-xl font-bold text-white mt-8">3. PERMITTED USES</h2>
           <ul className="list-disc pl-6 text-gray-300">
