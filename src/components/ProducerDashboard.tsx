@@ -21,6 +21,9 @@ export function ProducerDashboard() {
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
   const [deleteTrackId, setDeleteTrackId] = useState<string | null>(null);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<any | null>(null);
+  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<any | null>(null);
   const [salesStats, setSalesStats] = useState({
     totalSales: 0,
     totalRevenue: 0,
