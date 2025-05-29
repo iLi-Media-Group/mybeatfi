@@ -772,7 +772,16 @@ export function ClientDashboard() {
                         className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
+                          <button
+                            onClick={() => setSelectedLicenseToDelete(license)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                            title="Delete License"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                         <div className="text-sm text-gray-400 space-y-1">
                           <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
                           <div className="flex items-center space-x-4">
@@ -792,25 +801,6 @@ export function ClientDashboard() {
                         </div>
                       </div>
                       <AudioPlayer url={license.track.audio_url} title={license.track.title} />
-                    </div>
-
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="text-sm">
-                        {expiryStatus === 'expired' ? (
-                          <span className="text-red-400">License expired</span>
-                        ) : (
-                          <span className="text-gray-400">
-                            {calculateTimeRemaining(license.expiry_date)} remaining
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => setSelectedLicenseToDelete(license)}
-                        className="px-3 py-1.5 text-sm bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded-lg transition-colors flex items-center"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1.5" />
-                        Delete License
-                      </button>
                     </div>
 
                     {expiryStatus === 'expired' && (
