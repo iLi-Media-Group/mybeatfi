@@ -55,37 +55,37 @@ export interface SyncProposal {
 }
 
 export const GENRES = [
-  'Hiphop',
-  'R&B',
-  'Pop',
-  'Rock',
-  'Electronic',
-  'Jazz',
-  'Classical',
-  'World',
-  'Religious',
-  "Children's Music",
+  'hiphop',
+  'rnb',
+  'pop',
+  'rock',
+  'electronic',
+  'jazz',
+  'classical',
+  'world',
+  'religious',
+  'childrens music'
 ] as const;
 
 export const SUB_GENRES = {
-  'Hiphop': ['Trap', 'Boom Bap', 'Lo-Fi', 'Drill', 'West Coast', 'East Coast'],
-  'R&B': ['Soul', 'Neo Soul', 'Contemporary', 'Gospel'],
-  'Pop': ['Indie Pop', 'Synth Pop', 'K-Pop', 'Dance Pop'],
-  'Rock': ['Alternative', 'Indie Rock', 'Metal', 'Punk'],
-  'Electronic': ['House', 'Techno', 'Ambient', 'Drum & Bass', 'Dubstep'],
-  'Jazz': ['Smooth Jazz', 'Bebop', 'Fusion', 'Contemporary'],
-  'Classical': ['Orchestral', 'Chamber', 'Contemporary', 'Minimalist'],
-  'World': ['Latin', 'African', 'Asian', 'Middle Eastern'],
-  'Religious': ['Gospel', 'Contemporary Christian', 'Worship', 'Sacred', 'Spiritual'],
-  "Children's Music": [
-    'Playful',
-    'Whimsical',
-    'Educational',
-    'Nursery Rhyme',
-    'Lullaby',
-    'Adventure/Fantasy',
-    'Silly & Goofy',
-    'Interactive'
+  'hiphop': ['trap', 'boom bap', 'lo fi', 'drill', 'west coast', 'east coast'],
+  'rnb': ['soul', 'neo soul', 'contemporary', 'gospel'],
+  'pop': ['indie pop', 'synth pop', 'k pop', 'dance pop'],
+  'rock': ['alternative', 'indie rock', 'metal', 'punk'],
+  'electronic': ['house', 'techno', 'ambient', 'drum and bass', 'dubstep'],
+  'jazz': ['smooth jazz', 'bebop', 'fusion', 'contemporary'],
+  'classical': ['orchestral', 'chamber', 'contemporary', 'minimalist'],
+  'world': ['latin', 'african', 'asian', 'middle eastern'],
+  'religious': ['gospel', 'contemporary christian', 'worship', 'sacred', 'spiritual'],
+  'childrens music': [
+    'playful',
+    'whimsical',
+    'educational',
+    'nursery rhyme',
+    'lullaby',
+    'adventure fantasy',
+    'silly and goofy',
+    'interactive'
   ],
 } as const;
 
@@ -118,53 +118,53 @@ export const MUSICAL_KEYS = [
 
 export const MOODS_CATEGORIES = {
   'Happy & Upbeat': [
-    'Joyful', 'Energetic', 'Cheerful', 'Playful', 'Optimistic', 'Excited', 
-    'Celebratory', 'Triumphant', 'Uplifting', 'Bouncy', 'Bright', 'Carefree', 
-    'Euphoric', 'Lively'
+    'joyful', 'energetic', 'cheerful', 'playful', 'optimistic', 'excited', 
+    'celebratory', 'triumphant', 'uplifting', 'bouncy', 'bright', 'carefree', 
+    'euphoric', 'lively'
   ],
   'Sad & Melancholic': [
-    'Heartbroken', 'Melancholy', 'Nostalgic', 'Somber', 'Depressed', 'Reflective',
-    'Gloomy', 'Bitter', 'Yearning', 'Mournful', 'Haunting', 'Regretful', 'Lonely',
-    'Poignant'
+    'heartbroken', 'melancholy', 'nostalgic', 'somber', 'depressed', 'reflective',
+    'gloomy', 'bitter', 'yearning', 'mournful', 'haunting', 'regretful', 'lonely',
+    'poignant'
   ],
   'Calm & Relaxing': [
-    'Peaceful', 'Serene', 'Soothing', 'Meditative', 'Dreamy', 'Gentle', 'Tranquil',
-    'Ethereal', 'Laid-back', 'Floating', 'Mellow', 'Soft', 'Cozy', 'Chill'
+    'peaceful', 'serene', 'soothing', 'meditative', 'dreamy', 'gentle', 'tranquil',
+    'ethereal', 'laid back', 'floating', 'mellow', 'soft', 'cozy', 'chill'
   ],
   'Dark & Mysterious': [
-    'Ominous', 'Creepy', 'Foreboding', 'Brooding', 'Tense', 'Haunting', 'Moody',
-    'Sinister', 'Suspenseful', 'Menacing', 'Eerie', 'Shadowy'
+    'ominous', 'creepy', 'foreboding', 'brooding', 'tense', 'haunting', 'moody',
+    'sinister', 'suspenseful', 'menacing', 'eerie', 'shadowy'
   ],
   'Romantic & Intimate': [
-    'Loving', 'Passionate', 'Sensual', 'Tender', 'Intimate', 'Lustful', 'Heartfelt',
-    'Longing', 'Sweet', 'Sentimental', 'Gentle', 'Warm'
+    'loving', 'passionate', 'sensual', 'tender', 'intimate', 'lustful', 'heartfelt',
+    'longing', 'sweet', 'sentimental', 'gentle', 'warm'
   ],
   'Aggressive & Intense': [
-    'Angry', 'Furious', 'Chaotic', 'Explosive', 'Fierce', 'Powerful', 'Rebellious',
-    'Savage', 'Heavy', 'Relentless', 'Unstoppable', 'Wild'
+    'angry', 'furious', 'chaotic', 'explosive', 'fierce', 'powerful', 'rebellious',
+    'savage', 'heavy', 'relentless', 'unstoppable', 'wild'
   ],
   'Epic & Heroic': [
-    'Majestic', 'Triumphant', 'Victorious', 'Grand', 'Inspirational', 'Dramatic',
-    'Cinematic', 'Monumental', 'Glorious', 'Adventurous', 'Powerful'
+    'majestic', 'triumphant', 'victorious', 'grand', 'inspirational', 'dramatic',
+    'cinematic', 'monumental', 'glorious', 'adventurous', 'powerful'
   ],
   'Quirky & Fun': [
-    'Wacky', 'Silly', 'Funky', 'Playful', 'Bizarre', 'Eccentric', 'Whimsical',
-    'Goofy', 'Zany', 'Cheerful'
+    'wacky', 'silly', 'funky', 'playful', 'bizarre', 'eccentric', 'whimsical',
+    'goofy', 'zany', 'cheerful'
   ],
   'Inspirational & Hopeful': [
-    'Motivational', 'Encouraging', 'Uplifting', 'Aspirational', 'Bright',
-    'Confident', 'Positive', 'Driving', 'Determined'
+    'motivational', 'encouraging', 'uplifting', 'aspirational', 'bright',
+    'confident', 'positive', 'driving', 'determined'
   ],
   'Mysterious & Suspenseful': [
-    'Enigmatic', 'Secretive', 'Cryptic', 'Suspenseful', 'Intriguing',
-    'Tense', 'Unresolved'
+    'enigmatic', 'secretive', 'cryptic', 'suspenseful', 'intriguing',
+    'tense', 'unresolved'
   ],
   'Groovy & Funky': [
-    'Smooth', 'Cool', 'Retro', 'Stylish', 'Sassy', 'Funky', 'Catchy', 'Hypnotic'
+    'smooth', 'cool', 'retro', 'stylish', 'sassy', 'funky', 'catchy', 'hypnotic'
   ],
   'Otherworldly & Fantasy': [
-    'Mystical', 'Ethereal', 'Enchanted', 'Magical', 'Cosmic', 'Dreamlike',
-    'Celestial', 'Floating'
+    'mystical', 'ethereal', 'enchanted', 'magical', 'cosmic', 'dreamlike',
+    'celestial', 'floating'
   ]
 } as const;
 
