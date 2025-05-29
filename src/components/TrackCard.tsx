@@ -25,13 +25,14 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
   const checkFavoriteStatus = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('favorites')
         .select('id')
         .eq('user_id', user?.id)
         .eq('track_id', track.id)
         .maybeSingle();
 
+      if (error) throw error;
       setIsFavorite(!!data);
     } catch (error) {
       console.error('Error checking favorite status:', error);
@@ -39,14 +40,15 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   };
 
   const toggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (!user) return;
+    
+    if (!user || loading) return;
 
     try {
       setLoading(true);
 
       if (isFavorite) {
-        // Remove from favorites
         const { error } = await supabase
           .from('favorites')
           .delete()
@@ -56,7 +58,6 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
         if (error) throw error;
         setIsFavorite(false);
       } else {
-        // Add to favorites
         const { error } = await supabase
           .from('favorites')
           .insert({
