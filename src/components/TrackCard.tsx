@@ -15,7 +15,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync_only';
+  const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync';
 
   useEffect(() => {
     if (user && track?.id) {
