@@ -32,11 +32,14 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       setLoading(true);
       setError(null);
 
+      // Convert genres to lowercase to match database constraint
+      const formattedGenres = selectedGenres.map(genre => genre.toLowerCase());
+
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
-          genres: selectedGenres, // Pass arrays directly
-          moods: selectedMoods, // Pass arrays directly
+          genres: formattedGenres,
+          moods: selectedMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
