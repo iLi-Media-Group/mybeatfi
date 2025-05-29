@@ -12,7 +12,6 @@ interface LicensePDFProps {
     };
     licenseType: string;
     purchaseDate: string;
-    expiryDate: string;
     price: number;
   };
   showCredits: boolean;
