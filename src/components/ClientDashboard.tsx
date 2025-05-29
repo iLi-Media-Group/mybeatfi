@@ -36,6 +36,7 @@ export function ClientDashboard() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
   const [favorites, setFavorites] = useState<Track[]>([]);
+  const [newTracks, setNewTracks] = useState<Track[]>([]);
   const [syncRequests, setSyncRequests] = useState<any[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
@@ -122,7 +123,24 @@ export function ClientDashboard() {
           title: f.tracks.title,
           genres: f.tracks.genres.split(','),
           audioUrl: f.tracks.audio_url,
-          image: f.tracks.image_url
+          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+        })));
+      }
+
+      // Fetch new tracks
+      const { data: newTracksData } = await supabase
+        .from('tracks')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      if (newTracksData) {
+        setNewTracks(newTracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          genres: track.genres.split(','),
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
         })));
       }
 
@@ -355,8 +373,8 @@ export function ClientDashboard() {
             </div>
           </div>
 
-          {/* Favorites Section */}
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Favorites Section */}
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center">
                 <Star className="w-5 h-5 mr-2 text-yellow-400" />
@@ -366,38 +384,31 @@ export function ClientDashboard() {
                 {favorites.map((track) => (
                   <div
                     key={track.id}
-                    className="bg-white/5 rounded-lg overflow-hidden border border-purple-500/20"
+                    className="flex items-center space-x-4 bg-white/5 rounded-lg p-4 border border-purple-500/20"
                   >
-                    <div className="aspect-square relative">
-                      <img
-                        src={track.image}
-                        alt={track.title}
-                        className="w-full h-full object-cover"
-                      />
+                    <img
+                      src={track.image}
+                      alt={track.title}
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-medium truncate">{track.title}</h3>
+                      <AudioPlayer url={track.audioUrl} title={track.title} />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleLicenseTrack(track.id)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+                      >
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        License
+                      </button>
                       <button
                         onClick={() => handleRemoveFavorite(track.id)}
                         disabled={removingFavorite === track.id}
-                        className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full hover:bg-black/70 text-white transition-colors"
-                        aria-label="Remove from favorites"
+                        className="p-2 text-gray-400 hover:text-red-400 transition-colors"
                       >
                         <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold text-white mb-2">{track.title}</h3>
-                      <div className="text-sm text-gray-400 mb-3">
-                        {track.genres.join(', ')}
-                      </div>
-                      
-                      <AudioPlayer url={track.audioUrl} title={track.title} />
-                      
-                      <button
-                        onClick={() => handleLicenseTrack(track.id)}
-                        className="mt-4 w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        License Track
                       </button>
                     </div>
                   </div>
@@ -413,6 +424,46 @@ export function ClientDashboard() {
                     >
                       Browse the catalog
                     </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* New Releases Section */}
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                <Music className="w-5 h-5 mr-2 text-purple-500" />
+                New Releases
+              </h2>
+              <div className="space-y-4">
+                {newTracks.map((track) => (
+                  <div
+                    key={track.id}
+                    className="flex items-center space-x-4 bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <img
+                      src={track.image}
+                      alt={track.title}
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-medium truncate">{track.title}</h3>
+                      <AudioPlayer url={track.audioUrl} title={track.title} />
+                    </div>
+                    <button
+                      onClick={() => handleLicenseTrack(track.id)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+                    >
+                      <DollarSign className="w-4 h-4 mr-1" />
+                      License
+                    </button>
+                  </div>
+                ))}
+
+                {newTracks.length === 0 && (
+                  <div className="text-center py-8">
+                    <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400">No new tracks available</p>
                   </div>
                 )}
               </div>
