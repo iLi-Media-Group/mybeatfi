@@ -461,38 +461,43 @@ export function TrackUploadForm() {
             </div>
           </div>
 
-          {selectedGenres.map((genre) => (
-            <div key={genre}>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {genre} Sub-Genres
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {SUB_GENRES[genre as keyof typeof SUB_GENRES].map((subGenre) => (
-                  <label
-                    key={subGenre}
-                    className="flex items-center space-x-2 text-gray-300"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedSubGenres.includes(subGenre)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedSubGenres([...selectedSubGenres, subGenre]);
-                        } else {
-                          setSelectedSubGenres(
-                            selectedSubGenres.filter((sg) => sg !== subGenre)
-                          );
-                        }
-                      }}
-                      className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                      disabled={isSubmitting}
-                    />
-                    <span>{subGenre}</span>
-                  </label>
-                ))}
+          {selectedGenres.map((genre) => {
+            // Add safety check for SUB_GENRES[genre]
+            const subGenres = SUB_GENRES[genre as keyof typeof SUB_GENRES] || [];
+            
+            return subGenres.length > 0 ? (
+              <div key={genre}>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {genre} Sub-Genres
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {subGenres.map((subGenre) => (
+                    <label
+                      key={subGenre}
+                      className="flex items-center space-x-2 text-gray-300"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSubGenres.includes(subGenre)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSubGenres([...selectedSubGenres, subGenre]);
+                          } else {
+                            setSelectedSubGenres(
+                              selectedSubGenres.filter((sg) => sg !== subGenre)
+                            );
+                          }
+                        }}
+                        className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                        disabled={isSubmitting}
+                      />
+                      <span>{subGenre}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ) : null;
+          })}
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-4">
