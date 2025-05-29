@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Track } from '../types';
 import { LicenseTermsSummary } from './LicenseTermsSummary';
 import { sendLicenseEmail } from '../lib/email';
+import { LicenseConfirmationDialog } from './LicenseConfirmationDialog';
 
 interface LicenseDialogProps {
   isOpen: boolean;
@@ -35,6 +36,8 @@ export function LicenseDialog({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [createdLicenseId, setCreatedLicenseId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -106,7 +109,7 @@ export function LicenseDialog({
       const expiryDate = new Date();
       switch (membershipType) {
         case 'Ultimate Access':
-          expiryDate.setFullYear(expiryDate.getFullYear() + 100); // Effectively perpetual
+          expiryDate.setFullYear(expiryDate.getFullYear() + 100);
           break;
         case 'Platinum Access':
           expiryDate.setFullYear(expiryDate.getFullYear() + 3);
@@ -122,7 +125,7 @@ export function LicenseDialog({
           track_id: track.id,
           buyer_id: user.id,
           license_type: membershipType,
-          amount: 0, // Price handled by subscription
+          amount: 0,
           payment_method: 'subscription',
           expiry_date: expiryDate.toISOString(),
           licensee_info: {
@@ -135,19 +138,8 @@ export function LicenseDialog({
 
       if (licenseError) throw licenseError;
 
-      // Email sending temporarily disabled until Edge Function is set up
-      // TODO: Uncomment once email service is configured
-      // await sendLicenseEmail({
-      //   clientName: `${profile.first_name} ${profile.last_name}`,
-      //   clientEmail: profile.email,
-      //   trackName: track.title,
-      //   licenseTier: membershipType,
-      //   licenseDate: new Date().toISOString(),
-      //   expirationDate: expiryDate.toISOString(),
-      //   pdfUrl: `${window.location.origin}/license-agreement/${license.id}`
-      // });
-
-      onClose();
+      setCreatedLicenseId(license.id);
+      setShowConfirmation(true);
     } catch (err) {
       console.error('Error creating license:', err);
       setError('Failed to create license');
@@ -188,148 +180,163 @@ export function LicenseDialog({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">License Track</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-red-400 text-center">{error}</p>
+    <>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white">License Track</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-        )}
 
-        {step === 'terms' && (
-          <LicenseTermsSummary
-            licenseType={membershipType}
-            onAccept={() => {
-              if (!profile?.first_name || !profile?.last_name || !profile?.email) {
-                setStep('profile');
-              } else {
-                setStep('confirm');
-              }
-            }}
-          />
-        )}
-
-        {step === 'profile' && (
-          <form onSubmit={handleProfileSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full"
-                required
-              />
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-center">{error}</p>
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full"
-                required
-              />
-            </div>
+          {step === 'terms' && (
+            <LicenseTermsSummary
+              licenseType={membershipType}
+              onAccept={() => {
+                if (!profile?.first_name || !profile?.last_name || !profile?.email) {
+                  setStep('profile');
+                } else {
+                  setStep('confirm');
+                }
+              }}
+            />
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full"
-                required
-              />
-            </div>
+          {step === 'profile' && (
+            <form onSubmit={handleProfileSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
 
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Continue'}
-              </button>
-            </div>
-          </form>
-        )}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
 
-        {step === 'confirm' && profile && (
-          <div className="space-y-6">
-            <div className="bg-white/5 rounded-lg p-6">
-              <h4 className="text-lg font-semibold text-white mb-4">License Summary</h4>
-              <div className="space-y-3">
-                <p className="text-gray-300">
-                  <span className="font-medium text-white">Track:</span> {track.title}
-                </p>
-                <p className="text-gray-300">
-                  <span className="font-medium text-white">License Type:</span> {membershipType}
-                </p>
-                <p className="text-gray-300">
-                  <span className="font-medium text-white">Licensee:</span>{' '}
-                  {profile.first_name} {profile.last_name}
-                </p>
-                <p className="text-gray-300">
-                  <span className="font-medium text-white">Email:</span> {profile.email}
-                </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Continue'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === 'confirm' && profile && (
+            <div className="space-y-6">
+              <div className="bg-white/5 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-white mb-4">License Summary</h4>
+                <div className="space-y-3">
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Track:</span> {track.title}
+                  </p>
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">License Type:</span> {membershipType}
+                  </p>
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Licensee:</span>{' '}
+                    {profile.first_name} {profile.last_name}
+                  </p>
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Email:</span> {profile.email}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLicense}
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-5 h-5 mr-2" />
+                      Confirm & License
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLicense}
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-5 h-5 mr-2" />
-                    Confirm & License
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {showConfirmation && createdLicenseId && (
+        <LicenseConfirmationDialog
+          isOpen={true}
+          onClose={() => {
+            setShowConfirmation(false);
+            onClose();
+          }}
+          trackTitle={track.title}
+          licenseType={membershipType}
+          licenseId={createdLicenseId}
+        />
+      )}
+    </>
   );
 }
