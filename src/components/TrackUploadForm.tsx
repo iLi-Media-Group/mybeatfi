@@ -141,13 +141,13 @@ export function TrackUploadForm() {
         throw new Error('Please select at least one genre');
       }
 
-      // Convert genres to lowercase and ensure they start with a letter
-      const formattedGenres = selectedGenres.map(genre => 
-        genre.toLowerCase().trim()
-      ).filter(genre => /^[a-z][a-z0-9\s,]*$/.test(genre));
+      // Validate and format genres
+      const formattedGenres = selectedGenres
+        .map(genre => genre.toLowerCase().trim())
+        .filter(genre => GENRES.map(g => g.toLowerCase()).includes(genre));
 
       if (formattedGenres.length === 0) {
-        throw new Error('At least one valid genre is required');
+        throw new Error('At least one valid genre from the provided list is required');
       }
 
       const audioUrl = await uploadFile(audioFile, 'track-audio', (progress) => {
