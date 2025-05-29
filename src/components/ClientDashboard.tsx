@@ -312,6 +312,7 @@ export function ClientDashboard() {
             buyer_id: user.id,
             license_type: 'Single Track',
             amount: 7.99,
+            payment_method: 'test_data',
             created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
             expiry_date: new Date(Date.now() + 65 * 24 * 60 * 60 * 1000).toISOString()
           },
@@ -320,6 +321,7 @@ export function ClientDashboard() {
             buyer_id: user.id,
             license_type: 'Gold Access',
             amount: 24.99,
+            payment_method: 'test_data',
             created_at: new Date(Date.now() - 350 * 24 * 60 * 60 * 1000).toISOString(),
             expiry_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
           }
