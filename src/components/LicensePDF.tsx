@@ -114,17 +114,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. TERM OF LICENSE</Text>
-          <Text style={styles.text}>
-            The license commenced on {new Date(license.purchaseDate).toLocaleDateString()} and will
-            {license.licenseType === 'Ultimate Access' 
-              ? ' remain valid in perpetuity.'
-              : ` expire on ${new Date(license.expiryDate).toLocaleDateString()}.`}
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. PERMITTED USES</Text>
+          <Text style={styles.sectionTitle}>2. PERMITTED USES</Text>
           <View style={styles.list}>
             <Text style={styles.listItem}>• Online content (social media, websites, podcasts)</Text>
             <Text style={styles.listItem}>• Advertisements and promotional videos</Text>
@@ -135,7 +125,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. RESTRICTIONS</Text>
+          <Text style={styles.sectionTitle}>3. RESTRICTIONS</Text>
           <View style={styles.list}>
             <Text style={styles.listItem}>• Resell, sublicense, or distribute the Music as a standalone product</Text>
             <Text style={styles.listItem}>• Use the Music in a manner that is defamatory, obscene, or illegal</Text>
@@ -144,7 +134,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. COMPENSATION</Text>
+          <Text style={styles.sectionTitle}>4. COMPENSATION</Text>
           <Text style={styles.text}>
             Licensee has paid the amount of ${license.price.toFixed(2)} USD for this license.
           </Text>
@@ -152,7 +142,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
 
         {showCredits && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>6. CREDITS</Text>
+            <Text style={styles.sectionTitle}>5. CREDITS</Text>
             <Text style={styles.text}>
               Licensee has opted to provide credit in the following format:
               "Music by {license.producerName}"
