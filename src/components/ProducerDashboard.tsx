@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Music, Upload, X, Calendar, ArrowUpDown, AlertCircle, Edit, Trash2, Plus, UserCog, RefreshCw } from 'lucide-react';
+import { Music, Upload, X, Calendar, ArrowUpDown, AlertCircle, Edit, Trash2, Plus, UserCog, RefreshCw, BarChart3, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -8,6 +8,7 @@ import { AudioPlayer } from './AudioPlayer';
 import { EditTrackModal } from './EditTrackModal';
 import { DeleteTrackDialog } from './DeleteTrackDialog';
 import { ProducerProfile } from './ProducerProfile';
+import { ProposalAnalytics } from './ProposalAnalytics';
 
 export function ProducerDashboard() {
   const { user } = useAuth();
@@ -19,10 +20,19 @@ export function ProducerDashboard() {
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
   const [deleteTrackId, setDeleteTrackId] = useState<string | null>(null);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [salesStats, setSalesStats] = useState({
+    totalSales: 0,
+    totalRevenue: 0,
+    monthlyTrends: [],
+    topTracks: []
+  });
+  const [proposals, setProposals] = useState([]);
 
   useEffect(() => {
     if (!user) return;
     fetchDashboardData();
+    fetchSalesAnalytics();
+    fetchProposals();
   }, [user]);
 
   const fetchDashboardData = async () => {
@@ -69,6 +79,56 @@ export function ProducerDashboard() {
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSalesAnalytics = async () => {
+    try {
+      const { data: analytics, error } = await supabase
+        .from('sales_analytics')
+        .select('*')
+        .eq('producer_id', user?.id)
+        .order('month', { ascending: false });
+
+      if (error) throw error;
+
+      if (analytics && analytics.length > 0) {
+        setSalesStats({
+          totalSales: analytics[0].producer_sales_count || 0,
+          totalRevenue: analytics[0].producer_revenue || 0,
+          monthlyTrends: analytics,
+          topTracks: analytics[0].top_tracks || []
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching sales analytics:', err);
+    }
+  };
+
+  const fetchProposals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sync_proposals')
+        .select(`
+          *,
+          track:tracks!inner(
+            id,
+            title,
+            producer_id
+          ),
+          client:profiles!client_id(
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('tracks.producer_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) setProposals(data);
+    } catch (err) {
+      console.error('Error fetching proposals:', err);
     }
   };
 
@@ -160,7 +220,104 @@ export function ProducerDashboard() {
           </div>
         )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Total Sales</p>
+                <p className="text-3xl font-bold text-white">{salesStats.totalSales}</p>
+              </div>
+              <BarChart3 className="w-12 h-12 text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Total Revenue</p>
+                <p className="text-3xl font-bold text-white">
+                  ${salesStats.totalRevenue.toFixed(2)}
+                </p>
+              </div>
+              <DollarSign className="w-12 h-12 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Active Tracks</p>
+                <p className="text-3xl font-bold text-white">{tracks.length}</p>
+              </div>
+              <Music className="w-12 h-12 text-purple-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Pending Proposals</p>
+                <p className="text-3xl font-bold text-white">
+                  {proposals.filter(p => p.status === 'pending').length}
+                </p>
+              </div>
+              <Clock className="w-12 h-12 text-yellow-500" />
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-8">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <h2 className="text-xl font-bold text-white mb-6">Sync Proposal Analytics</h2>
+            <ProposalAnalytics />
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Media and Sync Proposals</h2>
+            </div>
+            <div className="space-y-4">
+              {proposals.map((proposal) => (
+                <div
+                  key={proposal.id}
+                  className="bg-white/5 rounded-lg p-4 border border-blue-500/20"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">
+                        {proposal.track.title}
+                      </h3>
+                      <p className="text-gray-400">
+                        From: {proposal.client.first_name} {proposal.client.last_name}
+                      </p>
+                      <p className="text-gray-400">
+                        Sync Fee: ${proposal.sync_fee.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        proposal.status === 'pending'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : proposal.status === 'accepted'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {proposal.status.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {proposals.length === 0 && (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-400">No sync proposals yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <h2 className="text-xl font-bold text-white mb-6">Your Tracks</h2>
             <div className="space-y-4">
