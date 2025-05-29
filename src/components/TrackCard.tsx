@@ -95,10 +95,13 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Star
-              className={`w-4 h-4 transition-colors ${
-                isFavorite ? 'text-yellow-400 fill-current' : 'text-white'
-              }`}
-            />
+               ${isFavorite ? (
+                 <Star 'text-yellow-400 fill-current' : 'text-white'
+               />
+    ) : (  
+              <Star className={`w-4 h-4 transition-colors' />
+              )}
+            
           </button>
         )}
 
