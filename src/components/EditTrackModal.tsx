@@ -25,13 +25,6 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatArrayToString = (arr: string[]): string => {
-    return arr
-      .map(item => item.toLowerCase().trim())
-      .filter(Boolean)
-      .join(',');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -39,15 +32,11 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       setLoading(true);
       setError(null);
 
-      // Format genres and moods as comma-separated strings
-      const formattedGenres = formatArrayToString(selectedGenres);
-      const formattedMoods = formatArrayToString(selectedMoods);
-
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
-          genres: formattedGenres,
-          moods: formattedMoods,
+          genres: selectedGenres,
+          moods: selectedMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()

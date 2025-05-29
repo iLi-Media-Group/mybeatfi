@@ -124,13 +124,6 @@ export function TrackUploadForm() {
     setError('');
   };
 
-  const formatGenresForDB = (genres: string[]): string => {
-    return genres
-      .map(g => g.toLowerCase().trim())
-      .filter(Boolean)
-      .join(',');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !audioFile) return;
@@ -165,9 +158,9 @@ export function TrackUploadForm() {
           producer_id: user.id,
           title,
           artist: user.email?.split('@')[0] || 'Unknown Artist',
-          genres: formatGenresForDB(selectedGenres),
-          sub_genres: formatGenresForDB(selectedSubGenres),
-          moods: formatGenresForDB(selectedMoods),
+          genres: selectedGenres,
+          sub_genres: selectedSubGenres,
+          moods: selectedMoods,
           bpm: bpmNumber,
           key,
           has_sting_ending: hasStingEnding,
