@@ -68,6 +68,24 @@ const styles = StyleSheet.create({
   }
 });
 
+const getExpirationDate = (licenseType: string, purchaseDate: string): string => {
+  const purchase = new Date(purchaseDate);
+
+  switch (licenseType) {
+    case 'Ultimate Access':
+      return 'Perpetual (No Expiration)';
+    case 'Platinum Access':
+      purchase.setFullYear(purchase.getFullYear() + 3);
+      break;
+    case 'Gold Access':
+    case 'Single Track':
+    default:
+      purchase.setFullYear(purchase.getFullYear() + 1);
+  }
+
+  return purchase.toLocaleDateString();
+};
+
 export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFProps) {
   return (
     <Document>
@@ -97,9 +115,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.text}>License Type: {license.licenseType}</Text>
           <Text style={styles.text}>Purchase Date: {new Date(license.purchaseDate).toLocaleDateString()}</Text>
           <Text style={styles.text}>
-            Expiration Date: {license.licenseType === 'Ultimate Access' 
-              ? 'Perpetual (No Expiration)' 
-              : new Date(license.expiryDate).toLocaleDateString()}
+            Expiration Date: {getExpirationDate(license.licenseType, license.purchaseDate)}
           </Text>
           <Text style={styles.text}>License Fee: ${license.price.toFixed(2)} USD</Text>
         </View>
