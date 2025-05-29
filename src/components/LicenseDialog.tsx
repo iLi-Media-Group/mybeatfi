@@ -21,21 +21,22 @@ interface ProfileInfo {
   email: string;
 }
 
-const calculateExpiryDate = (membershipType: string): Date => {
-  const now = new Date();
-  switch (membershipType) {
+const getExpirationDate = (licenseType: string, purchaseDate: string): string => {
+  const purchase = new Date(purchaseDate);
+
+  switch (licenseType) {
     case 'Ultimate Access':
-      now.setFullYear(now.getFullYear() + 100); // Effectively perpetual
-      break;
+      return 'Perpetual (No Expiration)';
     case 'Platinum Access':
-      now.setFullYear(now.getFullYear() + 3); // 3 years
+      purchase.setFullYear(purchase.getFullYear() + 3); // 3 years
       break;
     case 'Gold Access':
     case 'Single Track':
     default:
-      now.setFullYear(now.getFullYear() + 1); // 1 year
+      purchase.setFullYear(purchase.getFullYear() + 1); // 1 year
   }
-  return now;
+
+  return purchase.toLocaleDateString();
 };
 
 export function LicenseDialog({
@@ -122,7 +123,7 @@ export function LicenseDialog({
       setLoading(true);
       setError('');
 
-      const expiryDate = calculateExpiryDate(membershipType);
+      const purchaseDate = new Date().toISOString();
 
       // Create license record
       const { data: license, error: licenseError } = await supabase
@@ -133,7 +134,7 @@ export function LicenseDialog({
           license_type: membershipType,
           amount: 0,
           payment_method: 'subscription',
-          expiry_date: expiryDate.toISOString(),
+          created_at: purchaseDate,
           licensee_info: {
             name: `${profile.first_name} ${profile.last_name}`,
             email: profile.email
@@ -184,6 +185,8 @@ export function LicenseDialog({
       </div>
     );
   }
+
+  const purchaseDate = new Date().toISOString();
 
   return (
     <>
@@ -289,6 +292,14 @@ export function LicenseDialog({
                   </p>
                   <p className="text-gray-300">
                     <span className="font-medium text-white">License Type:</span> {membershipType}
+                  </p>
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Purchase Date:</span>{' '}
+                    {new Date(purchaseDate).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-300">
+                    <span className="font-medium text-white">Expiration Date:</span>{' '}
+                    {getExpirationDate(membershipType, purchaseDate)}
                   </p>
                   <p className="text-gray-300">
                     <span className="font-medium text-white">Licensee:</span>{' '}
