@@ -18,7 +18,15 @@ interface EditTrackModalProps {
 }
 
 export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackModalProps) {
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(track.genres);
+  // Normalize initial genres to match the format in GENRES
+  const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
+  
+  const initialGenres = track.genres.map(genre => {
+    // Find the matching genre from GENRES list
+    return GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre)) || genre;
+  });
+
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
   const [selectedMoods, setSelectedMoods] = useState<string[]>(track.moods);
   const [hasVocals, setHasVocals] = useState(track.hasVocals || false);
   const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(track.vocalsUsageType || 'normal');
@@ -37,12 +45,17 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
         throw new Error('At least one genre is required');
       }
 
-      // Ensure genres match the database constraint pattern
-      const formattedGenres = selectedGenres.map(genre => 
-        genre.toLowerCase().trim()
-      ).filter(genre => 
-        GENRES.includes(genre as typeof GENRES[number])
-      );
+      // Format and validate genres
+      const formattedGenres = selectedGenres
+        .map(genre => {
+          // Find the exact genre from GENRES list
+          const matchingGenre = GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre));
+          return matchingGenre || genre;
+        })
+        .filter(genre => 
+          // Validate that the genre exists in GENRES list
+          GENRES.some(g => normalizeGenre(g) === normalizeGenre(genre))
+        );
 
       if (formattedGenres.length === 0) {
         throw new Error('At least one valid genre from the provided list is required');
@@ -108,12 +121,12 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
                 <label key={genre} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={selectedGenres.includes(genre)}
+                    checked={selectedGenres.some(g => normalizeGenre(g) === normalizeGenre(genre))}
                     onChange={(e) => {
                       if (e.target.checked) {
                         setSelectedGenres([...selectedGenres, genre]);
                       } else {
-                        setSelectedGenres(selectedGenres.filter(g => g !== genre));
+                        setSelectedGenres(selectedGenres.filter(g => normalizeGenre(g) !== normalizeGenre(genre)));
                       }
                     }}
                     className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
