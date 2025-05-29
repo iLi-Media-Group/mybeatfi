@@ -130,11 +130,11 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.text}>Purchase Date: {new Date(license.purchaseDate).toLocaleDateString()}</Text>
           <Text style={styles.text}>Expiration Date: {expirationDate}</Text>
           <Text style={styles.text}>
-  License Fee:{' '}
-  {license.licenseType === 'Single Track'
-    ? '$7.99 USD'
-    : `Included with ${license.licenseType}`}
-</Text>
+            License Fee:{' '}
+            {license.licenseType === 'Single Track'
+              ? '$7.99 USD'
+              : `Included with ${license.licenseType}`}
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -170,9 +170,10 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
           <Text style={styles.sectionTitle}>4. COMPENSATION</Text>
           <Text style={styles.text}>
             Licensee has paid the amount {' '}
-  {license.licenseType === 'Single Track'
-    ? '$7.99 USD to use this track'
-    : `Included with ${license.licenseType} plan`}
+            {license.licenseType === 'Single Track'
+              ? '$7.99 USD to use this track'
+              : `Included with ${license.licenseType} plan`}
+          </Text>
         </View>
 
         {showCredits && (
