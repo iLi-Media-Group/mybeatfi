@@ -9,6 +9,9 @@ import { EditTrackModal } from './EditTrackModal';
 import { DeleteTrackDialog } from './DeleteTrackDialog';
 import { ProducerProfile } from './ProducerProfile';
 import { ProposalAnalytics } from './ProposalAnalytics';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 import { calculateTimeRemaining } from '../utils/dateUtils';
 
 export function ProducerDashboard() {
@@ -23,6 +26,8 @@ export function ProducerDashboard() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null);
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<any | null>(null);
   const [salesStats, setSalesStats] = useState({
     totalSales: 0,
@@ -44,7 +49,6 @@ export function ProducerDashboard() {
       setLoading(true);
       setError(null);
 
-      // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, email')
@@ -56,7 +60,6 @@ export function ProducerDashboard() {
         setProfile(profileData);
       }
 
-      // Fetch tracks including deleted ones
       const { data: tracksData, error: tracksError } = await supabase
         .from('tracks')
         .select('*')
@@ -74,7 +77,6 @@ export function ProducerDashboard() {
           deleted_at: track.deleted_at
         }));
 
-        // Split into active and deleted tracks
         setTracks(formattedTracks.filter(t => !t.deleted_at));
         setDeletedTracks(formattedTracks.filter(t => t.deleted_at));
       }
@@ -147,7 +149,6 @@ export function ProducerDashboard() {
 
       if (error) throw error;
 
-      // Move track from active to deleted list
       const deletedTrack = tracks.find(t => t.id === deleteTrackId);
       if (deletedTrack) {
         setTracks(tracks.filter(t => t.id !== deleteTrackId));
@@ -168,7 +169,6 @@ export function ProducerDashboard() {
 
       if (error) throw error;
 
-      // Move track from deleted to active list
       const restoredTrack = deletedTracks.find(t => t.id === trackId);
       if (restoredTrack) {
         setDeletedTracks(deletedTracks.filter(t => t.id !== trackId));
@@ -192,7 +192,6 @@ export function ProducerDashboard() {
 
       if (error) throw error;
 
-      // Add to proposal history
       const { error: historyError } = await supabase
         .from('proposal_history')
         .insert({
@@ -549,6 +548,42 @@ export function ProducerDashboard() {
           onClose={() => setDeleteTrackId(null)}
           trackTitle={tracks.find(t => t.id === deleteTrackId)?.title || ''}
           onConfirm={handleDeleteTrack}
+        />
+      )}
+
+      {selectedProposal && showNegotiationDialog && (
+        <ProposalNegotiationDialog
+          isOpen={true}
+          onClose={() => {
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+          }}
+          proposalId={selectedProposal.id}
+          currentOffer={selectedProposal.sync_fee}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+          trackTitle={selectedProposal.track.title}
+        />
+      )}
+
+      {selectedProposalId && showHistoryDialog && (
+        <ProposalHistoryDialog
+          isOpen={true}
+          onClose={() => {
+            setShowHistoryDialog(false);
+            setSelectedProposalId(null);
+          }}
+          proposalId={selectedProposalId}
+        />
+      )}
+
+      {confirmAction && (
+        <ProposalConfirmDialog
+          isOpen={true}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={() => handleProposalAction(confirmAction.proposalId, confirmAction.action)}
+          action={confirmAction.action}
+          trackTitle={confirmAction.trackTitle}
+          clientName={confirmAction.clientName}
         />
       )}
 
