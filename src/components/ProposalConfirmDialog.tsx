@@ -1,0 +1,79 @@
+import React from 'react';
+import { X, AlertTriangle, Check, XCircle } from 'lucide-react';
+
+interface ProposalConfirmDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  action: 'accept' | 'reject';
+  trackTitle: string;
+  clientName: string;
+}
+
+export function ProposalConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  action,
+  trackTitle,
+  clientName
+}: ProposalConfirmDialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <AlertTriangle className="w-6 h-6 text-yellow-500 mr-2" />
+            <h2 className="text-xl font-bold text-white">Confirm {action === 'accept' ? 'Acceptance' : 'Rejection'}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <p className="text-gray-300 mb-6">
+          Are you sure you want to {action} the sync proposal for "{trackTitle}" from {clientName}?
+          {action === 'reject' && (
+            <span className="block mt-2 text-yellow-400">
+              This action cannot be undone.
+            </span>
+          )}
+        </p>
+
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+              action === 'accept'
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
+          >
+            {action === 'accept' ? (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Accept Proposal
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 mr-2" />
+                Reject Proposal
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

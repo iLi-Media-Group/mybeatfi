@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-gray-100;
+  }
+
+  /* Modern Glassmorphism */
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-blue-500/20 shadow-xl;
+  }
+
+  /* Animated Gradient Background */
+  .animated-gradient {
+    background: linear-gradient(
+      -45deg,
+      #1a365d,
+      #1e3a5f,
+      #2b4c76,
+      #1e3a5f
+    );
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Modern Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-blue-600/50 rounded-full backdrop-blur-sm hover:bg-blue-600 transition-colors;
+  }
+
+  /* Smooth Transitions */
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Modern Input Styles */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    @apply bg-white/5 border border-blue-500/20 rounded-lg px-4 py-2 
+           focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent
+           placeholder-gray-400 text-white transition-all;
+  }
+
+  /* Style dropdown options */
+  select option {
+    @apply bg-gray-900 text-white;
+  }
+
+  /* Modern Button Styles */
+  .btn {
+    @apply px-6 py-2 rounded-lg font-medium transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-blue-600 to-blue-700
+           hover:from-blue-700 hover:to-blue-800
+           text-white shadow-lg shadow-blue-500/25;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white/10 hover:bg-white/20 text-white
+           backdrop-blur-sm border border-blue-500/20;
+  }
+
+  /* Card Hover Effects */
+  .hover-card {
+    @apply transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl;
+  }
+
+  /* Modern Tag Styles */
+  .tag {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-white/10 backdrop-blur-sm border border-blue-500/20
+           transition-all hover:bg-white/20;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400;
+  }
+}
