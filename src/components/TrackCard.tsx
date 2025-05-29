@@ -17,10 +17,11 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync_only';
 
   useEffect(() => {
-    if (user) {
-      checkFavoriteStatus();
-    }
-  }, [user, track.id]);
+  if (user && track?.id) {
+    checkFavoriteStatus();
+  }
+}, [user, track?.id]);
+
 
   const checkFavoriteStatus = async () => {
     try {
