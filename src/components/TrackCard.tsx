@@ -44,20 +44,27 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
     try {
       setLoading(true);
+
       if (isFavorite) {
-        await supabase
+        // Remove from favorites
+        const { error } = await supabase
           .from('favorites')
           .delete()
           .eq('user_id', user.id)
           .eq('track_id', track.id);
+
+        if (error) throw error;
         setIsFavorite(false);
       } else {
-        await supabase
+        // Add to favorites
+        const { error } = await supabase
           .from('favorites')
           .insert({
             user_id: user.id,
             track_id: track.id
           });
+
+        if (error) throw error;
         setIsFavorite(true);
       }
     } catch (error) {
@@ -87,7 +94,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Star
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 transition-colors ${
                 isFavorite ? 'text-yellow-400 fill-current' : 'text-white'
               }`}
             />
