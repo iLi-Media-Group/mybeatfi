@@ -1,79 +1,343 @@
-import { AlertCircle, Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { Track } from '../types';
+import { AudioPlayer } from './AudioPlayer';
+import { calculateTimeRemaining } from '../utils/dateUtils';
 import { EditRequestDialog } from './EditRequestDialog';
 import { ClientProfile } from './ClientProfile';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
-export default function ClientDashboard({ loading, error, profile, userStats }) {
+interface DashboardStats {
+  totalLicenses: number;
+  remainingLicenses: number;
+  membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  daysUntilReset: number | null;
+}
+
+export function ClientDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ first_name?: string, email: string } | null>(null);
+  const [userStats, setUserStats] = useState<DashboardStats>({
+    totalLicenses: 0,
+    remainingLicenses: 0,
+    membershipType: null,
+    currentPeriodStart: null,
+    currentPeriodEnd: null,
+    daysUntilReset: null
+  });
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [licenses, setLicenses] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Track[]>([]);
+  const [syncRequests, setSyncRequests] = useState<any[]>([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<any | null>(null);
+  const [removingFavorite, setRemovingFavorite] = useState<string | null>(null);
 
-  const handleUpdateRequest = async (id, updates) => {
-    // Implementation would go here
+  useEffect(() => {
+    if (!user) return;
+    fetchDashboardData();
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch profile and stats
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, email, membership_plan')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+        setUserStats(prev => ({
+          ...prev,
+          membershipType: profileData.membership_plan as DashboardStats['membershipType']
+        }));
+      }
+
+      // Fetch licenses
+      const { data: licensesData } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          license_type,
+          created_at,
+          expiry_date,
+          track:tracks (
+            id,
+            title,
+            genres,
+            bpm,
+            audio_url,
+            image_url
+          )
+        `)
+        .eq('buyer_id', user?.id)
+        .is('deleted_at', null);
+
+      if (licensesData) {
+        setLicenses(licensesData);
+      }
+
+      // Fetch favorites
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select(`
+          track_id,
+          tracks (*)
+        `)
+        .eq('user_id', user?.id);
+
+      if (favoritesData) {
+        setFavorites(favoritesData.map(f => ({
+          id: f.tracks.id,
+          title: f.tracks.title,
+          genres: f.tracks.genres.split(','),
+          audioUrl: f.tracks.audio_url,
+          image: f.tracks.image_url
+        })));
+      }
+
+      // Fetch sync requests
+      const { data: requestsData } = await supabase
+        .from('custom_sync_requests')
+        .select('*')
+        .eq('client_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (requestsData) {
+        setSyncRequests(requestsData);
+      }
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (trackId: string) => {
+    if (!user) return;
+
+    try {
+      setRemovingFavorite(trackId);
+      
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('track_id', trackId);
+
+      if (error) throw error;
+
+      setFavorites(favorites.filter(track => track.id !== trackId));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    } finally {
+      setRemovingFavorite(null);
+    }
   };
 
   const handleDeleteLicense = async () => {
-    // Implementation would go here
+    if (!selectedLicenseToDelete) return;
+
+    const { error } = await supabase
+      .from('sales')
+      .update({
+        deleted_at: new Date().toISOString()
+      })
+      .eq('id', selectedLicenseToDelete.id);
+
+    if (error) throw error;
+
+    setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
+    setSelectedLicenseToDelete(null);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-        <div className="text-white text-center">
-          <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4" />
-          <p>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-        <div className="text-white text-center">
-          <AlertCircle className="h-8 w-8 mx-auto mb-4 text-red-500" />
-          <p>{error}</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Content sections would go here */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Your Client Dashboard</h1>
+            {profile && (
+              <p className="text-xl text-gray-300 mt-2">
+                Welcome {profile.first_name || profile.email.split('@')[0]}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+            >
+              <UserCog className="w-5 h-5 mr-2" />
+              Edit Profile
+            </button>
+            <Link
+              to="/pricing"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Upgrade Membership
+            </Link>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-center">{error}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Licensed Tracks Section */}
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
+              <div className="space-y-4">
+                {licenses.map((license) => (
+                  <div
+                    key={license.id}
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
+                        <p className="text-gray-400">Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                      <button
+                        onClick={() => setSelectedLicenseToDelete(license)}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sync Requests Section */}
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Your Sync Requests</h2>
+                <Link
+                  to="/custom-sync-request"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Request
+                </Link>
+              </div>
+              <div className="space-y-4">
+                {syncRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{request.project_title}</h3>
+                        <p className="text-gray-400">{request.project_description}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowEditDialog(true);
+                          }}
+                          className="text-gray-400 hover:text-white transition-colors"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Favorites Section */}
+          <div className="space-y-6">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-bold text-white mb-6">Favorite Tracks</h2>
+              <div className="space-y-4">
+                {favorites.map((track) => (
+                  <div
+                    key={track.id}
+                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{track.title}</h3>
+                        <p className="text-gray-400">{track.genres.join(', ')}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveFavorite(track.id)}
+                        disabled={removingFavorite === track.id}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <AudioPlayer url={track.audioUrl} title={track.title} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      {showEditDialog && selectedRequest && (
+
+      {selectedRequest && showEditDialog && (
         <EditRequestDialog
           isOpen={showEditDialog}
-          onClose={() => setShowEditDialog(false)}
+          onClose={() => {
+            setShowEditDialog(false);
+            setSelectedRequest(null);
+          }}
           request={selectedRequest}
-          onSave={(updates) => handleUpdateRequest(selectedRequest.id, updates)}
-        />
-      )}
-
-      {showProfileDialog && (
-        <ClientProfile
-          isOpen={showProfileDialog}
-          onClose={() => setShowProfileDialog(false)}
-          profile={profile}
-          stats={userStats}
+          onSave={async () => {}}
         />
       )}
 
       {selectedLicenseToDelete && (
         <DeleteLicenseDialog
-          isOpen={!!selectedLicenseToDelete}
+          isOpen={true}
           onClose={() => setSelectedLicenseToDelete(null)}
           license={selectedLicenseToDelete}
           onConfirm={handleDeleteLicense}
         />
       )}
+
+      <ClientProfile
+        isOpen={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      />
     </div>
   );
 }
-
-export { ClientDashboard }
