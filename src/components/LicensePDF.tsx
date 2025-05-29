@@ -133,7 +133,7 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
   License Fee:{' '}
   {license.membershipType === 'Single Track'
     ? '$7.99 USD'
-    : `Included with ${license.membershipType}`}
+    : `Included with ${license.licenseType}`}
 </Text>
         </View>
 
