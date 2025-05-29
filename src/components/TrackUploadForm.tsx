@@ -124,6 +124,13 @@ export function TrackUploadForm() {
     setError('');
   };
 
+  const formatGenresForDB = (genres: string[]): string => {
+    return genres
+      .map(g => g.toLowerCase().trim())
+      .filter(Boolean)
+      .join(',');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !audioFile) return;
@@ -152,15 +159,15 @@ export function TrackUploadForm() {
         imageUrl = await uploadFile(imageFile, 'track-images');
       }
 
-      const { data: track, error: trackError } = await supabase
+      const { error: trackError } = await supabase
         .from('tracks')
         .insert({
           producer_id: user.id,
           title,
           artist: user.email?.split('@')[0] || 'Unknown Artist',
-          genres: selectedGenres.map(g => g.toLowerCase()),
-          sub_genres: selectedSubGenres.map(sg => sg.toLowerCase()),
-          moods: selectedMoods.map(m => m.toLowerCase()),
+          genres: formatGenresForDB(selectedGenres),
+          sub_genres: formatGenresForDB(selectedSubGenres),
+          moods: formatGenresForDB(selectedMoods),
           bpm: bpmNumber,
           key,
           has_sting_ending: hasStingEnding,
@@ -173,9 +180,7 @@ export function TrackUploadForm() {
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        });
 
       if (trackError) throw trackError;
 
@@ -184,6 +189,7 @@ export function TrackUploadForm() {
     } catch (err) {
       console.error('Submission error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save track. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
