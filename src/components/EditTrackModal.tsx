@@ -49,19 +49,20 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
       }
 
       // Format and validate moods
+      // Convert moods to lowercase, trim spaces, and replace spaces with underscores
       const formattedMoods = selectedMoods
-        .map(mood => mood.toLowerCase().trim())
-        .filter(mood => MOODS.includes(mood));
-
-      // Validate that moods match the database pattern
-      const moodPattern = /^[a-z][a-z0-9\s]*$/;
-      const validMoods = formattedMoods.filter(mood => moodPattern.test(mood));
+        .map(mood => mood.toLowerCase().trim().replace(/\s+/g, '_'))
+        .filter(mood => {
+          // Ensure mood starts with a letter and only contains letters, numbers, and underscores
+          const moodPattern = /^[a-z][a-z0-9_]*$/;
+          return moodPattern.test(mood) && MOODS.includes(mood);
+        });
 
       const { error: updateError } = await supabase
         .from('tracks')
         .update({
           genres: formattedGenres,
-          moods: validMoods,
+          moods: formattedMoods,
           has_vocals: hasVocals,
           vocals_usage_type: hasVocals ? vocalsUsageType : null,
           updated_at: new Date().toISOString()
