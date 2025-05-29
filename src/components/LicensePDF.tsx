@@ -169,8 +169,10 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>4. COMPENSATION</Text>
           <Text style={styles.text}>
-            Licensee has paid the amount of ${license.price.toFixed(2)} USD for this license.
-          </Text>
+            Licensee has paid the amount {' '}
+  {license.licenseType === 'Single Track'
+    ? '$7.99 USD to use this track'
+    : `Included with ${license.licenseType} plan`}
         </View>
 
         {showCredits && (
