@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -43,6 +43,21 @@ export function ClientDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<any | null>(null);
   const [removingFavorite, setRemovingFavorite] = useState<string | null>(null);
+
+  const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
+    const date = new Date(purchaseDate);
+    switch (membershipType) {
+      case 'Ultimate Access':
+        date.setFullYear(date.getFullYear() + 100); // Effectively perpetual
+        break;
+      case 'Platinum Access':
+        date.setFullYear(date.getFullYear() + 3);
+        break;
+      default:
+        date.setFullYear(date.getFullYear() + 1);
+    }
+    return date.toISOString();
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -349,26 +364,48 @@ export function ClientDashboard() {
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
               <h2 className="text-xl font-bold text-white mb-6">Your Licensed Tracks</h2>
               <div className="space-y-4">
-                {licenses.map((license) => (
-                  <div
-                    key={license.id}
-                    className="bg-white/5 rounded-lg p-4 border border-purple-500/20"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
-                        <p className="text-gray-400">Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
+                {licenses.map((license) => {
+                  const expiryDate = license.expiry_date || calculateExpiryDate(license.created_at, license.license_type);
+                  const isExpired = new Date(expiryDate) <= new Date();
+                  
+                  return (
+                    <div
+                      key={license.id}
+                      className={`bg-white/5 rounded-lg p-4 border ${
+                        isExpired ? 'border-red-500/20' : 'border-purple-500/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">{license.track.title}</h3>
+                          <div className="text-sm text-gray-400 space-y-1">
+                            <p>Licensed on {new Date(license.created_at).toLocaleDateString()}</p>
+                            <p>Expires on {new Date(expiryDate).toLocaleDateString()}</p>
+                            {isExpired && (
+                              <p className="text-red-400">License expired</p>
+                            )}
+                          </div>
+                          <Link
+                            to={`/license-agreement/${license.id}`}
+                            className="inline-flex items-center mt-2 text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 mr-1" />
+                            View/Download License
+                          </Link>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                          <button
+                            onClick={() => setSelectedLicenseToDelete(license)}
+                            className="text-gray-400 hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
-                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
-                      <button
-                        onClick={() => setSelectedLicenseToDelete(license)}
-                        className="text-gray-400 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

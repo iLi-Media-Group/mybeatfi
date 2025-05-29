@@ -84,6 +84,19 @@ export function LicensePDF({ license, showCredits, acceptedDate }: LicensePDFPro
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>License Summary</Text>
+          <Text style={styles.text}>Track: {license.trackTitle}</Text>
+          <Text style={styles.text}>License Type: {license.licenseType}</Text>
+          <Text style={styles.text}>Purchase Date: {new Date(license.purchaseDate).toLocaleDateString()}</Text>
+          <Text style={styles.text}>
+            Expiration Date: {license.licenseType === 'Ultimate Access' 
+              ? 'Perpetual (No Expiration)' 
+              : new Date(license.expiryDate).toLocaleDateString()}
+          </Text>
+          <Text style={styles.text}>License Fee: ${license.price.toFixed(2)} USD</Text>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. GRANT OF LICENSE</Text>
           <Text style={styles.text}>
             Licensor hereby grants Licensee a non-exclusive, non-transferable license to synchronize
