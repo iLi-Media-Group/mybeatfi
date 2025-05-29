@@ -134,23 +134,31 @@ export function CatalogPage() {
       if (error) throw error;
 
       if (data) {
-        const formattedTracks = data.map(track => ({
-          id: track.id,
-          title: track.title,
-          artist: track.producer.first_name || track.producer.email.split('@')[0],
-          genre: track.genres.split(',').map(g => g.trim()),
-          moods: track.moods?.split(',').map(m => m.trim()) || [],
-          duration: track.duration || '3:30',
-          bpm: track.bpm,
-          audioUrl: track.audio_url,
-          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-          hasStingEnding: track.has_sting_ending,
-          isOneStop: track.is_one_stop,
-          mp3Url: track.mp3_url,
-          trackoutsUrl: track.trackouts_url,
-          hasVocals: track.has_vocals,
-          vocalsUsageType: track.vocals_usage_type
-        }));
+        const formattedTracks = data
+  .filter(track => track && track.id) // Ensure valid track entries
+  .map(track => ({
+    id: track.id,
+    title: track.title || 'Untitled',
+    artist:
+      track.producer?.first_name ||
+      track.producer?.email?.split('@')[0] ||
+      'Unknown Artist',
+    genre: track.genres?.split(',').map(g => g.trim()) || [],
+    moods: track.moods?.split(',').map(m => m.trim()) || [],
+    duration: track.duration || '3:30',
+    bpm: track.bpm,
+    audioUrl: track.audio_url,
+    image:
+      track.image_url ||
+      'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+    hasStingEnding: track.has_sting_ending,
+    isOneStop: track.is_one_stop,
+    mp3Url: track.mp3_url,
+    trackoutsUrl: track.trackouts_url,
+    hasVocals: track.has_vocals,
+    vocalsUsageType: track.vocals_usage_type
+  }));
+
 
         if (currentPage === 1) {
           setTracks(formattedTracks);
