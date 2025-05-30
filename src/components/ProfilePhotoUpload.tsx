@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Upload, X, Camera, Loader2 } from 'lucide-react';
+import { Upload, X, Camera, Loader2, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProfilePhotoUploadProps {
   currentPhotoUrl: string | null;
   onPhotoUpdate: (url: string) => void;
   size?: 'sm' | 'md' | 'lg';
+  userId?: string;
 }
 
 const SIZES = {
@@ -14,9 +16,13 @@ const SIZES = {
   lg: 'w-40 h-40'
 };
 
-export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md' }: ProfilePhotoUploadProps) {
+export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md', userId }: ProfilePhotoUploadProps) {
+  const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if this is the logged-in user's profile
+  const isOwnProfile = user?.id === userId;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -119,34 +125,36 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-800">
-              <img
-                src="https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo.svg"
-                alt="Default Logo"
-                className="w-2/3 h-2/3 object-contain opacity-50"
-              />
+              <User className="w-2/3 h-2/3 text-gray-600" />
             </div>
           )}
-          <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-            {uploading ? (
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
-            ) : (
-              <Camera className="w-8 h-8 text-white" />
-            )}
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-          </label>
+          {isOwnProfile && (
+            <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+              {uploading ? (
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              ) : (
+                <Camera className="w-8 h-8 text-white" />
+              )}
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={uploading}
+              />
+            </label>
+          )}
         </div>
-        <p className="mt-2 text-sm text-gray-400">
-          Upload your logo or personal photo
-        </p>
-        <p className="text-xs text-gray-500">
-          Max size: 2MB (250x250px)
-        </p>
+        {isOwnProfile && (
+          <>
+            <p className="mt-2 text-sm text-gray-400">
+              Upload your logo or personal photo
+            </p>
+            <p className="text-xs text-gray-500">
+              Max size: 2MB (250x250px)
+            </p>
+          </>
+        )}
       </div>
 
       {error && (
