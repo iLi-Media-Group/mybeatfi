@@ -125,7 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.warn('Error during sign out:', error.message);
+        // Check if the error is due to session not found (already logged out)
+        if (error.message === 'Session from session_id claim in JWT does not exist') {
+          console.log('Session already ended');
+        } else {
+          console.warn('Error during sign out:', error.message);
+        }
       }
     } catch (error) {
       console.warn('Unexpected error during sign out:', error);
