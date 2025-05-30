@@ -17,6 +17,12 @@ export interface Track {
   trackoutsUrl?: string;
   hasVocals?: boolean;
   vocalsUsageType?: 'normal' | 'sync_only';
+  producer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
   fileFormats: {
     stereoMp3: {
       format: string[];
