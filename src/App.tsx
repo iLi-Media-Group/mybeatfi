@@ -25,7 +25,7 @@ import { useAuth } from './contexts/AuthContext';
 import { GoldAccessPage } from './components/GoldAccessPage';
 import { CustomSyncRequest } from './components/CustomSyncRequest';
 import { OpenSyncBriefs } from './components/OpenSyncBriefs';
-import { RefundPolicy } from './components/RefundPolicy';
+import RefundPolicy from './components/RefundPolicy';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import DisputeResolution from './components/DisputeResolution';
 import { AboutPage } from './components/AboutPage';
