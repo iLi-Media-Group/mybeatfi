@@ -186,15 +186,36 @@ export function ClientDashboard() {
 
         const { data: newTracksData } = await supabase
           .from('tracks')
-          .select('*')
+          .select(`
+            id,
+            title,
+            genres,
+            bpm,
+            audio_url,
+            image_url,
+            has_vocals,
+            vocals_usage_type,
+            producer:profiles!producer_id (
+              first_name,
+              last_name,
+              email
+            )
+          `)
           .order('created_at', { ascending: false })
           .limit(5);
 
         if (newTracksData) {
           const formattedNewTracks = newTracksData.map(track => ({
-            ...track,
+            id: track.id,
+            title: track.title,
+            artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
             genres: track.genres.split(',').map((g: string) => g.trim()),
-            moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : []
+            moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+            bpm: track.bpm,
+            audioUrl: track.audio_url,
+            image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+            hasVocals: track.has_vocals,
+            vocalsUsageType: track.vocals_usage_type
           }));
           setNewTracks(formattedNewTracks);
         }
@@ -729,11 +750,32 @@ export function ClientDashboard() {
                   newTracks.map((track) => (
                     <div
                       key={track.id}
-                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/20"
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
                     >
-                      <div className="font-medium text-white">{track.title}</div>
-                      <div className="text-sm text-gray-400">
-                        {track.genres.join(', ')} • {track.bpm} BPM
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="text-white font-medium truncate">{track.title}</h4>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <AudioPlayer url={track.audioUrl} title={track.title} />
+                            <button
+                              onClick={() => handleLicenseClick(track.id)}
+                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                              <span>License Track</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))
