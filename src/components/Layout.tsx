@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { Footer } from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -74,7 +75,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex flex-col">
       <header className="py-4 px-4 bg-blue-900/80 backdrop-blur-sm border-b border-blue-500/20 sticky top-0 z-50">
         <nav className="container mx-auto flex justify-between items-center relative">
           <div className="flex items-center w-1/3">
@@ -234,9 +235,11 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
         </nav>
       </header>
 
-      <main>
+      <main className="flex-1">
         {children}
       </main>
+
+      <Footer />
     </div>
   );
 }
