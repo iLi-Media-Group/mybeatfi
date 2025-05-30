@@ -44,6 +44,7 @@ export function VocalsPage() {
           has_vocals,
           vocals_usage_type,
           producer:profiles!producer_id (
+            id,
             first_name,
             last_name,
             email
@@ -119,7 +120,13 @@ export function VocalsPage() {
           mp3Url: track.mp3_url,
           trackoutsUrl: track.trackouts_url,
           hasVocals: track.has_vocals,
-          vocalsUsageType: track.vocals_usage_type
+          vocalsUsageType: track.vocals_usage_type,
+          producer: track.producer ? {
+            id: track.producer.id,
+            firstName: track.producer.first_name || '',
+            lastName: track.producer.last_name || '',
+            email: track.producer.email
+          } : undefined
         }));
         setTracks(formattedTracks);
       }
