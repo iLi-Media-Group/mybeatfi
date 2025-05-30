@@ -64,20 +64,23 @@ export function ProducerProfileDialog({ isOpen, onClose, producerId }: ProducerP
 
       if (profileError) throw profileError;
 
-      // Fetch track count
-      const { count: trackCount, error: tracksError } = await supabase
+      // Fetch track count and track IDs
+      const { data: tracks, count: trackCount, error: tracksError } = await supabase
         .from('tracks')
-        .select('id', { count: 'exact', head: true })
+        .select('id', { count: 'exact' })
         .eq('producer_id', producerId)
         .is('deleted_at', null);
 
       if (tracksError) throw tracksError;
 
-      // Fetch recent sales
+      // Get track IDs for sales query
+      const trackIds = tracks?.map(track => track.id) || [];
+
+      // Fetch recent sales using track IDs
       const { count: salesCount, error: salesError } = await supabase
         .from('sales')
         .select('id', { count: 'exact', head: true })
-        .eq('tracks.producer_id', producerId)
+        .in('track_id', trackIds)
         .is('deleted_at', null)
         .gt('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
