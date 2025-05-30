@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, X } from 'lucide-react';
+import { Mail, Lock, User, X, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [accountType, setAccountType] = useState<'client' | 'producer'>('client');
   const [ageVerified, setAgeVerified] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
@@ -70,6 +71,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
         .update({
           first_name: firstName,
           last_name: lastName,
+          company_name: companyName.trim() || null,
           account_type: accountType,
           age_verified: ageVerified,
           invitation_code: accountType === 'producer' ? invitationCode : null
@@ -149,6 +151,22 @@ export function SignupForm({ onClose }: SignupFormProps) {
                   disabled={loading}
                 />
               </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Company Name (Optional)
+            </label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full pl-10 pr-4 py-2"
+                disabled={loading}
+              />
             </div>
           </div>
 

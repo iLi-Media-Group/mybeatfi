@@ -15,12 +15,23 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync_only';
 
   useEffect(() => {
     if (user && track?.id) {
       checkFavoriteStatus();
     }
+    
+    // Create audio element
+    const audio = new Audio(track.audioUrl);
+    audio.addEventListener('ended', () => setIsPlaying(false));
+    setAudioRef(audio);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('ended', () => setIsPlaying(false));
+    };
   }, [user, track?.id]);
 
   const checkFavoriteStatus = async () => {
@@ -75,6 +86,20 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
     }
   };
 
+  const togglePlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!audioRef) return;
+
+    if (isPlaying) {
+      audioRef.pause();
+    } else {
+      audioRef.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   return (
     <div className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10">
       {/* Image Section */}
@@ -83,6 +108,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
           src={track.image}
           alt={track.title}
           className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+          onClick={togglePlay}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-60 transition-opacity duration-300" />
         
@@ -104,11 +130,14 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
         {/* Play Button Overlay */}
         <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+          onClick={togglePlay}
+          className={`absolute inset-0 flex items-center justify-center ${
+            isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          } transition-opacity duration-300 z-10`}
         >
           <div className="p-3 rounded-full bg-blue-600/90 hover:bg-blue-600 transform transition-transform duration-300 hover:scale-110">
-            <Play className="w-6 h-6 text-white" />
+            <Play className={`w-6 h-6 text-white ${isPlaying ? 'hidden' : ''}`} />
+            {isPlaying && <span className="block w-4 h-4 bg-white"></span>}
           </div>
         </button>
       </div>
@@ -152,11 +181,6 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
               <span>Stems</span>
             </div>
           )}
-        </div>
-
-        {/* Audio Player */}
-        <div className="pt-1">
-          <AudioPlayer url={track.audioUrl} title={track.title} />
         </div>
 
         {/* Action Button */}
