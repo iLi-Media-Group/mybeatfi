@@ -55,17 +55,17 @@ export function ContactPage() {
               <div className="space-y-4">
                 <div className="flex items-center text-gray-300">
                   <Mail className="w-5 h-5 mr-3 text-blue-400" />
-                  <span>info@mybeatfi.io</span>
+                  <span>mybeatfisync@gmail.com</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
                   <Phone className="w-5 h-5 mr-3 text-blue-400" />
-                  <span>+1 (323) 555-0123</span>
+                  <span>+55 (21) 97743 3821</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
                   <MapPin className="w-5 h-5 mr-3 text-blue-400" />
-                  <span>Los Angeles, CA</span>
+                  <span>Rio de Janeiro, Brasil</span>
                 </div>
               </div>
             </div>
@@ -73,8 +73,8 @@ export function ContactPage() {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
               <h2 className="text-xl font-semibold text-white mb-4">Office Hours</h2>
               <p className="text-gray-300">
-                Monday - Friday: 9:00 AM - 6:00 PM (PST)<br />
-                Saturday: 10:00 AM - 4:00 PM (PST)<br />
+                Monday - Friday: 10:00 AM - 10:00 PM (EST)<br />
+                Saturday: 10:00 AM - 6:00 PM (EST)<br />
                 Sunday: Closed
               </p>
             </div>
