@@ -22,7 +22,7 @@ interface PricingPlan {
 const pricingPlans: PricingPlan[] = [
   {
     name: 'Ultimate Access',
-    price: 249,
+    price: 299,
     period: 'year',
     description: 'Unlimited lifetime access',
     features: [
@@ -37,7 +37,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Platinum Access',
-    price: 44.99,
+    price: 59.99,
     period: 'month',
     description: 'Unlimited, non-exclusive track use',
     features: [
@@ -53,7 +53,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Gold Access',
-    price: 24.99,
+    price: 34.99,
     period: 'month',
     description: '10 tracks per month',
     trackLimit: 10,
@@ -70,7 +70,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Single Track',
-    price: 7.99,
+    price: 9.99,
     period: 'track',
     description: 'Pay per track',
     isSingleTrack: true,
