@@ -84,7 +84,7 @@ export function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="text-center">
               <img
-                src="https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400"
+                src="https://www.canva.com/design/DAGo8AvSfpQ/cizzMq11I2DtgP-T2SvhsQ/view"
                 alt="CEO"
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
