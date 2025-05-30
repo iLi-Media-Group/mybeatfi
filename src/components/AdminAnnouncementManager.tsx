@@ -22,6 +22,9 @@ interface AnnouncementFormProps {
   onSave: () => void;
 }
 
+// Store form data in localStorage to persist across navigation
+const FORM_STORAGE_KEY = 'announcement_form_data';
+
 function AnnouncementForm({ isOpen, onClose, announcement, onSave }: AnnouncementFormProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -37,35 +40,100 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
   const [success, setSuccess] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formId, setFormId] = useState<string>('');
 
+  // Load saved form data on initial render
   useEffect(() => {
-    if (announcement) {
-      setTitle(announcement.title);
-      setContent(announcement.content);
-      setType(announcement.type);
-      setPublishedAt(new Date(announcement.published_at).toISOString().split('T')[0]);
-      setExpiresAt(announcement.expires_at ? new Date(announcement.expires_at).toISOString().split('T')[0] : '');
-      setExternalUrl(announcement.external_url || '');
-      setImageUrl(announcement.image_url || '');
-      setIsFeatured(announcement.is_featured);
-      
-      if (announcement.image_url) {
-        setImagePreview(announcement.image_url);
+    const loadSavedFormData = () => {
+      const savedData = localStorage.getItem(FORM_STORAGE_KEY);
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          if (parsedData.formId) {
+            setTitle(parsedData.title || '');
+            setContent(parsedData.content || '');
+            setType(parsedData.type || 'general');
+            setPublishedAt(parsedData.publishedAt || '');
+            setExpiresAt(parsedData.expiresAt || '');
+            setExternalUrl(parsedData.externalUrl || '');
+            setImageUrl(parsedData.imageUrl || '');
+            setIsFeatured(parsedData.isFeatured || false);
+            setImagePreview(parsedData.imagePreview || null);
+            setFormId(parsedData.formId);
+            return true;
+          }
+        } catch (e) {
+          console.error('Error parsing saved form data:', e);
+        }
       }
-    } else {
-      // Set defaults for new announcement
-      setTitle('');
-      setContent('');
-      setType('general');
-      setPublishedAt(new Date().toISOString().split('T')[0]);
-      setExpiresAt('');
-      setExternalUrl('');
-      setImageUrl('');
-      setIsFeatured(false);
-      setImagePreview(null);
-      setImageFile(null);
+      return false;
+    };
+
+    if (isOpen) {
+      // If we have an announcement to edit, use that data
+      if (announcement) {
+        setTitle(announcement.title);
+        setContent(announcement.content);
+        setType(announcement.type);
+        setPublishedAt(new Date(announcement.published_at).toISOString().split('T')[0]);
+        setExpiresAt(announcement.expires_at ? new Date(announcement.expires_at).toISOString().split('T')[0] : '');
+        setExternalUrl(announcement.external_url || '');
+        setImageUrl(announcement.image_url || '');
+        setIsFeatured(announcement.is_featured);
+        setImagePreview(announcement.image_url);
+        setFormId(announcement.id);
+        
+        // Save to localStorage
+        saveFormData(announcement.id);
+      } else {
+        // Check if we have saved form data
+        const hasSavedData = loadSavedFormData();
+        
+        if (!hasSavedData) {
+          // Set defaults for new announcement
+          const newFormId = `new-${Date.now()}`;
+          setTitle('');
+          setContent('');
+          setType('general');
+          setPublishedAt(new Date().toISOString().split('T')[0]);
+          setExpiresAt('');
+          setExternalUrl('');
+          setImageUrl('');
+          setIsFeatured(false);
+          setImagePreview(null);
+          setImageFile(null);
+          setFormId(newFormId);
+          
+          // Save default values to localStorage
+          saveFormData(newFormId);
+        }
+      }
     }
   }, [announcement, isOpen]);
+
+  // Save form data to localStorage whenever it changes
+  const saveFormData = (id: string) => {
+    const formData = {
+      formId: id,
+      title,
+      content,
+      type,
+      publishedAt,
+      expiresAt,
+      externalUrl,
+      imageUrl,
+      isFeatured,
+      imagePreview
+    };
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+  };
+
+  // Update localStorage when form fields change
+  useEffect(() => {
+    if (formId && isOpen) {
+      saveFormData(formId);
+    }
+  }, [title, content, type, publishedAt, expiresAt, externalUrl, imageUrl, isFeatured, imagePreview, formId, isOpen]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,7 +152,8 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
     }
 
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
     setError('');
   };
 
@@ -164,6 +233,10 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
       }
 
       setSuccess(true);
+      
+      // Clear localStorage after successful save
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      
       setTimeout(() => {
         onSave();
         onClose();
@@ -173,6 +246,13 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
       setError(err instanceof Error ? err.message : 'Failed to save announcement');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (confirm('Are you sure you want to close? Any unsaved changes will be lost.')) {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      onClose();
     }
   };
 
@@ -186,7 +266,7 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
             {announcement ? 'Edit Announcement' : 'Create Announcement'}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-white transition-colors"
           >
             <X className="w-6 h-6" />
@@ -387,7 +467,7 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
               disabled={loading}
             >
@@ -424,6 +504,14 @@ export function AdminAnnouncementManager() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | undefined>(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Check if we have a saved form when component mounts
+  useEffect(() => {
+    const savedData = localStorage.getItem(FORM_STORAGE_KEY);
+    if (savedData) {
+      setShowForm(true);
+    }
+  }, []);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -630,7 +718,10 @@ export function AdminAnnouncementManager() {
       {/* Create/Edit Form */}
       <AnnouncementForm
         isOpen={showForm}
-        onClose={() => setShowForm(false)}
+        onClose={() => {
+          setShowForm(false);
+          localStorage.removeItem(FORM_STORAGE_KEY);
+        }}
         announcement={selectedAnnouncement}
         onSave={fetchAnnouncements}
       />
