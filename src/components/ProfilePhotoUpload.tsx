@@ -77,15 +77,6 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9);
       });
 
-      // Check if bucket exists, create if it doesn't
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const profilePhotosBucket = buckets?.find(b => b.name === 'profile-photos');
-      
-      if (!profilePhotosBucket) {
-        console.error('Profile photos bucket not found');
-        throw new Error('Storage bucket not configured. Please contact support.');
-      }
-
       // Upload to Supabase Storage
       const fileName = `${Date.now()}.jpg`;
       const { data, error: uploadError } = await supabase.storage
@@ -96,7 +87,30 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        // If the error is due to bucket not found, try to create it
+        if (uploadError.message.includes('bucket not found')) {
+          const { data: bucket, error: bucketError } = await supabase.rpc('create_storage_bucket', {
+            bucket_name: 'profile-photos',
+            public_access: true
+          });
+
+          if (bucketError) throw bucketError;
+
+          // Retry upload after bucket creation
+          const { data: retryData, error: retryError } = await supabase.storage
+            .from('profile-photos')
+            .upload(fileName, blob, {
+              contentType: 'image/jpeg',
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (retryError) throw retryError;
+        } else {
+          throw uploadError;
+        }
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
