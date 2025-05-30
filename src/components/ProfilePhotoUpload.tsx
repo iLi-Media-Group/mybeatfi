@@ -78,9 +78,9 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
       });
 
       // Upload to Supabase Storage
-      const fileName = `profile-photos/${Date.now()}.jpg`;
+      const fileName = `${Date.now()}.jpg`;
       const { data, error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from('profile-photos')
         .upload(fileName, blob, {
           contentType: 'image/jpeg',
           cacheControl: '3600',
@@ -91,7 +91,7 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from('profile-photos')
         .getPublicUrl(fileName);
 
       // Delete old photo if exists
@@ -99,8 +99,8 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         const oldPath = currentPhotoUrl.split('/').pop();
         if (oldPath) {
           await supabase.storage
-            .from('avatars')
-            .remove([`profile-photos/${oldPath}`]);
+            .from('profile-photos')
+            .remove([oldPath]);
         }
       }
 
