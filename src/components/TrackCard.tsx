@@ -105,28 +105,32 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   const handleProducerClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowProducerProfile(true);
+    if (track.producer?.id) {
+      setShowProducerProfile(true);
+    }
   };
 
   return (
     <>
-      <div className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10">
+      <div 
+        className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
+        onClick={() => onSelect(track)}
+      >
         {/* Image Section */}
         <div className="relative aspect-square overflow-hidden">
           <img
             src={track.image}
             alt={track.title}
             className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-            onClick={togglePlay}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-60 transition-opacity duration-300" />
           
-          {/* Favorite Button - Always visible */}
+          {/* Favorite Button */}
           {user && (
             <button
               onClick={toggleFavorite}
               disabled={loading}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-10"
+              className="absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-20 cursor-pointer"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Star 
@@ -137,12 +141,10 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             </button>
           )}
 
-          {/* Play Button Overlay */}
+          {/* Play Button */}
           <button
             onClick={togglePlay}
-            className={`absolute inset-0 flex items-center justify-center ${
-              isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-            } transition-opacity duration-300 z-10`}
+            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <div className="p-3 rounded-full bg-blue-600/90 hover:bg-blue-600 transform transition-transform duration-300 hover:scale-110">
               <Play className={`w-6 h-6 text-white ${isPlaying ? 'hidden' : ''}`} />
@@ -155,13 +157,15 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
         <div className="p-3 space-y-2">
           <div>
             <h3 className="text-sm font-bold text-white mb-0.5 truncate">{track.title}</h3>
-            <button
-              onClick={handleProducerClick}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center"
-            >
-              <User className="w-3 h-3 mr-1" />
-              {track.artist}
-            </button>
+            {track.producer && (
+              <button
+                onClick={handleProducerClick}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+              >
+                <User className="w-3 h-3 mr-1" />
+                {track.producer.firstName} {track.producer.lastName}
+              </button>
+            )}
           </div>
 
           {/* Track Details */}
@@ -200,7 +204,11 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
           {/* Action Button */}
           <button
-            onClick={() => onSelect(track)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect(track);
+            }}
             className={`w-full py-2 px-4 rounded text-sm font-medium transition-all duration-300 flex items-center justify-center ${
               isSyncOnly 
                 ? 'bg-purple-600 hover:bg-purple-700 text-white'
@@ -214,11 +222,11 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
         </div>
       </div>
 
-      {showProducerProfile && (
+      {showProducerProfile && track.producer?.id && (
         <ProducerProfileDialog
           isOpen={showProducerProfile}
           onClose={() => setShowProducerProfile(false)}
-          producerId={track.producer?.id || ''}
+          producerId={track.producer.id}
         />
       )}
     </>
