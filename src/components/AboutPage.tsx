@@ -84,7 +84,7 @@ export function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="text-center">
               <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400"
+                src="https://drive.google.com/file/d/1Nx_GEfwgGi9fibmXJVNErekxenLWyzCd/view?usp=drive_link"
                 alt="CEO"
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
@@ -94,7 +94,7 @@ export function AboutPage() {
 
             <div className="text-center">
               <img
-                src="https://drive.google.com/file/d/1Nx_GEfwgGi9fibmXJVNErekxenLWyzCd/view?usp=drive_link"
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400"
                 alt="Head of Music"
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
