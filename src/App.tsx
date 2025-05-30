@@ -27,6 +27,7 @@ import { CustomSyncRequest } from './components/CustomSyncRequest';
 import { OpenSyncBriefs } from './components/OpenSyncBriefs';
 import RefundPolicy from './components/RefundPolicy';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import DisputeResolution from './components/DisputeResolution';
 
 function App() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
@@ -40,7 +41,6 @@ function App() {
   );
 
   const handleSearch = (filters: any) => {
-    // Convert filters to URL search params
     const params = new URLSearchParams();
     if (filters.query) params.set('q', filters.query);
     if (filters.genres?.length) params.set('genres', filters.genres.join(','));
@@ -48,7 +48,6 @@ function App() {
     if (filters.minBpm) params.set('minBpm', filters.minBpm.toString());
     if (filters.maxBpm) params.set('maxBpm', filters.maxBpm.toString());
 
-    // Navigate to catalog page with search params
     navigate(`/catalog?${params.toString()}`);
   };
 
@@ -134,6 +133,7 @@ function App() {
         <Route path="/upgrade" element={<LayoutWrapper><GoldAccessPage /></LayoutWrapper>} />
         <Route path="/refund-policy" element={<LayoutWrapper><RefundPolicy /></LayoutWrapper>} />
         <Route path="/privacy" element={<LayoutWrapper><PrivacyPolicy /></LayoutWrapper>} />
+        <Route path="/dispute-resolution" element={<LayoutWrapper><DisputeResolution /></LayoutWrapper>} />
 
         <Route path="/custom-sync-request" element={
           <ProtectedRoute requiresClient>
