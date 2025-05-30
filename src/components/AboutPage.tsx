@@ -63,7 +63,7 @@ export function AboutPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
-            <Globe className="w-8 h-8 text-blue-500 mb-4" />
+            <Globe className="w-8 h-8 text-blue-400 mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">Global Reach</h3>
             <p className="text-gray-300">
               Serving creators and producers from over 50 countries worldwide
@@ -71,7 +71,7 @@ export function AboutPage() {
           </div>
 
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
-            <Award className="w-8 h-8 text-blue-500 mb-4" />
+            <Award className="w-8 h-8 text-blue-400 mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">Industry Recognition</h3>
             <p className="text-gray-300">
               Trusted by leading content creators and production companies
@@ -83,10 +83,11 @@ export function AboutPage() {
           <h2 className="text-2xl font-bold text-white mb-6">Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="text-center">
-              <img
-                src="https://www.canva.com/design/DAGo8AvSfpQ/cizzMq11I2DtgP-T2SvhsQ/view"
-                alt="CEO"
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+              <ProfilePhotoUpload
+                currentPhotoUrl={null}
+                onPhotoUpdate={() => {}}
+                size="lg"
+                userId="ceo"
               />
               <h3 className="text-lg font-semibold text-white">Deryk Banks</h3>
               <p className="text-gray-400">CEO & Founder</p>
