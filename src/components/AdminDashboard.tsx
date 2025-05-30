@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search } from 'lucide-react';
+import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +7,7 @@ import { ProposalAnalytics } from './ProposalAnalytics';
 import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
 import { ClientList } from './ClientList';
+import { AdminAnnouncementManager } from './AdminAnnouncementManager';
 
 interface UserStats {
   total_clients: number;
@@ -46,6 +47,7 @@ export function AdminDashboard() {
   const [producerSortField, setProducerSortField] = useState<keyof UserDetails>('total_revenue');
   const [producerSortOrder, setProducerSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProducer, setSelectedProducer] = useState<UserDetails | null>(null);
+  const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements'>('analytics');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -258,21 +260,70 @@ export function AdminDashboard() {
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="flex border-b border-blue-500/20 mb-8">
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'analytics' 
+                ? 'text-white border-b-2 border-blue-500' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Analytics
+          </button>
+          <button
+            onClick={() => setActiveTab('producers')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'producers' 
+                ? 'text-white border-b-2 border-blue-500' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Producers
+          </button>
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'clients' 
+                ? 'text-white border-b-2 border-blue-500' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Clients
+          </button>
+          <button
+            onClick={() => setActiveTab('announcements')}
+            className={`px-6 py-3 font-medium transition-colors flex items-center ${
+              activeTab === 'announcements' 
+                ? 'text-white border-b-2 border-blue-500' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Bell className="w-4 h-4 mr-2" />
+            Announcements
+          </button>
+        </div>
+
         {/* Analytics Sections */}
-        <div className="space-y-12">
-          {/* Proposal Analytics */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Sync Proposal Analytics</h2>
-            <ProposalAnalytics />
-          </div>
+        {activeTab === 'analytics' && (
+          <div className="space-y-12">
+            {/* Proposal Analytics */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Sync Proposal Analytics</h2>
+              <ProposalAnalytics />
+            </div>
 
-          {/* Custom Sync Analytics */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Custom Sync Analytics</h2>
-            <CustomSyncAnalytics />
+            {/* Custom Sync Analytics */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Custom Sync Analytics</h2>
+              <CustomSyncAnalytics />
+            </div>
           </div>
+        )}
 
-          {/* Producer List */}
+        {/* Producer List */}
+        {activeTab === 'producers' && (
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">Producer Analytics</h2>
@@ -385,27 +436,36 @@ export function AdminDashboard() {
               </table>
             </div>
           </div>
+        )}
 
-          {/* Add Client List section */}
+        {/* Client List section */}
+        {activeTab === 'clients' && (
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
             <ClientList />
           </div>
-        </div>
+        )}
 
-        {/* Producer Analytics Modal */}
-        {selectedProducer && (
-          <ProducerAnalyticsModal
-            isOpen={true}
-            onClose={() => setSelectedProducer(null)}
-            producerId={selectedProducer.id}
-            producerName={
-              selectedProducer.first_name && selectedProducer.last_name
-                ? `${selectedProducer.first_name} ${selectedProducer.last_name}`
-                : selectedProducer.email.split('@')[0]
-            }
-          />
+        {/* Announcements Management */}
+        {activeTab === 'announcements' && (
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+            <AdminAnnouncementManager />
+          </div>
         )}
       </div>
+
+      {/* Producer Analytics Modal */}
+      {selectedProducer && (
+        <ProducerAnalyticsModal
+          isOpen={true}
+          onClose={() => setSelectedProducer(null)}
+          producerId={selectedProducer.id}
+          producerName={
+            selectedProducer.first_name && selectedProducer.last_name
+              ? `${selectedProducer.first_name} ${selectedProducer.last_name}`
+              : selectedProducer.email.split('@')[0]
+          }
+        />
+      )}
     </div>
   );
 }
