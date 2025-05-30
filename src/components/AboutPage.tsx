@@ -88,7 +88,7 @@ export function AboutPage() {
                 alt="CEO"
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
-              <h3 className="text-lg font-semibold text-white">John Smith</h3>
+              <h3 className="text-lg font-semibold text-white">Deryk Banks</h3>
               <p className="text-gray-400">CEO & Founder</p>
             </div>
 
