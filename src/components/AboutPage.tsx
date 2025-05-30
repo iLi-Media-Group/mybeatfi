@@ -17,34 +17,61 @@ export function AboutPage() {
   ]);
 
   useEffect(() => {
-    // Load team member photos from site settings
-    const loadTeamPhotos = async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key, value')
-        .like('key', 'about_photo_%');
+    // Initialize storage bucket and load team member photos
+    const initializeStorage = async () => {
+      try {
+        // Check if bucket exists
+        const { data: buckets, error: bucketsError } = await supabase
+          .storage
+          .listBuckets();
 
-      if (!error && data) {
-        const updatedMembers = [...teamMembers];
-        
-        data.forEach(setting => {
-          const memberId = setting.key.replace('about_photo_', '');
-          const memberIndex = updatedMembers.findIndex(m => m.id === memberId);
-          
-          if (memberIndex >= 0) {
-            const photoUrl = supabase.storage
-              .from('about-photos')
-              .getPublicUrl(setting.value).data.publicUrl;
-              
-            updatedMembers[memberIndex].photoUrl = photoUrl;
+        const bucketExists = buckets?.some(bucket => bucket.name === 'about-photos');
+
+        if (!bucketExists) {
+          // Create the bucket if it doesn't exist
+          const { error: createError } = await supabase
+            .storage
+            .createBucket('about-photos', {
+              public: true,
+              fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+            });
+
+          if (createError) {
+            console.error('Error creating bucket:', createError);
+            return;
           }
-        });
-        
-        setTeamMembers(updatedMembers);
+        }
+
+        // Now load the photos
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('key, value')
+          .like('key', 'about_photo_%');
+
+        if (!error && data) {
+          const updatedMembers = [...teamMembers];
+          
+          data.forEach(setting => {
+            const memberId = setting.key.replace('about_photo_', '');
+            const memberIndex = updatedMembers.findIndex(m => m.id === memberId);
+            
+            if (memberIndex >= 0) {
+              const photoUrl = supabase.storage
+                .from('about-photos')
+                .getPublicUrl(setting.value).data.publicUrl;
+                
+              updatedMembers[memberIndex].photoUrl = photoUrl;
+            }
+          });
+          
+          setTeamMembers(updatedMembers);
+        }
+      } catch (error) {
+        console.error('Error initializing storage:', error);
       }
     };
     
-    loadTeamPhotos();
+    initializeStorage();
   }, []);
 
   const handlePhotoUpdate = (memberId: string, url: string) => {
