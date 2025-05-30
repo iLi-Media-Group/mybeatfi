@@ -13,7 +13,7 @@ interface TeamMember {
 export function AboutPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     { id: 'ceo', name: 'Deryk Banks', role: 'CEO & Founder', photoUrl: null },
-    { id: 'music-head', name: 'Sarah Johnson', role: 'Head of Music', photoUrl: null }
+    { id: 'partner', name: 'G Smith', role: 'Head of Music', photoUrl: null }
   ]);
 
   useEffect(() => {
