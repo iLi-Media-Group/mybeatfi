@@ -25,6 +25,7 @@ import { useAuth } from './contexts/AuthContext';
 import { GoldAccessPage } from './components/GoldAccessPage';
 import { CustomSyncRequest } from './components/CustomSyncRequest';
 import { OpenSyncBriefs } from './components/OpenSyncBriefs';
+import RefundPolicy from './components/RefundPolicy';
 
 function App() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
@@ -130,6 +131,7 @@ function App() {
         <Route path="/reset-password" element={<LayoutWrapper><ResetPassword /></LayoutWrapper>} />
         <Route path="/test-upload" element={<LayoutWrapper><TestUpload /></LayoutWrapper>} />
         <Route path="/upgrade" element={<LayoutWrapper><GoldAccessPage /></LayoutWrapper>} />
+        <Route path="/refund-policy" element={<LayoutWrapper><RefundPolicy /></LayoutWrapper>} />
 
         <Route path="/custom-sync-request" element={
           <ProtectedRoute requiresClient>
