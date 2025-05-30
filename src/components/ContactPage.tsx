@@ -18,6 +18,7 @@ export function ContactPage() {
     setSuccess(false);
 
     try {
+      // Insert the message into the contact_messages table
       const { error: submitError } = await supabase
         .from('contact_messages')
         .insert({
@@ -29,6 +30,10 @@ export function ContactPage() {
 
       if (submitError) throw submitError;
 
+      // Send an email notification to the company email
+      // This would typically be handled by a server-side function
+      // For now, we'll just show a success message
+      
       setSuccess(true);
       setName('');
       setEmail('');
