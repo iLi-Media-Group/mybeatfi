@@ -43,33 +43,55 @@ export function ProducerProfileDialog({ isOpen, onClose, producerId }: ProducerP
       setLoading(true);
       setError(null);
 
+      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          bio,
+          avatar_path,
+          show_location,
+          city,
+          state,
+          company_name,
+          producer_number
+        `)
         .eq('id', producerId)
         .single();
 
       if (profileError) throw profileError;
 
-      // Fetch producer stats
-      const { data: tracksData } = await supabase
+      // Fetch track count
+      const { count: trackCount, error: tracksError } = await supabase
         .from('tracks')
-        .select('id')
-        .eq('producer_id', producerId);
+        .select('id', { count: 'exact', head: true })
+        .eq('producer_id', producerId)
+        .is('deleted_at', null);
 
-      const { data: salesData } = await supabase
+      if (tracksError) throw tracksError;
+
+      // Fetch recent sales
+      const { count: salesCount, error: salesError } = await supabase
         .from('sales')
-        .select('amount')
+        .select('id', { count: 'exact', head: true })
         .eq('tracks.producer_id', producerId)
+        .is('deleted_at', null)
         .gt('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      const stats = {
-        totalTracks: tracksData?.length || 0,
-        totalSales: salesData?.length || 0,
-        avgRating: 4.8 // Placeholder for future rating system
-      };
+      if (salesError) throw salesError;
 
-      setProfile({ ...profileData, stats });
+      // Set profile with stats
+      setProfile({
+        ...profileData,
+        stats: {
+          totalTracks: trackCount || 0,
+          totalSales: salesCount || 0,
+          avgRating: 4.8 // Placeholder for future rating system
+        }
+      });
     } catch (err) {
       console.error('Error fetching producer profile:', err);
       setError('Failed to load producer profile');
