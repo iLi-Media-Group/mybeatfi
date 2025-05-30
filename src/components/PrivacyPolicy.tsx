@@ -46,8 +46,8 @@ export default function PrivacyPolicy() {
       <p className="mb-6">We may update this Privacy Policy and will revise the effective date at the top.</p>
 
       <h2 className="text-xl font-semibold mt-8 mb-2">10. Contact Us</h2>
-      <p className="mb-2">📧 info@mybeatfi.io</p>
-      <p>📍 Los Angeles, CA, United States</p>
+      <p className="mb-2">📧 mybeatfisync@gmail.com</p>
+      <p>📍 Rio de Janeiro, RJ, Brasil</p>
     </div>
   );
 }
