@@ -73,8 +73,8 @@ export function ContactPage() {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
               <h2 className="text-xl font-semibold text-white mb-4">Office Hours</h2>
               <p className="text-gray-300">
-                Monday - Friday: 10:00 AM - 10:00 PM (EST)<br />
-                Saturday: 10:00 AM - 6:00 PM (EST)<br />
+                Monday - Friday: 10:00 AM - 10:00 PM (BST)<br />
+                Saturday: 10:00 AM - 6:00 PM (BST)<br />
                 Sunday: Closed
               </p>
             </div>
