@@ -9,7 +9,6 @@ import { calculateTimeRemaining } from '../utils/dateUtils';
 import { ClientProfile } from './ClientProfile';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 import { EditRequestDialog } from './EditRequestDialog';
-import { LicenseDialog } from './LicenseDialog';
 
 interface License {
   id: string;
@@ -91,8 +90,6 @@ export function ClientDashboard() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
-  const [showLicenseDialog, setShowLicenseDialog] = useState(false);
-  const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -309,21 +306,6 @@ export function ClientDashboard() {
     } finally {
       setRemovingFavorite(null);
     }
-  };
-
-  const handleLicenseClick = (track: Track) => {
-    if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
-      navigate('/pricing');
-      return;
-    }
-
-    if (userStats.membershipType === 'Gold Access' && userStats.remainingLicenses <= 0) {
-      navigate('/upgrade');
-      return;
-    }
-
-    setSelectedTrackToLicense(track);
-    setShowLicenseDialog(true);
   };
 
   const handleUpdateRequest = async (requestId: string, updates: Partial<CustomSyncRequest>) => {
@@ -758,15 +740,8 @@ export function ClientDashboard() {
                           <p className="text-sm text-gray-400">
                             {track.genres.join(', ')} • {track.bpm} BPM
                           </p>
-                          <div className="mt-2 flex items-center justify-between">
+                          <div className="mt-2">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
-                            <button
-                              onClick={() => handleLicenseClick(track)}
-                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                            >
-                              <DollarSign className="w-4 h-4" />
-                              <span>License Track</span>
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -805,15 +780,8 @@ export function ClientDashboard() {
                           <p className="text-sm text-gray-400">
                             {track.genres.join(', ')} • {track.bpm} BPM
                           </p>
-                          <div className="mt-2 flex items-center justify-between">
+                          <div className="mt-2">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
-                            <button
-                              onClick={() => handleLicenseClick(track)}
-                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                            >
-                              <DollarSign className="w-4 h-4" />
-                              <span>License Track</span>
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -851,19 +819,6 @@ export function ClientDashboard() {
         isOpen={showProfileDialog}
         onClose={() => setShowProfileDialog(false)}
       />
-
-      {selectedTrackToLicense && (
-        <LicenseDialog
-          isOpen={showLicenseDialog}
-          onClose={() => {
-            setShowLicenseDialog(false);
-            setSelectedTrackToLicense(null);
-          }}
-          track={selectedTrackToLicense}
-          membershipType={userStats.membershipType || 'Single Track'}
-          remainingLicenses={userStats.remainingLicenses}
-        />
-      )}
     </div>
   );
 }
