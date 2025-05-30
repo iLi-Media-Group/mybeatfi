@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ProducerDashboard() {
-  // Update the profile state to include avatar and bio
+  const { user } = useAuth();
   const [profile, setProfile] = useState<{ 
     first_name?: string, 
     email: string,
@@ -13,26 +14,23 @@ export function ProducerDashboard() {
   } | null>(null);
 
   const fetchDashboardData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     
-    if (user) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('first_name, email, avatar_path, bio, producer_number')
-        .eq('id', user.id)
-        .single();
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('first_name, email, avatar_path, bio, producer_number')
+      .eq('id', user.id)
+      .single();
 
-      setProfile(profileData);
-    }
+    setProfile(profileData);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      {/* Update the welcome section */}
       <div className="flex items-center space-x-6">
         <div className="flex-shrink-0">
           <ProfilePhotoUpload
@@ -40,6 +38,7 @@ export function ProducerDashboard() {
             onPhotoUpdate={(url) => {
               setProfile(prev => prev ? { ...prev, avatar_path: url } : null);
             }}
+            userId={user?.id}
           />
         </div>
         <div>

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { ProfilePhotoUpload } from './ProfilePhotoUpload';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ClientDashboard() {
-  // Update the profile section at the top of the dashboard
+  const { user } = useAuth();
   const [profile, setProfile] = useState<{ 
     first_name?: string, 
     email: string,
@@ -12,20 +13,20 @@ export function ClientDashboard() {
   } | null>(null);
 
   const fetchDashboardData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     
     const { data: profileData } = await supabase
       .from('profiles')
       .select('first_name, email, avatar_path, bio')
-      .eq('id', user?.id)
+      .eq('id', user.id)
       .single();
 
     setProfile(profileData);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
@@ -37,6 +38,7 @@ export function ClientDashboard() {
               onPhotoUpdate={(url) => {
                 setProfile(prev => prev ? { ...prev, avatar_path: url } : null);
               }}
+              userId={user?.id}
             />
           </div>
           <div>
@@ -57,5 +59,3 @@ export function ClientDashboard() {
     </div>
   );
 }
-
-export default ClientDashboard;
