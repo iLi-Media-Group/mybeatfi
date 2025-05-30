@@ -100,23 +100,6 @@ export function AboutPagePhotoUpload({
         canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9);
       });
 
-      // Check if about-photos bucket exists, create if not
-      try {
-        const { data: buckets } = await supabase.storage.getBucket('about-photos');
-        if (!buckets) {
-          await supabase.rpc('create_storage_bucket', {
-            bucket_name: 'about-photos',
-            public_access: true
-          });
-        }
-      } catch (bucketError) {
-        // Bucket doesn't exist, create it
-        await supabase.rpc('create_storage_bucket', {
-          bucket_name: 'about-photos',
-          public_access: true
-        });
-      }
-
       // Upload to Supabase Storage
       const fileName = `${photoId}-${Date.now()}.jpg`;
       const { data, error: uploadError } = await supabase.storage

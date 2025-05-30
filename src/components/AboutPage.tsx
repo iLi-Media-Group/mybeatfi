@@ -17,32 +17,10 @@ export function AboutPage() {
   ]);
 
   useEffect(() => {
-    // Initialize storage bucket and load team member photos
+    // Load team member photos
     const initializeStorage = async () => {
       try {
-        // Check if bucket exists
-        const { data: buckets, error: bucketsError } = await supabase
-          .storage
-          .listBuckets();
-
-        const bucketExists = buckets?.some(bucket => bucket.name === 'about-photos');
-
-        if (!bucketExists) {
-          // Create the bucket if it doesn't exist
-          const { error: createError } = await supabase
-            .storage
-            .createBucket('about-photos', {
-              public: true,
-              fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
-            });
-
-          if (createError) {
-            console.error('Error creating bucket:', createError);
-            return;
-          }
-        }
-
-        // Now load the photos
+        // Load the photos
         const { data, error } = await supabase
           .from('site_settings')
           .select('key, value')
@@ -67,7 +45,7 @@ export function AboutPage() {
           setTeamMembers(updatedMembers);
         }
       } catch (error) {
-        console.error('Error initializing storage:', error);
+        console.error('Error loading photos:', error);
       }
     };
     
