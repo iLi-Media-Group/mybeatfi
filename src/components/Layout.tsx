@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase } from 'lucide-react';
+import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Footer } from './Footer';
@@ -13,7 +13,7 @@ interface LayoutProps {
 export function Layout({ children, onSignupClick }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const { user, accountType, signOut } = useAuth();
+  const { user, accountType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
@@ -161,6 +161,46 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                     <CreditCard className="w-4 h-4 mr-2" />
                     Pricing Plans
                   </Link>
+
+                  <div className="border-t border-blue-500/20 my-1"></div>
+
+                  <Link
+                    to="/about"
+                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Info className="w-4 h-4 mr-2" />
+                    About Us
+                  </Link>
+
+                  <Link
+                    to="/contact"
+                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Contact Us
+                  </Link>
+
+                  <Link
+                    to="/announcements"
+                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Bell className="w-4 h-4 mr-2" />
+                    Announcements
+                  </Link>
+
+                  {(accountType === 'producer' || isAdmin) && (
+                    <Link
+                      to="/chat"
+                      className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Internal Chat
+                    </Link>
+                  )}
 
                   {user ? (
                     <>

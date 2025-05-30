@@ -25,9 +25,13 @@ import { useAuth } from './contexts/AuthContext';
 import { GoldAccessPage } from './components/GoldAccessPage';
 import { CustomSyncRequest } from './components/CustomSyncRequest';
 import { OpenSyncBriefs } from './components/OpenSyncBriefs';
-import RefundPolicy from './components/RefundPolicy';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import DisputeResolution from './components/DisputeResolution';
+import { RefundPolicy } from './components/RefundPolicy';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { DisputeResolution } from './components/DisputeResolution';
+import { AboutPage } from './components/AboutPage';
+import { ContactPage } from './components/ContactPage';
+import { AnnouncementsPage } from './components/AnnouncementsPage';
+import { ChatSystem } from './components/ChatSystem';
 
 function App() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
@@ -134,6 +138,17 @@ function App() {
         <Route path="/refund-policy" element={<LayoutWrapper><RefundPolicy /></LayoutWrapper>} />
         <Route path="/privacy" element={<LayoutWrapper><PrivacyPolicy /></LayoutWrapper>} />
         <Route path="/dispute-resolution" element={<LayoutWrapper><DisputeResolution /></LayoutWrapper>} />
+        <Route path="/about" element={<LayoutWrapper><AboutPage /></LayoutWrapper>} />
+        <Route path="/contact" element={<LayoutWrapper><ContactPage /></LayoutWrapper>} />
+        <Route path="/announcements" element={<LayoutWrapper><AnnouncementsPage /></LayoutWrapper>} />
+
+        <Route path="/chat" element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <ChatSystem />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
 
         <Route path="/custom-sync-request" element={
           <ProtectedRoute requiresClient>
