@@ -77,6 +77,15 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9);
       });
 
+      // Check if bucket exists, create if it doesn't
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const profilePhotosBucket = buckets?.find(b => b.name === 'profile-photos');
+      
+      if (!profilePhotosBucket) {
+        console.error('Profile photos bucket not found');
+        throw new Error('Storage bucket not configured. Please contact support.');
+      }
+
       // Upload to Supabase Storage
       const fileName = `${Date.now()}.jpg`;
       const { data, error: uploadError } = await supabase.storage
@@ -84,7 +93,7 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         .upload(fileName, blob, {
           contentType: 'image/jpeg',
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
@@ -93,6 +102,19 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(fileName);
+
+      // Update profile with new avatar path
+      if (user) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            avatar_path: `profile-photos/${fileName}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+      }
 
       // Delete old photo if exists
       if (currentPhotoUrl) {
@@ -104,7 +126,7 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         }
       }
 
-      onPhotoUpdate(publicUrl);
+      onPhotoUpdate(`profile-photos/${fileName}`);
     } catch (err) {
       console.error('Error uploading photo:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload photo');
@@ -119,7 +141,7 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
         <div className={`relative ${SIZES[size]} rounded-full overflow-hidden bg-gray-800 border-2 border-blue-500/20`}>
           {currentPhotoUrl ? (
             <img
-              src={currentPhotoUrl}
+              src={supabase.storage.from('profile-photos').getPublicUrl(currentPhotoUrl.replace('profile-photos/', '')).data.publicUrl}
               alt="Profile"
               className="w-full h-full object-cover"
             />
