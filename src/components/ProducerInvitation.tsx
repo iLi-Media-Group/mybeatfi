@@ -20,32 +20,41 @@ export function ProducerInvitation() {
 
   const fetchNextProducerNumber = async () => {
     try {
-      const { data, error } = await supabase
+      // Get all existing producer numbers
+      const { data: existingNumbers, error: fetchError } = await supabase
         .from('profiles')
         .select('producer_number')
         .not('producer_number', 'is', null)
-        .order('producer_number', { ascending: false })
-        .limit(1);
+        .order('producer_number', { ascending: true });
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       const defaultNumber = 'mbfpr-001';
-
-      if (data && data.length > 0 && data[0].producer_number) {
-        const match = data[0].producer_number.match(/mbfpr-(\d{3})/);
-        if (match) {
-          const lastNumber = parseInt(match[1]);
-          const next = `mbfpr-${String(lastNumber + 1).padStart(3, '0')}`;
-          setNextNumber(next);
-          setProducerNumber(next);
-        } else {
-          setNextNumber(defaultNumber);
-          setProducerNumber(defaultNumber);
-        }
-      } else {
+      
+      if (!existingNumbers || existingNumbers.length === 0) {
         setNextNumber(defaultNumber);
         setProducerNumber(defaultNumber);
+        return;
       }
+
+      // Find the first available number
+      let currentNum = 1;
+      for (const profile of existingNumbers) {
+        const match = profile.producer_number?.match(/mbfpr-(\d{3})/);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num !== currentNum) {
+            // Found a gap, use this number
+            break;
+          }
+          currentNum++;
+        }
+      }
+
+      const nextAvailable = `mbfpr-${String(currentNum).padStart(3, '0')}`;
+      setNextNumber(nextAvailable);
+      setProducerNumber(nextAvailable);
+
     } catch (err) {
       console.error('Error fetching next producer number:', err);
       // Set default values even in case of error
@@ -84,6 +93,17 @@ export function ProducerInvitation() {
 
       if (!producerNumber.match(/^mbfpr-\d{3}$/)) {
         throw new Error('Invalid producer number format. Must be mbfpr-XXX');
+      }
+
+      // Check if producer number already exists
+      const { data: existingNumber } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('producer_number', producerNumber)
+        .maybeSingle();
+
+      if (existingNumber) {
+        throw new Error('This producer number is already in use');
       }
 
       const { data: existingProfile } = await supabase
