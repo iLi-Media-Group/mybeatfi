@@ -134,6 +134,7 @@ export function ProducerProfileDialog({ isOpen, onClose, producerId }: ProducerP
                   currentPhotoUrl={profile.avatar_path}
                   onPhotoUpdate={() => {}}
                   size="lg"
+                  userId={producerId}
                 />
               </div>
               
