@@ -1,5 +1,6 @@
 import React from 'react';
 import { Music, Users, Shield, Zap, Globe, Award } from 'lucide-react';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 
 export function AboutPage() {
   return (
