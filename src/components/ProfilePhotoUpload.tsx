@@ -1,0 +1,159 @@
+import React, { useState } from 'react';
+import { Upload, X, Camera, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+interface ProfilePhotoUploadProps {
+  currentPhotoUrl: string | null;
+  onPhotoUpdate: (url: string) => void;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const SIZES = {
+  sm: 'w-24 h-24',
+  md: 'w-32 h-32',
+  lg: 'w-40 h-40'
+};
+
+export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md' }: ProfilePhotoUploadProps) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setError(null);
+      setUploading(true);
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please upload an image file');
+      }
+
+      // Validate file size (2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error('Image size must be less than 2MB');
+      }
+
+      // Create a temporary canvas to resize the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      // Calculate dimensions to maintain aspect ratio
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 250;
+
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height / width) * maxSize;
+          width = maxSize;
+        } else {
+          width = (width / height) * maxSize;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9);
+      });
+
+      // Upload to Supabase Storage
+      const fileName = `profile-photos/${Date.now()}.jpg`;
+      const { data, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, blob, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Delete old photo if exists
+      if (currentPhotoUrl) {
+        const oldPath = currentPhotoUrl.split('/').pop();
+        if (oldPath) {
+          await supabase.storage
+            .from('avatars')
+            .remove([`profile-photos/${oldPath}`]);
+        }
+      }
+
+      onPhotoUpdate(publicUrl);
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col items-center">
+        <div className={`relative ${SIZES[size]} rounded-full overflow-hidden bg-gray-800 border-2 border-blue-500/20`}>
+          {currentPhotoUrl ? (
+            <img
+              src={currentPhotoUrl}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-800">
+              <img
+                src="https://raw.githubusercontent.com/supabase/supabase/master/packages/common/assets/images/supabase-logo.svg"
+                alt="Default Logo"
+                className="w-2/3 h-2/3 object-contain opacity-50"
+              />
+            </div>
+          )}
+          <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+            {uploading ? (
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            ) : (
+              <Camera className="w-8 h-8 text-white" />
+            )}
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+        <p className="mt-2 text-sm text-gray-400">
+          Upload your logo or personal photo
+        </p>
+        <p className="text-xs text-gray-500">
+          Max size: 2MB (250x250px)
+        </p>
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+          <p className="text-red-400 text-sm text-center">{error}</p>
+        </div>
+      )}
+    </div>
+  );
+}
