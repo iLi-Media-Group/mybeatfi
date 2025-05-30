@@ -26,7 +26,7 @@ import { GoldAccessPage } from './components/GoldAccessPage';
 import { CustomSyncRequest } from './components/CustomSyncRequest';
 import { OpenSyncBriefs } from './components/OpenSyncBriefs';
 import { RefundPolicy } from './components/RefundPolicy';
-import { PrivacyPolicy } from './components/PrivacyPolicy';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import DisputeResolution from './components/DisputeResolution';
 import { AboutPage } from './components/AboutPage';
 import { ContactPage } from './components/ContactPage';
