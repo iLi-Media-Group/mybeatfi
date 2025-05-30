@@ -41,6 +41,7 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formId, setFormId] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Load saved form data on initial render
   useEffect(() => {
@@ -108,6 +109,7 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
           saveFormData(newFormId);
         }
       }
+      setHasUnsavedChanges(false);
     }
   }, [announcement, isOpen]);
 
@@ -132,8 +134,25 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
   useEffect(() => {
     if (formId && isOpen) {
       saveFormData(formId);
+      setHasUnsavedChanges(true);
     }
   }, [title, content, type, publishedAt, expiresAt, externalUrl, imageUrl, isFeatured, imagePreview, formId, isOpen]);
+
+  // Add beforeunload event listener to warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        const message = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -233,6 +252,7 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
       }
 
       setSuccess(true);
+      setHasUnsavedChanges(false);
       
       // Clear localStorage after successful save
       localStorage.removeItem(FORM_STORAGE_KEY);
@@ -250,8 +270,9 @@ function AnnouncementForm({ isOpen, onClose, announcement, onSave }: Announcemen
   };
 
   const handleClose = () => {
-    if (confirm('Are you sure you want to close? Any unsaved changes will be lost.')) {
+    if (!hasUnsavedChanges || confirm('Are you sure you want to close? Any unsaved changes will be lost.')) {
       localStorage.removeItem(FORM_STORAGE_KEY);
+      setHasUnsavedChanges(false);
       onClose();
     }
   };
@@ -509,7 +530,31 @@ export function AdminAnnouncementManager() {
   useEffect(() => {
     const savedData = localStorage.getItem(FORM_STORAGE_KEY);
     if (savedData) {
-      setShowForm(true);
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.formId) {
+          // If the saved form is for editing an existing announcement
+          if (!parsedData.formId.startsWith('new-')) {
+            // Try to find the announcement in the database
+            const fetchAnnouncement = async () => {
+              const { data } = await supabase
+                .from('announcements')
+                .select('*')
+                .eq('id', parsedData.formId)
+                .single();
+                
+              if (data) {
+                setSelectedAnnouncement(data);
+              }
+            };
+            
+            fetchAnnouncement();
+          }
+          setShowForm(true);
+        }
+      } catch (e) {
+        console.error('Error parsing saved form data:', e);
+      }
     }
   }, []);
 
@@ -682,6 +727,11 @@ export function AdminAnnouncementManager() {
                     <span className="px-2 py-0.5 rounded-full bg-white/10">
                       {announcement.type.charAt(0).toUpperCase() + announcement.type.slice(1)}
                     </span>
+                    {announcement.is_featured && (
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
+                        Featured
+                      </span>
+                    )}
                   </div>
                   
                   {announcement.image_url && (
@@ -719,8 +769,10 @@ export function AdminAnnouncementManager() {
       <AnnouncementForm
         isOpen={showForm}
         onClose={() => {
-          setShowForm(false);
-          localStorage.removeItem(FORM_STORAGE_KEY);
+          if (confirm('Are you sure you want to close? Any unsaved changes will be lost.')) {
+            setShowForm(false);
+            localStorage.removeItem(FORM_STORAGE_KEY);
+          }
         }}
         announcement={selectedAnnouncement}
         onSave={fetchAnnouncements}
