@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X } from 'lucide-react';
+import { User, Mail, X, Phone, MapPin, Building2, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -13,6 +13,14 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [producerNumber, setProducerNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -29,7 +37,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email')
+        .select('*')
         .eq('id', user?.id)
         .single();
 
@@ -39,6 +47,14 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setEmail(data.email || '');
+        setCompanyName(data.company_name || '');
+        setProducerNumber(data.producer_number || '');
+        setPhoneNumber(data.phone_number || '');
+        setStreetAddress(data.street_address || '');
+        setCity(data.city || '');
+        setState(data.state || '');
+        setPostalCode(data.postal_code || '');
+        setCountry(data.country || '');
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -62,6 +78,13 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          company_name: companyName.trim() || null,
+          phone_number: phoneNumber.trim() || null,
+          street_address: streetAddress.trim() || null,
+          city: city.trim() || null,
+          state: state.trim() || null,
+          postal_code: postalCode.trim() || null,
+          country: country.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -84,9 +107,9 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Edit Profile</h2>
+          <h2 className="text-2xl font-bold text-white">Producer Profile</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -113,53 +136,172 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  className="w-full pl-10 opacity-50"
-                  disabled
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Producer Number
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={producerNumber}
+                    className="w-full pl-10 opacity-50"
+                    disabled
+                  />
+                </div>
               </div>
-              <p className="mt-1 text-xs text-gray-400">
-                Email cannot be changed
-              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    className="w-full pl-10 opacity-50"
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  First Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full pl-10"
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                First Name
+                Company Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full pl-10"
-                  required
+                  placeholder="Optional"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Last Name
+                Phone Number
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                   className="w-full pl-10"
-                  required
+                  placeholder="International format"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium text-white">Address Information</h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Street Address
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={streetAddress}
+                    onChange={(e) => setStreetAddress(e.target.value)}
+                    className="w-full pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    State/Province/Region
+                  </label>
+                  <input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Postal Code
+                  </label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
 

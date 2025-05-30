@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserPlus, Send, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Send, Loader2, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,9 +8,39 @@ export function ProducerInvitation() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [producerNumber, setProducerNumber] = useState('');
+  const [nextNumber, setNextNumber] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchNextProducerNumber();
+  }, []);
+
+  const fetchNextProducerNumber = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('producer_number')
+        .order('producer_number', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const lastNumber = parseInt(data[0].producer_number.split('-')[1]);
+        const next = `mbfpr-${String(lastNumber + 1).padStart(3, '0')}`;
+        setNextNumber(next);
+        setProducerNumber(next);
+      } else {
+        setNextNumber('mbfpr-001');
+        setProducerNumber('mbfpr-001');
+      }
+    } catch (err) {
+      console.error('Error fetching next producer number:', err);
+    }
+  };
 
   const generateInvitationCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -31,55 +61,31 @@ export function ProducerInvitation() {
         throw new Error('Admin email not found');
       }
 
-      // Validate email format
       const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
       if (!emailRegex.test(email)) {
         throw new Error('Please enter a valid email address');
       }
 
-      // Validate required fields
       if (!firstName.trim() || !lastName.trim()) {
         throw new Error('First name and last name are required');
       }
 
-      // Check if email already exists in profiles
-      const { data: existingProfile, error: profileError } = await supabase
+      if (!producerNumber.match(/^mbfpr-\d{3}$/)) {
+        throw new Error('Invalid producer number format. Must be mbfpr-XXX');
+      }
+
+      const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id, account_type')
         .eq('email', email)
         .maybeSingle();
 
-      if (profileError) throw profileError;
-
       if (existingProfile) {
-        if (existingProfile.account_type === 'producer') {
-          throw new Error('This email is already registered as a producer');
-        } else {
-          throw new Error('This email is already registered with a different account type');
-        }
+        throw new Error('This email is already registered');
       }
 
-      // Check for existing invitations
-      const { data: existingInvitation, error: inviteError } = await supabase
-        .from('producer_invitations')
-        .select('id, invitation_code, expires_at, used')
-        .eq('email', email)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (inviteError) throw inviteError;
-
-      if (existingInvitation) {
-        if (!existingInvitation.used && new Date(existingInvitation.expires_at) > new Date()) {
-          throw new Error('An active invitation already exists for this email');
-        }
-      }
-
-      // Generate invitation code
       const invitationCode = generateInvitationCode();
 
-      // Create new invitation
       const { error: insertError } = await supabase
         .from('producer_invitations')
         .insert({
@@ -87,19 +93,17 @@ export function ProducerInvitation() {
           first_name: firstName,
           last_name: lastName,
           invitation_code: invitationCode,
-          created_by: user.email,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+          created_by: user.id,
+          producer_number: producerNumber
         });
 
-      if (insertError) {
-        console.error('Invitation creation error:', insertError);
-        throw new Error('Failed to create invitation');
-      }
+      if (insertError) throw insertError;
 
       setSuccess('Producer invitation created successfully');
       setEmail('');
       setFirstName('');
       setLastName('');
+      await fetchNextProducerNumber();
     } catch (err) {
       console.error('Error creating invitation:', err);
       setError(err instanceof Error ? err.message : 'Failed to create invitation');
@@ -137,13 +141,35 @@ export function ProducerInvitation() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
+                Producer Number
+              </label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={producerNumber}
+                  onChange={(e) => setProducerNumber(e.target.value)}
+                  className="w-full pl-10"
+                  pattern="mbfpr-\d{3}"
+                  title="Format: mbfpr-XXX (where X is a digit)"
+                  placeholder={nextNumber}
+                  required
+                />
+              </div>
+              <p className="mt-1 text-sm text-gray-400">
+                Next available number: {nextNumber}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:border-purple-500 focus:ring focus:ring-purple-500/20"
+                className="w-full"
                 required
                 disabled={loading}
                 placeholder="producer@example.com"
@@ -158,7 +184,7 @@ export function ProducerInvitation() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:border-purple-500 focus:ring focus:ring-purple-500/20"
+                className="w-full"
                 required
                 disabled={loading}
                 placeholder="John"
@@ -173,7 +199,7 @@ export function ProducerInvitation() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:border-purple-500 focus:ring focus:ring-purple-500/20"
+                className="w-full"
                 required
                 disabled={loading}
                 placeholder="Doe"
