@@ -1,8 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Music, Users, Shield, Zap, Globe, Award } from 'lucide-react';
-import { ProfilePhotoUpload } from './ProfilePhotoUpload';
+import { AboutPagePhotoUpload } from './AboutPagePhotoUpload';
+import { supabase } from '../lib/supabase';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  photoUrl: string | null;
+}
 
 export function AboutPage() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
+    { id: 'ceo', name: 'Deryk Banks', role: 'CEO & Founder', photoUrl: null },
+    { id: 'music-head', name: 'Sarah Johnson', role: 'Head of Music', photoUrl: null }
+  ]);
+
+  useEffect(() => {
+    // Load team member photos from site settings
+    const loadTeamPhotos = async () => {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('key, value')
+        .like('key', 'about_photo_%');
+
+      if (!error && data) {
+        const updatedMembers = [...teamMembers];
+        
+        data.forEach(setting => {
+          const memberId = setting.key.replace('about_photo_', '');
+          const memberIndex = updatedMembers.findIndex(m => m.id === memberId);
+          
+          if (memberIndex >= 0) {
+            const photoUrl = supabase.storage
+              .from('about-photos')
+              .getPublicUrl(setting.value).data.publicUrl;
+              
+            updatedMembers[memberIndex].photoUrl = photoUrl;
+          }
+        });
+        
+        setTeamMembers(updatedMembers);
+      }
+    };
+    
+    loadTeamPhotos();
+  }, []);
+
+  const handlePhotoUpdate = (memberId: string, url: string) => {
+    setTeamMembers(prev => 
+      prev.map(member => 
+        member.id === memberId 
+          ? { ...member, photoUrl: url } 
+          : member
+      )
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-4xl mx-auto">
@@ -83,26 +137,18 @@ export function AboutPage() {
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-8">
           <h2 className="text-2xl font-bold text-white mb-6">Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="text-center">
-              <ProfilePhotoUpload
-                currentPhotoUrl={null}
-                onPhotoUpdate={() => {}}
-                size="lg"
-                userId="ceo"
-              />
-              <h3 className="text-lg font-semibold text-white">Deryk Banks</h3>
-              <p className="text-gray-400">CEO & Founder</p>
-            </div>
-
-            <div className="text-center">
-              <img
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400"
-                alt="Head of Music"
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
-              />
-              <h3 className="text-lg font-semibold text-white">Sarah Johnson</h3>
-              <p className="text-gray-400">Head of Music</p>
-            </div>
+            {teamMembers.map(member => (
+              <div key={member.id} className="text-center">
+                <AboutPagePhotoUpload
+                  photoId={member.id}
+                  currentPhotoUrl={member.photoUrl}
+                  title={member.name}
+                  onPhotoUpdate={(url) => handlePhotoUpdate(member.id, url)}
+                  size="lg"
+                />
+                <p className="text-gray-400 mt-1">{member.role}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
