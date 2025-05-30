@@ -13,7 +13,7 @@ interface LayoutProps {
 export function Layout({ children, onSignupClick }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const { user, accountType } = useAuth();
+  const { user, accountType, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
