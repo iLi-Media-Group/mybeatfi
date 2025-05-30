@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, BarChart3, Upload } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, BarChart3, Upload, MessageSquare, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -9,13 +9,34 @@ import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { ProducerProfile } from './ProducerProfile';
 import { EditTrackModal } from './EditTrackModal';
 import { DeleteTrackDialog } from './DeleteTrackDialog';
-import { SyncProposalDialog } from './SyncProposalDialog';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 
 interface UserStats {
   totalTracks: number;
   totalSales: number;
   totalRevenue: number;
   pendingProposals: number;
+}
+
+interface SyncProposal {
+  id: string;
+  project_type: string;
+  sync_fee: number;
+  expiration_date: string;
+  is_urgent: boolean;
+  status: string;
+  created_at: string;
+  client: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  track: {
+    id: string;
+    title: string;
+  };
 }
 
 export function ProducerDashboard() {
@@ -29,7 +50,7 @@ export function ProducerDashboard() {
     producer_number?: string | null
   } | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [pendingProposals, setPendingProposals] = useState<any[]>([]);
+  const [pendingProposals, setPendingProposals] = useState<SyncProposal[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +64,13 @@ export function ProducerDashboard() {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showProposalDialog, setShowProposalDialog] = useState(false);
+  
+  // Proposal action states
+  const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
+  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
 
   useEffect(() => {
     if (user) {
@@ -136,6 +163,7 @@ export function ProducerDashboard() {
             email
           ),
           track:tracks!track_id (
+            id,
             title
           )
         `)
@@ -230,6 +258,78 @@ export function ProducerDashboard() {
       setStats(prev => ({ ...prev, totalTracks: prev.totalTracks - 1 }));
     } catch (err) {
       console.error('Error deleting track:', err);
+      throw err;
+    }
+  };
+
+  const handleProposalAction = (proposal: SyncProposal, action: 'negotiate' | 'history' | 'accept' | 'reject') => {
+    setSelectedProposal(proposal);
+    
+    switch (action) {
+      case 'negotiate':
+        setShowNegotiationDialog(true);
+        break;
+      case 'history':
+        setShowHistoryDialog(true);
+        break;
+      case 'accept':
+        setConfirmAction('accept');
+        setShowConfirmDialog(true);
+        break;
+      case 'reject':
+        setConfirmAction('reject');
+        setShowConfirmDialog(true);
+        break;
+    }
+  };
+
+  const handleProposalStatusChange = async (action: 'accept' | 'reject') => {
+    if (!selectedProposal) return;
+    
+    try {
+      // Update proposal status
+      const { error } = await supabase
+        .from('sync_proposals')
+        .update({ 
+          status: action === 'accept' ? 'accepted' : 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedProposal.id);
+
+      if (error) throw error;
+
+      // Create history entry
+      const { error: historyError } = await supabase
+        .from('proposal_history')
+        .insert({
+          proposal_id: selectedProposal.id,
+          previous_status: 'pending',
+          new_status: action === 'accept' ? 'accepted' : 'rejected',
+          changed_by: user?.id
+        });
+
+      if (historyError) throw historyError;
+
+      // Send notification to client
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-proposal-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          proposalId: selectedProposal.id,
+          action,
+          trackTitle: selectedProposal.track.title,
+          clientEmail: selectedProposal.client.email
+        })
+      });
+
+      // Update local state
+      setPendingProposals(pendingProposals.filter(p => p.id !== selectedProposal.id));
+      setStats(prev => ({ ...prev, pendingProposals: prev.pendingProposals - 1 }));
+    } catch (err) {
+      console.error(`Error ${action}ing proposal:`, err);
       throw err;
     }
   };
@@ -448,22 +548,7 @@ export function ProducerDashboard() {
                     {pendingProposals.map((proposal) => (
                       <div
                         key={proposal.id}
-                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                        onClick={() => {
-                          setSelectedTrack({
-                            id: proposal.track.id,
-                            title: proposal.track.title,
-                            artist: '',
-                            genres: [],
-                            subGenres: [],
-                            moods: [],
-                            duration: '',
-                            bpm: 0,
-                            audioUrl: '',
-                            image: ''
-                          });
-                          setShowProposalDialog(true);
-                        }}
+                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
                       >
                         <div className="flex justify-between items-start">
                           <div>
@@ -479,12 +564,44 @@ export function ProducerDashboard() {
                             </p>
                           </div>
                         </div>
+                        
                         {proposal.is_urgent && (
                           <div className="mt-2 flex items-center text-yellow-400 text-xs">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Urgent
                           </div>
                         )}
+                        
+                        <div className="mt-3 flex items-center space-x-2">
+                          <button
+                            onClick={() => handleProposalAction(proposal, 'negotiate')}
+                            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <MessageSquare className="w-3 h-3 mr-1" />
+                            Negotiate
+                          </button>
+                          <button
+                            onClick={() => handleProposalAction(proposal, 'history')}
+                            className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <Clock className="w-3 h-3 mr-1" />
+                            History
+                          </button>
+                          <button
+                            onClick={() => handleProposalAction(proposal, 'accept')}
+                            className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleProposalAction(proposal, 'reject')}
+                            className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <XCircle className="w-3 h-3 mr-1" />
+                            Decline
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -562,14 +679,43 @@ export function ProducerDashboard() {
         />
       )}
 
-      {selectedTrack && showProposalDialog && (
-        <SyncProposalDialog
-          isOpen={showProposalDialog}
+      {/* Proposal Action Dialogs */}
+      {selectedProposal && showNegotiationDialog && (
+        <ProposalNegotiationDialog
+          isOpen={showNegotiationDialog}
           onClose={() => {
-            setShowProposalDialog(false);
-            setSelectedTrack(null);
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
           }}
-          track={selectedTrack}
+          proposalId={selectedProposal.id}
+          currentOffer={selectedProposal.sync_fee}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+          trackTitle={selectedProposal.track.title}
+        />
+      )}
+
+      {selectedProposal && showHistoryDialog && (
+        <ProposalHistoryDialog
+          isOpen={showHistoryDialog}
+          onClose={() => {
+            setShowHistoryDialog(false);
+            setSelectedProposal(null);
+          }}
+          proposalId={selectedProposal.id}
+        />
+      )}
+
+      {selectedProposal && showConfirmDialog && (
+        <ProposalConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setSelectedProposal(null);
+          }}
+          onConfirm={() => handleProposalStatusChange(confirmAction)}
+          action={confirmAction}
+          trackTitle={selectedProposal.track.title}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
         />
       )}
     </div>
