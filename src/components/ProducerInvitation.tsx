@@ -23,22 +23,34 @@ export function ProducerInvitation() {
       const { data, error } = await supabase
         .from('profiles')
         .select('producer_number')
+        .not('producer_number', 'is', null)
         .order('producer_number', { ascending: false })
         .limit(1);
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        const lastNumber = parseInt(data[0].producer_number.split('-')[1]);
-        const next = `mbfpr-${String(lastNumber + 1).padStart(3, '0')}`;
-        setNextNumber(next);
-        setProducerNumber(next);
+      const defaultNumber = 'mbfpr-001';
+
+      if (data && data.length > 0 && data[0].producer_number) {
+        const match = data[0].producer_number.match(/mbfpr-(\d{3})/);
+        if (match) {
+          const lastNumber = parseInt(match[1]);
+          const next = `mbfpr-${String(lastNumber + 1).padStart(3, '0')}`;
+          setNextNumber(next);
+          setProducerNumber(next);
+        } else {
+          setNextNumber(defaultNumber);
+          setProducerNumber(defaultNumber);
+        }
       } else {
-        setNextNumber('mbfpr-001');
-        setProducerNumber('mbfpr-001');
+        setNextNumber(defaultNumber);
+        setProducerNumber(defaultNumber);
       }
     } catch (err) {
       console.error('Error fetching next producer number:', err);
+      // Set default values even in case of error
+      setNextNumber('mbfpr-001');
+      setProducerNumber('mbfpr-001');
     }
   };
 
