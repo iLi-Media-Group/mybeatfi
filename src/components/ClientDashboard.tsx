@@ -9,6 +9,7 @@ import { calculateTimeRemaining } from '../utils/dateUtils';
 import { ClientProfile } from './ClientProfile';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 import { EditRequestDialog } from './EditRequestDialog';
+import { LicenseDialog } from './LicenseDialog';
 
 interface License {
   id: string;
@@ -90,6 +91,8 @@ export function ClientDashboard() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
+  const [showLicenseDialog, setShowLicenseDialog] = useState(false);
+  const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -196,6 +199,7 @@ export function ClientDashboard() {
             has_vocals,
             vocals_usage_type,
             producer:profiles!producer_id (
+              id,
               first_name,
               last_name,
               email
@@ -215,7 +219,17 @@ export function ClientDashboard() {
             audioUrl: track.audio_url,
             image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
             hasVocals: track.has_vocals,
-            vocalsUsageType: track.vocals_usage_type
+            vocalsUsageType: track.vocals_usage_type,
+            subGenres: [],
+            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+            leaseAgreementUrl: '',
+            producer: track.producer ? {
+              id: track.producer.id,
+              firstName: track.producer.first_name || '',
+              lastName: track.producer.last_name || '',
+              email: track.producer.email
+            } : undefined
           }));
           setNewTracks(formattedNewTracks);
         }
@@ -228,6 +242,31 @@ export function ClientDashboard() {
 
         if (syncRequestsData) {
           setSyncRequests(syncRequestsData);
+        }
+
+        // Calculate remaining licenses for Gold Access
+        if (profileData.membership_plan === 'Gold Access') {
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+
+          const { count } = await supabase
+            .from('sales')
+            .select('id', { count: 'exact' })
+            .eq('buyer_id', user.id)
+            .gte('created_at', startOfMonth.toISOString());
+
+          const totalLicenses = count || 0;
+          const remainingLicenses = 10 - totalLicenses;
+
+          setUserStats(prev => ({
+            ...prev,
+            totalLicenses,
+            remainingLicenses,
+            currentPeriodStart: startOfMonth,
+            currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
+            daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+          }));
         }
 
       } catch (err) {
@@ -272,7 +311,7 @@ export function ClientDashboard() {
     }
   };
 
-  const handleLicenseClick = (trackId: string) => {
+  const handleLicenseClick = (track: Track) => {
     if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
       navigate('/pricing');
       return;
@@ -283,7 +322,8 @@ export function ClientDashboard() {
       return;
     }
 
-    navigate(`/license/${trackId}`);
+    setSelectedTrackToLicense(track);
+    setShowLicenseDialog(true);
   };
 
   const handleUpdateRequest = async (requestId: string, updates: Partial<CustomSyncRequest>) => {
@@ -721,7 +761,7 @@ export function ClientDashboard() {
                           <div className="mt-2 flex items-center justify-between">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
                             <button
-                              onClick={() => handleLicenseClick(track.id)}
+                              onClick={() => handleLicenseClick(track)}
                               className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                             >
                               <DollarSign className="w-4 h-4" />
@@ -768,7 +808,7 @@ export function ClientDashboard() {
                           <div className="mt-2 flex items-center justify-between">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
                             <button
-                              onClick={() => handleLicenseClick(track.id)}
+                              onClick={() => handleLicenseClick(track)}
                               className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                             >
                               <DollarSign className="w-4 h-4" />
@@ -811,6 +851,19 @@ export function ClientDashboard() {
         isOpen={showProfileDialog}
         onClose={() => setShowProfileDialog(false)}
       />
+
+      {selectedTrackToLicense && (
+        <LicenseDialog
+          isOpen={showLicenseDialog}
+          onClose={() => {
+            setShowLicenseDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          track={selectedTrackToLicense}
+          membershipType={userStats.membershipType || 'Single Track'}
+          remainingLicenses={userStats.remainingLicenses}
+        />
+      )}
     </div>
   );
 }
