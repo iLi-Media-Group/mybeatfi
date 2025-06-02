@@ -560,16 +560,14 @@ export function ProducerDashboard() {
                     {pendingProposals.map((proposal) => (
                       <div
                         key={proposal.id}
-                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                        onClick={() => setSelectedProposal(proposal)}
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <button
-                              onClick={() => handleProposalAction(proposal, 'history')}
-                              className="text-white font-medium hover:text-blue-400 transition-colors text-left"
-                            >
+                            <p className="text-white font-medium">
                               {proposal.track.title}
-                            </button>
+                            </p>
                             <p className="text-sm text-gray-400">
                               From: {proposal.client.first_name} {proposal.client.last_name}
                             </p>
@@ -591,28 +589,40 @@ export function ProducerDashboard() {
                         
                         <div className="mt-3 flex items-center space-x-2">
                           <button
-                            onClick={() => handleProposalAction(proposal, 'negotiate')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'negotiate');
+                            }}
                             className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors flex items-center"
                           >
                             <MessageSquare className="w-3 h-3 mr-1" />
                             Negotiate
                           </button>
                           <button
-                            onClick={() => handleProposalAction(proposal, 'history')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'history');
+                            }}
                             className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
                           >
                             <Clock className="w-3 h-3 mr-1" />
                             History
                           </button>
                           <button
-                            onClick={() => handleProposalAction(proposal, 'accept')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'accept');
+                            }}
                             className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors flex items-center"
                           >
                             <Check className="w-3 h-3 mr-1" />
                             Accept
                           </button>
                           <button
-                            onClick={() => handleProposalAction(proposal, 'reject')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'reject');
+                            }}
                             className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center"
                           >
                             <XCircle className="w-3 h-3 mr-1" />
