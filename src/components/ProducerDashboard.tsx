@@ -12,6 +12,7 @@ import { DeleteTrackDialog } from './DeleteTrackDialog';
 import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
 import { ProposalHistoryDialog } from './ProposalHistoryDialog';
 import { ProposalConfirmDialog } from './ProposalConfirmDialog';
+import { TrackProposalsDialog } from './TrackProposalsDialog';
 
 interface UserStats {
   totalTracks: number;
@@ -64,6 +65,7 @@ export function ProducerDashboard() {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showTrackProposalsDialog, setShowTrackProposalsDialog] = useState(false);
   
   // Proposal action states
   const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
@@ -240,6 +242,11 @@ export function ProducerDashboard() {
   const handleDeleteTrack = (track: Track) => {
     setSelectedTrack(track);
     setShowDeleteDialog(true);
+  };
+
+  const handleTrackTitleClick = (track: Track) => {
+    setSelectedTrack(track);
+    setShowTrackProposalsDialog(true);
   };
 
   const confirmDeleteTrack = async () => {
@@ -483,7 +490,12 @@ export function ProducerDashboard() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-white mb-1">{track.title}</h3>
+                          <button
+                            onClick={() => handleTrackTitleClick(track)}
+                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
+                          >
+                            {track.title}
+                          </button>
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleEditTrack(track)}
@@ -676,6 +688,18 @@ export function ProducerDashboard() {
           }}
           trackTitle={selectedTrack.title}
           onConfirm={confirmDeleteTrack}
+        />
+      )}
+
+      {selectedTrack && showTrackProposalsDialog && (
+        <TrackProposalsDialog
+          isOpen={showTrackProposalsDialog}
+          onClose={() => {
+            setShowTrackProposalsDialog(false);
+            setSelectedTrack(null);
+          }}
+          trackId={selectedTrack.id}
+          trackTitle={selectedTrack.title}
         />
       )}
 
