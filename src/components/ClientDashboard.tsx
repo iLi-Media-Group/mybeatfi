@@ -10,6 +10,7 @@ import { ClientProfile } from './ClientProfile';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 import { EditRequestDialog } from './EditRequestDialog';
 import { LicenseDialog } from './LicenseDialog';
+import { SyncProposalDialog } from './SyncProposalDialog';
 
 interface License {
   id: string;
@@ -93,6 +94,7 @@ export function ClientDashboard() {
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
   const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
+  const [showProposalDialog, setShowProposalDialog] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -312,6 +314,14 @@ export function ClientDashboard() {
   };
 
   const handleLicenseClick = (track: Track) => {
+    // For sync-only tracks, show the proposal dialog
+    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
+      setSelectedTrackToLicense(track);
+      setShowProposalDialog(true);
+      return;
+    }
+    
+    // For regular tracks, show the license dialog
     setSelectedTrackToLicense(track);
     setShowLicenseDialog(true);
   };
@@ -727,12 +737,12 @@ export function ClientDashboard() {
                           src={track.image}
                           alt={track.title}
                           className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => handleLicenseClick(track)}
+                          onClick={() => navigate(`/catalog?track=${track.id}`)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <button 
-                              onClick={() => handleLicenseClick(track)}
+                              onClick={() => navigate(`/catalog?track=${track.id}`)}
                               className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
                               {track.title}
@@ -751,13 +761,26 @@ export function ClientDashboard() {
                           </p>
                           <div className="mt-2 flex items-center justify-between">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
-                            <button
-                              onClick={() => handleLicenseClick(track)}
-                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                            >
-                              <DollarSign className="w-4 h-4" />
-                              <span>License Track</span>
-                            </button>
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -788,12 +811,12 @@ export function ClientDashboard() {
                           src={track.image}
                           alt={track.title}
                           className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => handleLicenseClick(track)}
+                          onClick={() => navigate(`/catalog?track=${track.id}`)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <button
-                              onClick={() => handleLicenseClick(track)}
+                              onClick={() => navigate(`/catalog?track=${track.id}`)}
                               className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
                               {track.title}
@@ -804,13 +827,26 @@ export function ClientDashboard() {
                           </p>
                           <div className="mt-2 flex items-center justify-between">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
-                            <button
-                              onClick={() => handleLicenseClick(track)}
-                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                            >
-                              <DollarSign className="w-4 h-4" />
-                              <span>License Track</span>
-                            </button>
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -849,7 +885,7 @@ export function ClientDashboard() {
         onClose={() => setShowProfileDialog(false)}
       />
 
-      {selectedTrackToLicense && (
+      {selectedTrackToLicense && showLicenseDialog && (
         <LicenseDialog
           isOpen={showLicenseDialog}
           onClose={() => {
@@ -934,6 +970,17 @@ export function ClientDashboard() {
               fetchData();
             }
           }}
+        />
+      )}
+
+      {selectedTrackToLicense && showProposalDialog && (
+        <SyncProposalDialog
+          isOpen={showProposalDialog}
+          onClose={() => {
+            setShowProposalDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          track={selectedTrackToLicense}
         />
       )}
     </div>
