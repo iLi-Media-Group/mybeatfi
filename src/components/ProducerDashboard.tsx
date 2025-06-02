@@ -564,7 +564,12 @@ export function ProducerDashboard() {
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="text-white font-medium">{proposal.track.title}</p>
+                            <button
+                              onClick={() => handleProposalAction(proposal, 'history')}
+                              className="text-white font-medium hover:text-blue-400 transition-colors text-left"
+                            >
+                              {proposal.track.title}
+                            </button>
                             <p className="text-sm text-gray-400">
                               From: {proposal.client.first_name} {proposal.client.last_name}
                             </p>
