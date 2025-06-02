@@ -8,6 +8,7 @@ import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
+import { SyncProposalDialog } from './SyncProposalDialog';
 
 interface UserStats {
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
@@ -16,11 +17,12 @@ interface UserStats {
 
 export function LicensePage() {
   const { trackId } = useParams();
-  const { user } = useAuth();
+  const { user, membershipPlan, refreshMembership } = useAuth();
   const navigate = useNavigate();
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
+  const [showProposalDialog, setShowProposalDialog] = useState(false);
   const [userStats, setUserStats] = useState<UserStats>({
     membershipType: 'Single Track',
     remainingLicenses: 0
@@ -33,100 +35,101 @@ export function LicensePage() {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    // Refresh membership info first to ensure we have the latest data
+    refreshMembership().then(() => {
+      fetchData();
+    });
+  }, [trackId, user, navigate, membershipPlan]);
 
-        // Fetch track details
-        const { data: trackData, error: trackError } = await supabase
-          .from('tracks')
-          .select(`
-            *,
-            producer:producer_id (
-              first_name,
-              last_name
-            )
-          `)
-          .eq('id', trackId)
-          .single();
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-        if (trackError) throw trackError;
+      // Fetch track details
+      const { data: trackData, error: trackError } = await supabase
+        .from('tracks')
+        .select(`
+          *,
+          producer:producer_id (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('id', trackId)
+        .single();
+
+      if (trackError) throw trackError;
+      
+      if (trackData) {
+        // Convert comma-separated strings to arrays
+        const genres = trackData.genres ? trackData.genres.split(',').map(g => g.trim()) : [];
+        const moods = trackData.moods ? trackData.moods.split(',').map(m => m.trim()) : [];
+        const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map(g => g.trim()) : [];
+
+        // Map the database fields to the Track interface
+        const mappedTrack: Track = {
+          id: trackData.id,
+          title: trackData.title,
+          genre: genres,
+          subGenres: subGenres,
+          artist: trackData.producer ? `${trackData.producer.first_name} ${trackData.producer.last_name}`.trim() : 'Unknown Artist',
+          audioUrl: trackData.audio_url || '',
+          image: trackData.image_url || 'https://images.pexels.com/photos/1626481/pexels-photo-1626481.jpeg',
+          bpm: trackData.bpm || 0,
+          key: trackData.key || '',
+          duration: trackData.duration || '',
+          moods: moods,
+          hasVocals: trackData.has_vocals || false,
+          vocalsUsageType: trackData.vocals_usage_type || 'normal',
+          isOneStop: trackData.is_one_stop || false,
+          hasSting: trackData.has_sting_ending || false,
+          fileFormats: [], // Default empty array for file formats
+          pricing: [], // Default empty array for pricing
+          leaseAgreementUrl: '', // Default empty string for lease agreement URL
+        };
         
-        if (trackData) {
-          // Convert comma-separated strings to arrays
-          const genres = trackData.genres ? trackData.genres.split(',').map(g => g.trim()) : [];
-          const moods = trackData.moods ? trackData.moods.split(',').map(m => m.trim()) : [];
-          const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map(g => g.trim()) : [];
-
-          // Map the database fields to the Track interface
-          const mappedTrack: Track = {
-            id: trackData.id,
-            title: trackData.title,
-            genre: genres,
-            subGenres: subGenres,
-            artist: trackData.producer ? `${trackData.producer.first_name} ${trackData.producer.last_name}`.trim() : 'Unknown Artist',
-            audioUrl: trackData.audio_url || '',
-            image: trackData.image_url || 'https://images.pexels.com/photos/1626481/pexels-photo-1626481.jpeg',
-            bpm: trackData.bpm || 0,
-            key: trackData.key || '',
-            duration: trackData.duration || '',
-            moods: moods,
-            hasVocals: trackData.has_vocals || false,
-            isOneStop: trackData.is_one_stop || false,
-            hasSting: trackData.has_sting_ending || false,
-            fileFormats: [], // Default empty array for file formats
-            pricing: [], // Default empty array for pricing
-            leaseAgreementUrl: '', // Default empty string for lease agreement URL
-          };
-          
-          setTrack(mappedTrack);
-        }
-
-        // Fetch user membership info
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('membership_plan')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        // Calculate remaining licenses for Gold Access
-        let remainingLicenses = 0;
-        if (profileData.membership_plan === 'Gold Access') {
-          const startOfMonth = new Date();
-          startOfMonth.setDate(1);
-          startOfMonth.setHours(0, 0, 0, 0);
-
-          const { count } = await supabase
-            .from('sales')
-            .select('id', { count: 'exact' })
-            .eq('buyer_id', user.id)
-            .gte('created_at', startOfMonth.toISOString());
-
-          remainingLicenses = 10 - (count || 0);
-        }
-
-        setUserStats({
-          membershipType: profileData.membership_plan || 'Single Track',
-          remainingLicenses
-        });
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        navigate('/catalog');
-      } finally {
-        setLoading(false);
+        setTrack(mappedTrack);
       }
-    };
 
-    fetchData();
-  }, [trackId, user, navigate]);
+      // Calculate remaining licenses for Gold Access
+      let remainingLicenses = 0;
+      if (membershipPlan === 'Gold Access') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count } = await supabase
+          .from('sales')
+          .select('id', { count: 'exact' })
+          .eq('buyer_id', user.id)
+          .gte('created_at', startOfMonth.toISOString());
+
+        remainingLicenses = 10 - (count || 0);
+      }
+
+      setUserStats({
+        membershipType: membershipPlan || 'Single Track',
+        remainingLicenses
+      });
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      navigate('/catalog');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLicenseClick = async () => {
     if (!track) return;
     
-    if (userStats.membershipType === 'Single Track') {
+    // For sync-only tracks, show the proposal dialog
+    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
+      setShowProposalDialog(true);
+      return;
+    }
+    
+    if (membershipPlan === 'Single Track') {
       try {
         setCheckoutLoading(true);
         
@@ -174,6 +177,8 @@ export function LicensePage() {
     );
   }
 
+  const isSyncOnly = track.hasVocals && track.vocalsUsageType === 'sync_only';
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -204,14 +209,18 @@ export function LicensePage() {
                 </div>
                 <div className="flex items-center text-gray-300">
                   <Shield className="w-5 h-5 mr-2" />
-                  <span>Licensed under your {userStats.membershipType} plan</span>
+                  <span>Licensed under your {membershipPlan || 'Single Track'} plan</span>
                 </div>
               </div>
 
               <button
                 onClick={handleLicenseClick}
                 disabled={checkoutLoading}
-                className="mt-8 w-full py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                className={`mt-8 w-full py-3 px-6 text-white font-semibold rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 ${
+                  isSyncOnly 
+                    ? 'bg-purple-600 hover:bg-purple-700' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
                 {checkoutLoading ? (
                   <>
@@ -221,9 +230,11 @@ export function LicensePage() {
                 ) : (
                   <>
                     <Download className="w-5 h-5 mr-2" />
-                    {userStats.membershipType === 'Single Track' 
-                      ? 'Purchase License ($9.99)' 
-                      : 'License Track'}
+                    {isSyncOnly 
+                      ? 'Submit Sync Proposal' 
+                      : (membershipPlan === 'Single Track' 
+                        ? 'Purchase License ($9.99)' 
+                        : 'License Track')}
                   </>
                 )}
               </button>
@@ -236,8 +247,15 @@ export function LicensePage() {
         isOpen={showLicenseDialog}
         onClose={() => setShowLicenseDialog(false)}
         track={track}
-        membershipType={userStats.membershipType}
+        membershipType={membershipPlan || 'Single Track'}
         remainingLicenses={userStats.remainingLicenses}
+        onLicenseCreated={fetchData}
+      />
+      
+      <SyncProposalDialog
+        isOpen={showProposalDialog}
+        onClose={() => setShowProposalDialog(false)}
+        track={track}
       />
     </div>
   );

@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 export function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshMembership } = useAuth();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
   const [order, setOrder] = useState<any>(null);
@@ -37,6 +37,9 @@ export function CheckoutSuccessPage() {
               .from('profiles')
               .update({ membership_plan: membershipPlan })
               .eq('id', user.id);
+              
+            // Refresh the membership in the auth context
+            await refreshMembership();
           }
           
           setLoading(false);
@@ -57,7 +60,7 @@ export function CheckoutSuccessPage() {
     };
 
     fetchData();
-  }, [sessionId, navigate, user]);
+  }, [sessionId, navigate, user, refreshMembership]);
 
   if (loading) {
     return (

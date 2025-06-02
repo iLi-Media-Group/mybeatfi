@@ -48,7 +48,7 @@ export function LicenseDialog({
   remainingLicenses,
   onLicenseCreated
 }: LicenseDialogProps) {
-  const { user } = useAuth();
+  const { user, refreshMembership } = useAuth();
   const [step, setStep] = useState<'terms' | 'profile' | 'confirm'>('terms');
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +69,7 @@ export function LicenseDialog({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email')
+        .select('first_name, last_name, email, membership_plan')
         .eq('id', user?.id)
         .single();
 
@@ -80,6 +80,9 @@ export function LicenseDialog({
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setEmail(data.email || '');
+        
+        // Refresh membership info to ensure we have the latest
+        await refreshMembership();
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -145,7 +148,10 @@ export function LicenseDialog({
         .select()
         .single();
 
-      if (licenseError) throw licenseError;
+      if (licenseError) {
+        console.error('License creation error:', licenseError);
+        throw new Error('Failed to create license. Please try again.');
+      }
 
       setCreatedLicenseId(license.id);
       setShowConfirmation(true);
@@ -156,7 +162,7 @@ export function LicenseDialog({
       }
     } catch (err) {
       console.error('Error creating license:', err);
-      setError('Failed to create license');
+      setError(err instanceof Error ? err.message : 'Failed to create license');
     } finally {
       setLoading(false);
     }

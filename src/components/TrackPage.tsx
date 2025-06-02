@@ -8,6 +8,8 @@ import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
 import { SyncProposalDialog } from './SyncProposalDialog';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
+import { createCheckoutSession } from '../lib/stripe';
+import { PRODUCTS } from '../stripe-config';
 
 interface UserStats {
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
@@ -16,7 +18,7 @@ interface UserStats {
 
 export function TrackPage() {
   const { trackId } = useParams();
-  const { user } = useAuth();
+  const { user, membershipPlan, refreshMembership } = useAuth();
   const navigate = useNavigate();
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,7 @@ export function TrackPage() {
   });
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     if (!trackId) {
@@ -37,8 +40,15 @@ export function TrackPage() {
       return;
     }
 
-    fetchTrackData();
-  }, [trackId, user]);
+    if (user) {
+      // Refresh membership info first to ensure we have the latest data
+      refreshMembership().then(() => {
+        fetchTrackData();
+      });
+    } else {
+      fetchTrackData();
+    }
+  }, [trackId, user, membershipPlan]);
 
   const fetchTrackData = async () => {
     try {
@@ -123,16 +133,9 @@ export function TrackPage() {
 
         setIsFavorite(!!favoriteData);
 
-        // Fetch user membership info
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('membership_plan')
-          .eq('id', user.id)
-          .single();
-
         // Calculate remaining licenses for Gold Access
         let remainingLicenses = 0;
-        if (profileData?.membership_plan === 'Gold Access') {
+        if (membershipPlan === 'Gold Access') {
           const startOfMonth = new Date();
           startOfMonth.setDate(1);
           startOfMonth.setHours(0, 0, 0, 0);
@@ -147,7 +150,7 @@ export function TrackPage() {
         }
 
         setUserStats({
-          membershipType: profileData?.membership_plan || 'Single Track',
+          membershipType: membershipPlan || 'Single Track',
           remainingLicenses
         });
       }
@@ -192,15 +195,47 @@ export function TrackPage() {
     }
   };
 
-  const handleActionClick = () => {
+  const handleActionClick = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
 
-    if (track?.hasVocals && track?.vocalsUsageType === 'sync_only') {
+    if (!track) return;
+
+    // For sync-only tracks, show the proposal dialog
+    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
       setShowProposalDialog(true);
+      return;
+    }
+    
+    // For regular tracks, handle based on membership
+    if (membershipPlan === 'Single Track') {
+      try {
+        setCheckoutLoading(true);
+        
+        // Find the Single Track product
+        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
+        
+        if (!singleTrackProduct) {
+          throw new Error('Single Track product not found');
+        }
+        
+        // Create checkout session
+        const checkoutUrl = await createCheckoutSession(
+          singleTrackProduct.priceId, 
+          singleTrackProduct.mode
+        );
+        
+        // Redirect to checkout
+        window.location.href = checkoutUrl;
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+      } finally {
+        setCheckoutLoading(false);
+      }
     } else {
+      // For subscription users, show the license dialog
       setShowLicenseDialog(true);
     }
   };
@@ -353,14 +388,28 @@ export function TrackPage() {
                 {user ? (
                   <button
                     onClick={handleActionClick}
+                    disabled={checkoutLoading}
                     className={`w-full py-3 px-6 rounded-lg text-white font-semibold transition-colors flex items-center justify-center ${
                       isSyncOnly 
                         ? 'bg-purple-600 hover:bg-purple-700' 
                         : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
+                    } disabled:opacity-50`}
                   >
-                    <DollarSign className="w-5 h-5 mr-2" />
-                    {isSyncOnly ? 'Submit Sync Proposal' : 'License This Track'}
+                    {checkoutLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <DollarSign className="w-5 h-5 mr-2" />
+                        {isSyncOnly ? 'Submit Sync Proposal' : (
+                          membershipPlan === 'Single Track' 
+                            ? 'Purchase License ($9.99)' 
+                            : 'License This Track'
+                        )}
+                      </>
+                    )}
                   </button>
                 ) : (
                   <div className="space-y-3">
@@ -413,7 +462,7 @@ export function TrackPage() {
             isOpen={showLicenseDialog}
             onClose={() => setShowLicenseDialog(false)}
             track={track}
-            membershipType={userStats.membershipType}
+            membershipType={membershipPlan || 'Single Track'}
             remainingLicenses={userStats.remainingLicenses}
             onLicenseCreated={fetchTrackData}
           />

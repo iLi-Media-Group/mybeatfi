@@ -7,9 +7,11 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   accountType: 'client' | 'producer' | 'admin' | null;
+  membershipPlan: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshMembership: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accountType, setAccountType] = useState<'client' | 'producer' | 'admin' | null>(null);
+  const [membershipPlan, setMembershipPlan] = useState<'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAccountType = async (userId: string, email: string) => {
@@ -36,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (data) {
         setAccountType(data.account_type as 'client' | 'producer');
+        setMembershipPlan(data.membership_plan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null);
         
         // If the user is a client, check for subscription
         if (data.account_type === 'client') {
@@ -44,13 +48,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             if (subscription?.subscription_id && subscription?.status === 'active') {
               // Update membership plan in profile based on subscription
-              const membershipPlan = getMembershipPlanFromPriceId(subscription.price_id);
+              const newMembershipPlan = getMembershipPlanFromPriceId(subscription.price_id);
               
-              if (membershipPlan !== data.membership_plan) {
+              if (newMembershipPlan !== data.membership_plan) {
                 await supabase
                   .from('profiles')
-                  .update({ membership_plan: membershipPlan })
+                  .update({ membership_plan: newMembershipPlan })
                   .eq('id', userId);
+                  
+                setMembershipPlan(newMembershipPlan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access');
               }
             }
           } catch (subError) {
@@ -63,6 +69,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error fetching account type:', error);
       setAccountType(null);
+    }
+  };
+
+  const refreshMembership = async () => {
+    if (!user) return;
+    
+    try {
+      // Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('membership_plan')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      
+      // Check for active subscription
+      const subscription = await getUserSubscription();
+      
+      if (subscription?.subscription_id && subscription?.status === 'active') {
+        // Get membership plan from subscription
+        const newMembershipPlan = getMembershipPlanFromPriceId(subscription.price_id);
+        
+        // Update if different from current plan
+        if (newMembershipPlan !== profileData.membership_plan) {
+          await supabase
+            .from('profiles')
+            .update({ membership_plan: newMembershipPlan })
+            .eq('id', user.id);
+            
+          setMembershipPlan(newMembershipPlan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access');
+        } else {
+          setMembershipPlan(profileData.membership_plan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null);
+        }
+      } else {
+        setMembershipPlan(profileData.membership_plan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null);
+      }
+    } catch (error) {
+      console.error('Error refreshing membership:', error);
     }
   };
 
@@ -83,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchAccountType(session.user.id, session.user.email || '');
       } else {
         setAccountType(null);
+        setMembershipPlan(null);
       }
       setLoading(false);
     });
@@ -123,11 +169,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .insert({
             id: data.user.id,
             email: data.user.email,
-            account_type: 'client' // Default to client for new signups
+            account_type: 'client', // Default to client for new signups
+            membership_plan: 'Single Track' // Default membership plan
           });
 
         if (profileError) throw profileError;
         setAccountType('client');
+        setMembershipPlan('Single Track');
       } catch (err) {
         // If profile creation fails, clean up by deleting the auth user
         await supabase.auth.admin.deleteUser(data.user.id);
@@ -145,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (sessionError || !session) {
         setUser(null);
         setAccountType(null);
+        setMembershipPlan(null);
         return;
       }
 
@@ -159,11 +208,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Always clear the local state
       setUser(null);
       setAccountType(null);
+      setMembershipPlan(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, accountType, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      accountType, 
+      membershipPlan,
+      signIn, 
+      signUp, 
+      signOut,
+      refreshMembership
+    }}>
       {children}
     </AuthContext.Provider>
   );
