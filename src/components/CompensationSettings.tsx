@@ -5,12 +5,15 @@ import { useAuth } from '../contexts/AuthContext';
 
 export function CompensationSettings() {
   const { user } = useAuth();
-  const [standardRate, setStandardRate] = useState(70);
+  const [standardRate, setStandardRate] = useState(75); // Updated to 75%
   const [exclusiveRate, setExclusiveRate] = useState(80);
-  const [syncFeeRate, setSyncFeeRate] = useState(85);
+  const [syncFeeRate, setSyncFeeRate] = useState(90); // Updated to 90%
   const [holdingPeriod, setHoldingPeriod] = useState(30);
   const [minimumWithdrawal, setMinimumWithdrawal] = useState(50);
   const [processingFee, setProcessingFee] = useState(2);
+  const [noSalesBucketRate, setNoSalesBucketRate] = useState(2); // Added no sales bucket rate
+  const [growthBonusRate, setGrowthBonusRate] = useState(5); // Added growth bonus rate
+  const [noSaleBonusRate, setNoSaleBonusRate] = useState(3); // Added no sale bonus rate
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +56,9 @@ export function CompensationSettings() {
         setHoldingPeriod(data.holding_period);
         setMinimumWithdrawal(data.minimum_withdrawal);
         setProcessingFee(data.processing_fee);
+        setNoSalesBucketRate(data.no_sales_bucket_rate || 2);
+        setGrowthBonusRate(data.growth_bonus_rate || 5);
+        setNoSaleBonusRate(data.no_sale_bonus_rate || 3);
       }
     } catch (err) {
       console.error('Error fetching compensation settings:', err);
@@ -89,6 +95,15 @@ export function CompensationSettings() {
       if (processingFee < 0 || processingFee > 100) {
         throw new Error('Processing fee must be between 0 and 100');
       }
+      if (noSalesBucketRate < 0 || noSalesBucketRate > 100) {
+        throw new Error('No sales bucket rate must be between 0 and 100');
+      }
+      if (growthBonusRate < 0 || growthBonusRate > 100) {
+        throw new Error('Growth bonus rate must be between 0 and 100');
+      }
+      if (noSaleBonusRate < 0 || noSaleBonusRate > 100) {
+        throw new Error('No sale bonus rate must be between 0 and 100');
+      }
 
       // Update or insert settings
       const { data, error } = await supabase
@@ -101,6 +116,9 @@ export function CompensationSettings() {
           holding_period: holdingPeriod,
           minimum_withdrawal: minimumWithdrawal,
           processing_fee: processingFee,
+          no_sales_bucket_rate: noSalesBucketRate,
+          growth_bonus_rate: growthBonusRate,
+          no_sale_bonus_rate: noSaleBonusRate,
           updated_at: new Date().toISOString()
         });
 
@@ -141,49 +159,55 @@ export function CompensationSettings() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Standard License Rate (%)
-            </label>
-            <div className="relative">
-              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                value={standardRate}
-                onChange={(e) => setStandardRate(parseInt(e.target.value))}
-                className="w-full pl-10"
-                min="0"
-                max="100"
-                required
-              />
+        <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Single Track & License Revenue</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Standard License Rate (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={standardRate}
+                  onChange={(e) => setStandardRate(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Percentage of standard license sales that goes to producers (75% recommended)
+              </p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Percentage of standard license sales that goes to producers
-            </p>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Exclusive License Rate (%)
-            </label>
-            <div className="relative">
-              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                value={exclusiveRate}
-                onChange={(e) => setExclusiveRate(parseInt(e.target.value))}
-                className="w-full pl-10"
-                min="0"
-                max="100"
-                required
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Exclusive License Rate (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={exclusiveRate}
+                  onChange={(e) => setExclusiveRate(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Percentage of exclusive license sales that goes to producers
+              </p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Percentage of exclusive license sales that goes to producers
-            </p>
           </div>
+        </div>
 
+        <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Custom Sync Revenue</h3>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Sync Fee Rate (%)
@@ -201,71 +225,144 @@ export function CompensationSettings() {
               />
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              Percentage of sync fees that goes to producers
+              Percentage of sync fees that goes to producers (90% recommended)
             </p>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Holding Period (Days)
-            </label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                value={holdingPeriod}
-                onChange={(e) => setHoldingPeriod(parseInt(e.target.value))}
-                className="w-full pl-10"
-                min="0"
-                required
-              />
+        <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Membership Plan Revenue</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                No Sales Bucket Rate (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={noSalesBucketRate}
+                  onChange={(e) => setNoSalesBucketRate(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Percentage of membership revenue allocated to producers with no sales (2% recommended)
+              </p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Number of days before earnings become available for withdrawal
-            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Growth Bonus Rate (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={growthBonusRate}
+                  onChange={(e) => setGrowthBonusRate(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Bonus percentage for producers with increasing sales
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                No Sale Bonus Rate (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={noSaleBonusRate}
+                  onChange={(e) => setNoSaleBonusRate(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Bonus percentage for producers with no sales in a period
+              </p>
+            </div>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Minimum Withdrawal ($)
-            </label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                value={minimumWithdrawal}
-                onChange={(e) => setMinimumWithdrawal(parseInt(e.target.value))}
-                className="w-full pl-10"
-                min="0"
-                step="1"
-                required
-              />
+        <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Payment Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Holding Period (Days)
+              </label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={holdingPeriod}
+                  onChange={(e) => setHoldingPeriod(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Number of days before earnings become available for withdrawal
+              </p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Minimum amount that can be withdrawn
-            </p>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Processing Fee (%)
-            </label>
-            <div className="relative">
-              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                value={processingFee}
-                onChange={(e) => setProcessingFee(parseFloat(e.target.value))}
-                className="w-full pl-10"
-                min="0"
-                max="100"
-                step="0.1"
-                required
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Minimum Withdrawal ($)
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={minimumWithdrawal}
+                  onChange={(e) => setMinimumWithdrawal(parseInt(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Minimum amount that can be withdrawn
+              </p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Fee charged for processing withdrawals
-            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Processing Fee (%)
+              </label>
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  value={processingFee}
+                  onChange={(e) => setProcessingFee(parseFloat(e.target.value))}
+                  className="w-full pl-10"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Fee charged for processing withdrawals
+              </p>
+            </div>
           </div>
         </div>
 
