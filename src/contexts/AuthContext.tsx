@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { getUserSubscription, getMembershipPlanFromPriceId } from '../lib/stripe';
 
 interface AuthContextType {
   user: User | null;
@@ -28,13 +29,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('account_type')
+        .select('account_type, membership_plan')
         .eq('id', userId)
         .maybeSingle();
 
       if (error) throw error;
       if (data) {
         setAccountType(data.account_type as 'client' | 'producer');
+        
+        // If the user is a client, check for subscription
+        if (data.account_type === 'client') {
+          try {
+            const subscription = await getUserSubscription();
+            
+            if (subscription?.subscription_id && subscription?.status === 'active') {
+              // Update membership plan in profile based on subscription
+              const membershipPlan = getMembershipPlanFromPriceId(subscription.price_id);
+              
+              if (membershipPlan !== data.membership_plan) {
+                await supabase
+                  .from('profiles')
+                  .update({ membership_plan: membershipPlan })
+                  .eq('id', userId);
+              }
+            }
+          } catch (subError) {
+            console.error('Error checking subscription:', subError);
+          }
+        }
       } else {
         setAccountType('client'); // Default to client if no profile found
       }

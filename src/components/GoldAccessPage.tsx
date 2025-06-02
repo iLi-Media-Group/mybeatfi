@@ -1,19 +1,47 @@
-import React from 'react';
-import { Music, Star, Zap, Gift, PlayCircle, Video, Headphones, FileCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Music, Star, Zap, Gift, PlayCircle, Video, Headphones, FileCheck, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { PRODUCTS } from '../stripe-config';
+import { createCheckoutSession } from '../lib/stripe';
 
 export function GoldAccessPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
-    // Handle subscription upgrade
-    console.log('Upgrading to Gold Access');
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Find Gold Access product
+      const goldProduct = PRODUCTS.find(p => p.name === 'Gold Membership');
+      
+      if (!goldProduct) {
+        throw new Error('Gold membership product not found');
+      }
+      
+      // Create checkout session
+      const checkoutUrl = await createCheckoutSession(
+        goldProduct.priceId, 
+        goldProduct.mode
+      );
+      
+      // Redirect to checkout
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error('Error creating checkout session:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create checkout session');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,6 +56,12 @@ export function GoldAccessPage() {
             Create freely with unlimited downloads, full commercial rights, and new tracks added every month!
           </p>
         </div>
+
+        {error && (
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-center">{error}</p>
+          </div>
+        )}
 
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -64,7 +98,7 @@ export function GoldAccessPage() {
               <div className="text-center mb-6">
                 <h3 className="text-3xl font-bold text-white mb-2">Gold Access</h3>
                 <div className="flex items-center justify-center">
-                  <span className="text-4xl font-bold text-white">$24.99</span>
+                  <span className="text-4xl font-bold text-white">$34.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
               </div>
@@ -81,9 +115,17 @@ export function GoldAccessPage() {
 
               <button
                 onClick={handleUpgrade}
-                className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/25"
+                disabled={loading}
+                className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center"
               >
-                Unlock Gold Access
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  'Unlock Gold Access'
+                )}
               </button>
             </div>
           </div>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Music, Download, Shield } from 'lucide-react';
+import { Music, Download, Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
+import { createCheckoutSession } from '../lib/stripe';
+import { PRODUCTS } from '../stripe-config';
 
 interface UserStats {
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
@@ -23,6 +25,7 @@ export function LicensePage() {
     membershipType: 'Single Track',
     remainingLicenses: 0
   });
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -120,6 +123,39 @@ export function LicensePage() {
     fetchData();
   }, [trackId, user, navigate]);
 
+  const handleLicenseClick = async () => {
+    if (!track) return;
+    
+    if (userStats.membershipType === 'Single Track') {
+      try {
+        setCheckoutLoading(true);
+        
+        // Find the Single Track product
+        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
+        
+        if (!singleTrackProduct) {
+          throw new Error('Single Track product not found');
+        }
+        
+        // Create checkout session
+        const checkoutUrl = await createCheckoutSession(
+          singleTrackProduct.priceId, 
+          singleTrackProduct.mode
+        );
+        
+        // Redirect to checkout
+        window.location.href = checkoutUrl;
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+      } finally {
+        setCheckoutLoading(false);
+      }
+    } else {
+      // For subscription users, show the license dialog
+      setShowLicenseDialog(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -173,11 +209,23 @@ export function LicensePage() {
               </div>
 
               <button
-                onClick={() => setShowLicenseDialog(true)}
-                className="mt-8 w-full py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center"
+                onClick={handleLicenseClick}
+                disabled={checkoutLoading}
+                className="mt-8 w-full py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
               >
-                <Download className="w-5 h-5 mr-2" />
-                License Track
+                {checkoutLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 mr-2" />
+                    {userStats.membershipType === 'Single Track' 
+                      ? 'Purchase License ($9.99)' 
+                      : 'License Track'}
+                  </>
+                )}
               </button>
             </div>
           </div>

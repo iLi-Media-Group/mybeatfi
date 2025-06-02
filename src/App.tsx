@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { SearchBox } from './components/SearchBox';
 import { ProducerLogin } from './components/ProducerLogin';
@@ -34,6 +34,7 @@ import { AnnouncementsPage } from './components/AnnouncementsPage';
 import { ChatSystem } from './components/ChatSystem';
 import { ProducerBankingPage } from './components/ProducerBankingPage';
 import { AdminBankingPage } from './components/AdminBankingPage';
+import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 
 function App() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
@@ -143,6 +144,7 @@ function App() {
         <Route path="/about" element={<LayoutWrapper><AboutPage /></LayoutWrapper>} />
         <Route path="/contact" element={<LayoutWrapper><ContactPage /></LayoutWrapper>} />
         <Route path="/announcements" element={<LayoutWrapper><AnnouncementsPage /></LayoutWrapper>} />
+        <Route path="/checkout/success" element={<LayoutWrapper><CheckoutSuccessPage /></LayoutWrapper>} />
 
         <Route path="/chat" element={
           <ProtectedRoute>
