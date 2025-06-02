@@ -3,6 +3,8 @@ import { LogIn, KeyRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { PRODUCTS } from '../stripe-config';
+import { createCheckoutSession } from '../lib/stripe';
 
 export function ClientLogin() {
   const [searchParams] = useSearchParams();

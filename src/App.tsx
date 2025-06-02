@@ -35,6 +35,7 @@ import { ChatSystem } from './components/ChatSystem';
 import { ProducerBankingPage } from './components/ProducerBankingPage';
 import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
+import { WelcomePage } from './components/WelcomePage';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -156,6 +157,7 @@ function App() {
         <Route path="/contact" element={<LayoutWrapper><ContactPage /></LayoutWrapper>} />
         <Route path="/announcements" element={<LayoutWrapper><AnnouncementsPage /></LayoutWrapper>} />
         <Route path="/checkout/success" element={<LayoutWrapper><CheckoutSuccessPage /></LayoutWrapper>} />
+        <Route path="/welcome" element={<LayoutWrapper><WelcomePage /></LayoutWrapper>} />
 
         <Route path="/chat" element={
           <ProtectedRoute>
@@ -208,7 +210,7 @@ function App() {
             <ClientSignupDialog isOpen={true} onClose={() => navigate('/')} />
           </LayoutWrapper>
         } />
-
+        
         <Route path="/producer/login" element={
           <LayoutWrapper>
             <ProducerLogin />

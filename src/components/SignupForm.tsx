@@ -97,26 +97,22 @@ export function SignupForm({ onClose }: SignupFormProps) {
 
       onClose();
       
-      // Handle redirect based on URL params
-      if (redirectTo === 'pricing' && productId && accountType === 'client') {
-        // Find the product and proceed with subscription
-        const product = PRODUCTS.find(p => p.id === productId);
-        if (product) {
-          try {
-            const checkoutUrl = await createCheckoutSession(product.priceId, product.mode);
-            window.location.href = checkoutUrl;
-            return;
-          } catch (err) {
-            console.error('Error creating checkout session:', err);
-            // If checkout fails, just navigate to dashboard
-            navigate(accountType === 'producer' ? '/producer/dashboard' : '/dashboard');
-            return;
-          }
-        }
+      // For client accounts, always navigate to the welcome/pricing page first
+      if (accountType === 'client') {
+        navigate('/welcome', { 
+          state: { 
+            newUser: true,
+            email,
+            firstName,
+            redirectTo,
+            productId
+          } 
+        });
+        return;
       }
-
-      // Default navigation
-      navigate(accountType === 'producer' ? '/producer/dashboard' : '/dashboard');
+      
+      // For producer accounts, go directly to dashboard
+      navigate('/producer/dashboard');
     } catch (err) {
       console.error('Signup error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create account');
