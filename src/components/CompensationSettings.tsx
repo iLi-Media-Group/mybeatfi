@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Percent, DollarSign, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { Percent, DollarSign, Save, Loader2, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
