@@ -8,6 +8,8 @@ import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
 import { ClientList } from './ClientList';
 import { AdminAnnouncementManager } from './AdminAnnouncementManager';
+import { CompensationSettings } from './CompensationSettings';
+import { Link } from 'react-router-dom';
 
 interface UserStats {
   total_clients: number;
@@ -47,7 +49,7 @@ export function AdminDashboard() {
   const [producerSortField, setProducerSortField] = useState<keyof UserDetails>('total_revenue');
   const [producerSortOrder, setProducerSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProducer, setSelectedProducer] = useState<UserDetails | null>(null);
-  const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -261,7 +263,7 @@ export function AdminDashboard() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-blue-500/20 mb-8">
+        <div className="flex flex-wrap border-b border-blue-500/20 mb-8">
           <button
             onClick={() => setActiveTab('analytics')}
             className={`px-6 py-3 font-medium transition-colors ${
@@ -303,6 +305,17 @@ export function AdminDashboard() {
             <Bell className="w-4 h-4 mr-2" />
             Announcements
           </button>
+          <button
+            onClick={() => setActiveTab('compensation')}
+            className={`px-6 py-3 font-medium transition-colors flex items-center ${
+              activeTab === 'compensation' 
+                ? 'text-white border-b-2 border-blue-500' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Percent className="w-4 h-4 mr-2" />
+            Compensation
+          </button>
         </div>
 
         {/* Analytics Sections */}
@@ -327,15 +340,24 @@ export function AdminDashboard() {
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">Producer Analytics</h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search producers..."
-                  className="pl-10 pr-4 py-2 bg-white/5 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
-                />
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search producers..."
+                    className="pl-10 pr-4 py-2 bg-white/5 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <Link
+                  to="/admin/banking"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+                >
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  Manage Payments
+                </Link>
               </div>
             </div>
 
@@ -450,6 +472,11 @@ export function AdminDashboard() {
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
             <AdminAnnouncementManager />
           </div>
+        )}
+
+        {/* Compensation Settings */}
+        {activeTab === 'compensation' && (
+          <CompensationSettings />
         )}
       </div>
 

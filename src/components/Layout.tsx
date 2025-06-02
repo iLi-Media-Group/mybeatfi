@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare } from 'lucide-react';
+import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Footer } from './Footer';
@@ -205,14 +205,24 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                   {user ? (
                     <>
                       {isAdmin && (
-                        <Link
-                          to="/admin/invite-producer"
-                          className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <UserCog className="w-4 h-4 mr-2" />
-                          Invite Producer
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin/invite-producer"
+                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <UserCog className="w-4 h-4 mr-2" />
+                            Invite Producer
+                          </Link>
+                          <Link
+                            to="/admin/banking"
+                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <DollarSign className="w-4 h-4 mr-2" />
+                            Producer Payments
+                          </Link>
+                        </>
                       )}
                       <Link
                         to={getDashboardLink()}
@@ -222,15 +232,25 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                         {getDashboardIcon()}
                         {getDashboardLabel()}
                       </Link>
-                      {(accountType === 'producer' || user.email === 'knockriobeats@gmail.com') && (
-                        <Link
-                          to="/producer/upload"
-                          className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Track
-                        </Link>
+                      {accountType === 'producer' && (
+                        <>
+                          <Link
+                            to="/producer/upload"
+                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Track
+                          </Link>
+                          <Link
+                            to="/producer/banking"
+                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <DollarSign className="w-4 h-4 mr-2" />
+                            Earnings & Payments
+                          </Link>
+                        </>
                       )}
                       <button
                         onClick={handleSignOut}

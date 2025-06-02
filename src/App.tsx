@@ -32,6 +32,8 @@ import { AboutPage } from './components/AboutPage';
 import { ContactPage } from './components/ContactPage';
 import { AnnouncementsPage } from './components/AnnouncementsPage';
 import { ChatSystem } from './components/ChatSystem';
+import { ProducerBankingPage } from './components/ProducerBankingPage';
+import { AdminBankingPage } from './components/AdminBankingPage';
 
 function App() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
@@ -210,6 +212,14 @@ function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/producer/banking" element={
+          <ProtectedRoute requiresProducer>
+            <LayoutWrapper>
+              <ProducerBankingPage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
+
         <Route path="/dashboard" element={
           <ProtectedRoute requiresClient>
             <LayoutWrapper>
@@ -236,6 +246,14 @@ function App() {
           <ProtectedRoute requiresAdmin>
             <LayoutWrapper>
               <ProducerInvitation />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/banking" element={
+          <ProtectedRoute requiresAdmin>
+            <LayoutWrapper>
+              <AdminBankingPage />
             </LayoutWrapper>
           </ProtectedRoute>
         } />
