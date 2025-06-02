@@ -275,7 +275,7 @@ export function ProducerBankingPage() {
                   onClick={() => setShowBankForm(true)}
                   className="mt-2 text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Add payment method
+                  Add payout method
                 </button>
               </div>
             ) : (
