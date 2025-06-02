@@ -28,6 +28,7 @@ export function CatalogPage() {
     const moods = searchParams.get('moods')?.split(',').filter(Boolean) || [];
     const minBpm = searchParams.get('minBpm');
     const maxBpm = searchParams.get('maxBpm');
+    const trackId = searchParams.get('track');
 
     // Create filters object
     const filters = {
@@ -35,7 +36,8 @@ export function CatalogPage() {
       genres,
       moods,
       minBpm: minBpm ? parseInt(minBpm) : undefined,
-      maxBpm: maxBpm ? parseInt(maxBpm) : undefined
+      maxBpm: maxBpm ? parseInt(maxBpm) : undefined,
+      trackId
     };
 
     // Reset page and tracks when filters change
@@ -85,53 +87,58 @@ export function CatalogPage() {
         // Exclude sync_only tracks
         .or('vocals_usage_type.neq.sync_only,has_vocals.eq.false');
 
-      // Build search conditions
-      const searchConditions = [];
+      // If a specific track ID is provided, fetch only that track
+      if (filters?.trackId) {
+        query = query.eq('id', filters.trackId);
+      } else {
+        // Build search conditions
+        const searchConditions = [];
 
-      if (filters?.query) {
-        // Text search
-        searchConditions.push(`title.ilike.%${filters.query}%`);
-        searchConditions.push(`artist.ilike.%${filters.query}%`);
-        
-        // Search in comma-separated strings
-        searchConditions.push(`genres.ilike.%${filters.query}%`);
-        searchConditions.push(`moods.ilike.%${filters.query}%`);
+        if (filters?.query) {
+          // Text search
+          searchConditions.push(`title.ilike.%${filters.query}%`);
+          searchConditions.push(`artist.ilike.%${filters.query}%`);
+          
+          // Search in comma-separated strings
+          searchConditions.push(`genres.ilike.%${filters.query}%`);
+          searchConditions.push(`moods.ilike.%${filters.query}%`);
+        }
+
+        // Genre filters
+        if (filters?.genres?.length > 0) {
+          filters.genres.forEach((genre: string) => {
+            searchConditions.push(`genres.ilike.%${genre}%`);
+          });
+        }
+
+        // Mood filters
+        if (filters?.moods?.length > 0) {
+          filters.moods.forEach((mood: string) => {
+            searchConditions.push(`moods.ilike.%${mood}%`);
+          });
+        }
+
+        // Apply search conditions
+        if (searchConditions.length > 0) {
+          query = query.or(searchConditions.join(','));
+        }
+
+        // Apply BPM filters
+        if (filters?.minBpm !== undefined) {
+          query = query.gte('bpm', filters.minBpm);
+        }
+        if (filters?.maxBpm !== undefined) {
+          query = query.lte('bpm', filters.maxBpm);
+        }
+
+        // Add pagination
+        const from = (currentPage - 1) * TRACKS_PER_PAGE;
+        const to = from + TRACKS_PER_PAGE - 1;
+        query = query.range(from, to);
+
+        // Order by most recent first
+        query = query.order('created_at', { ascending: false });
       }
-
-      // Genre filters
-      if (filters?.genres?.length > 0) {
-        filters.genres.forEach((genre: string) => {
-          searchConditions.push(`genres.ilike.%${genre}%`);
-        });
-      }
-
-      // Mood filters
-      if (filters?.moods?.length > 0) {
-        filters.moods.forEach((mood: string) => {
-          searchConditions.push(`moods.ilike.%${mood}%`);
-        });
-      }
-
-      // Apply search conditions
-      if (searchConditions.length > 0) {
-        query = query.or(searchConditions.join(','));
-      }
-
-      // Apply BPM filters
-      if (filters?.minBpm !== undefined) {
-        query = query.gte('bpm', filters.minBpm);
-      }
-      if (filters?.maxBpm !== undefined) {
-        query = query.lte('bpm', filters.maxBpm);
-      }
-
-      // Add pagination
-      const from = (currentPage - 1) * TRACKS_PER_PAGE;
-      const to = from + TRACKS_PER_PAGE - 1;
-      query = query.range(from, to);
-
-      // Order by most recent first
-      query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
 
@@ -183,6 +190,11 @@ export function CatalogPage() {
         }
 
         setHasMore(formattedTracks.length === TRACKS_PER_PAGE);
+        
+        // If we're looking for a specific track and found it, navigate to its page
+        if (filters?.trackId && formattedTracks.length === 1) {
+          navigate(`/track/${filters.trackId}`);
+        }
       }
     } catch (error) {
       console.error('Error fetching tracks:', error);
@@ -219,6 +231,10 @@ export function CatalogPage() {
       setPage(nextPage);
       fetchTracks(currentFilters, nextPage);
     }
+  };
+
+  const handleTrackSelect = (track: Track) => {
+    navigate(`/track/${track.id}`);
   };
 
   if (loading) {
@@ -285,7 +301,7 @@ export function CatalogPage() {
                 <TrackCard
                   key={track.id}
                   track={track}
-                  onSelect={() => user ? navigate(`/license/${track.id}`) : navigate('/login')}
+                  onSelect={() => handleTrackSelect(track)}
                 />
               ) : null
             )}

@@ -637,11 +637,17 @@ export function ClientDashboard() {
                       <img
                         src={license.track.image}
                         alt={license.track.title}
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer"
+                        onClick={() => navigate(`/track/${license.track.id}`)}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
+                          <button
+                            onClick={() => navigate(`/track/${license.track.id}`)}
+                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
+                          >
+                            {license.track.title}
+                          </button>
                           <button
                             onClick={() => setSelectedLicenseToDelete(license)}
                             className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
@@ -737,12 +743,12 @@ export function ClientDashboard() {
                           src={track.image}
                           alt={track.title}
                           className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => navigate(`/catalog?track=${track.id}`)}
+                          onClick={() => navigate(`/track/${track.id}`)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <button 
-                              onClick={() => navigate(`/catalog?track=${track.id}`)}
+                              onClick={() => navigate(`/track/${track.id}`)}
                               className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
                               {track.title}
@@ -811,12 +817,12 @@ export function ClientDashboard() {
                           src={track.image}
                           alt={track.title}
                           className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => navigate(`/catalog?track=${track.id}`)}
+                          onClick={() => navigate(`/track/${track.id}`)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <button
-                              onClick={() => navigate(`/catalog?track=${track.id}`)}
+                              onClick={() => navigate(`/track/${track.id}`)}
                               className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
                               {track.title}

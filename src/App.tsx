@@ -36,6 +36,7 @@ import { ProducerBankingPage } from './components/ProducerBankingPage';
 import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 import { WelcomePage } from './components/WelcomePage';
+import { TrackPage } from './components/TrackPage';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -158,6 +159,7 @@ function App() {
         <Route path="/announcements" element={<LayoutWrapper><AnnouncementsPage /></LayoutWrapper>} />
         <Route path="/checkout/success" element={<LayoutWrapper><CheckoutSuccessPage /></LayoutWrapper>} />
         <Route path="/welcome" element={<LayoutWrapper><WelcomePage /></LayoutWrapper>} />
+        <Route path="/track/:trackId" element={<LayoutWrapper><TrackPage /></LayoutWrapper>} />
 
         <Route path="/chat" element={
           <ProtectedRoute>

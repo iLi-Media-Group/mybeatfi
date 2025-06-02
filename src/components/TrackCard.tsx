@@ -5,6 +5,7 @@ import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, Play, User } fro
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface TrackCardProps {
   track: Track;
@@ -13,6 +14,7 @@ interface TrackCardProps {
 
 export function TrackCard({ track, onSelect }: TrackCardProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -110,11 +112,16 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(`/track/${track.id}`);
+  };
+
   return (
     <>
       <div 
-        className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
-        onClick={() => onSelect(track)}
+        className="group relative bg-white/5 backdrop-blur-sm rounded-lg border border-blue-500/20 overflow-hidden transition-all duration-300 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer"
+        onClick={handleCardClick}
       >
         {/* Image Section */}
         <div className="relative aspect-square overflow-hidden">
