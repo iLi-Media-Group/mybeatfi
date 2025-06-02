@@ -6,7 +6,7 @@ import { CreditCard, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function PricingPage() {
-  const { user } = useAuth();
+  const { user, refreshMembership } = useAuth();
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,6 +21,11 @@ export function PricingPage() {
       setLoading(true);
       const subscriptionData = await getUserSubscription();
       setSubscription(subscriptionData);
+      
+      // If we have a subscription, refresh the membership info
+      if (subscriptionData?.subscription_id && subscriptionData?.status === 'active') {
+        await refreshMembership();
+      }
     } catch (error) {
       console.error('Error fetching subscription:', error);
     } finally {
