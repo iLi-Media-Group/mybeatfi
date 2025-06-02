@@ -85,7 +85,8 @@ export function PricingCarousel() {
                 ${(product.price / 100).toFixed(2)}
               </span>
               <span className="text-gray-400 ml-2">
-                {product.mode === 'subscription' ? '/month' : ''}
+                {product.name === 'Ultimate Membership' ? '/year' : 
+                 product.mode === 'subscription' ? '/month' : ''}
               </span>
             </div>
           </div>
