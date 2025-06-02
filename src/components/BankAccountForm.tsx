@@ -100,7 +100,7 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Add Payment Method</h2>
+          <h2 className="text-2xl font-bold text-white">Add Payout Method</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -118,7 +118,7 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Payment Method Type
+              Payout Method Type
             </label>
             <div className="grid grid-cols-3 gap-4">
               <button
