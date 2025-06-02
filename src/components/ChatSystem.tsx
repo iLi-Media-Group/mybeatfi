@@ -188,20 +188,48 @@ export function ChatSystem() {
   const [isAdmin, setIsAdmin] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [roomSubscription, setRoomSubscription] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
       checkAdminStatus();
       fetchRooms();
-      subscribeToRooms();
+      
+      // Subscribe to room changes
+      const roomSub = subscribeToRooms();
+      setRoomSubscription(roomSub);
+      
+      return () => {
+        if (roomSub) {
+          roomSub.unsubscribe();
+        }
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
     }
   }, [user]);
 
   useEffect(() => {
     if (selectedRoom) {
       fetchMessages();
-      subscribeToMessages();
+      
+      // Unsubscribe from previous room subscription
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+      
+      // Subscribe to new room messages
+      const messageSub = subscribeToMessages();
+      setSubscription(messageSub);
     }
+    
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [selectedRoom]);
 
   useEffect(() => {
@@ -271,7 +299,7 @@ export function ChatSystem() {
   };
 
   const subscribeToRooms = () => {
-    const subscription = supabase
+    return supabase
       .channel('room_changes')
       .on('postgres_changes', {
         event: '*',
@@ -281,16 +309,12 @@ export function ChatSystem() {
         fetchRooms();
       })
       .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   };
 
   const subscribeToMessages = () => {
-    if (!selectedRoom) return;
+    if (!selectedRoom) return null;
 
-    const subscription = supabase
+    return supabase
       .channel(`room_${selectedRoom.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
@@ -302,10 +326,6 @@ export function ChatSystem() {
         fetchNewMessage(payload.new.id);
       })
       .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   };
 
   const fetchNewMessage = async (messageId: string) => {
