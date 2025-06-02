@@ -3,10 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Music, Calendar, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUserSubscription, getUserOrders, formatCurrency, formatDate, getMembershipPlanFromPriceId } from '../lib/stripe';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
   const [order, setOrder] = useState<any>(null);
@@ -26,6 +29,16 @@ export function CheckoutSuccessPage() {
         const subscriptionData = await getUserSubscription();
         if (subscriptionData) {
           setSubscription(subscriptionData);
+          
+          // Update user's membership plan in the database based on subscription
+          if (user) {
+            const membershipPlan = getMembershipPlanFromPriceId(subscriptionData.price_id);
+            await supabase
+              .from('profiles')
+              .update({ membership_plan: membershipPlan })
+              .eq('id', user.id);
+          }
+          
           setLoading(false);
           return;
         }
@@ -44,7 +57,7 @@ export function CheckoutSuccessPage() {
     };
 
     fetchData();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, user]);
 
   if (loading) {
     return (

@@ -13,6 +13,7 @@ interface LicenseDialogProps {
   track: Track;
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
   remainingLicenses: number;
+  onLicenseCreated?: () => void;
 }
 
 interface ProfileInfo {
@@ -44,7 +45,8 @@ export function LicenseDialog({
   onClose,
   track,
   membershipType,
-  remainingLicenses
+  remainingLicenses,
+  onLicenseCreated
 }: LicenseDialogProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'terms' | 'profile' | 'confirm'>('terms');
@@ -147,6 +149,11 @@ export function LicenseDialog({
 
       setCreatedLicenseId(license.id);
       setShowConfirmation(true);
+      
+      // Call the callback if provided
+      if (onLicenseCreated) {
+        onLicenseCreated();
+      }
     } catch (err) {
       console.error('Error creating license:', err);
       setError('Failed to create license');

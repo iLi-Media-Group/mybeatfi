@@ -726,16 +726,17 @@ export function ClientDashboard() {
                         <img
                           src={track.image}
                           alt={track.title}
-                          className="w-16 h-16 object-cover rounded-lg"
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => handleLicenseClick(track)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <Link 
-                              to={`/catalog?track=${track.id}`}
-                              className="text-white font-medium hover:text-blue-400 transition-colors truncate"
+                            <button 
+                              onClick={() => handleLicenseClick(track)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
                               {track.title}
-                            </Link>
+                            </button>
                             <button
                               onClick={() => handleRemoveFavorite(track.id)}
                               disabled={removingFavorite === track.id}
@@ -786,11 +787,17 @@ export function ClientDashboard() {
                         <img
                           src={track.image}
                           alt={track.title}
-                          className="w-16 h-16 object-cover rounded-lg"
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => handleLicenseClick(track)}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="text-white font-medium truncate">{track.title}</h4>
+                            <button
+                              onClick={() => handleLicenseClick(track)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
+                            >
+                              {track.title}
+                            </button>
                           </div>
                           <p className="text-sm text-gray-400">
                             {track.genres.join(', ')} • {track.bpm} BPM
@@ -852,6 +859,81 @@ export function ClientDashboard() {
           track={selectedTrackToLicense}
           membershipType={userStats.membershipType || 'Single Track'}
           remainingLicenses={userStats.remainingLicenses}
+          onLicenseCreated={() => {
+            // Refresh the dashboard data after a new license is created
+            if (user) {
+              setLoading(true);
+              const fetchData = async () => {
+                try {
+                  const { data: licensesData } = await supabase
+                    .from('sales')
+                    .select(`
+                      id,
+                      license_type,
+                      created_at,
+                      expiry_date,
+                      track:tracks (
+                        id,
+                        title,
+                        genres,
+                        bpm,
+                        audio_url,
+                        image_url,
+                        producer:profiles!producer_id (
+                          first_name,
+                          last_name,
+                          email
+                        )
+                      )
+                    `)
+                    .eq('buyer_id', user.id)
+                    .is('deleted_at', null)
+                    .order('created_at', { ascending: false });
+                  
+                  if (licensesData) {
+                    const formattedLicenses = licensesData.map(license => ({
+                      ...license,
+                      expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, userStats.membershipType || 'Single Track'),
+                      track: {
+                        ...license.track,
+                        genres: license.track.genres.split(',').map((g: string) => g.trim()),
+                        image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+                      }
+                    }));
+                    setLicenses(formattedLicenses);
+                  }
+                  
+                  // Update license count for Gold Access
+                  if (userStats.membershipType === 'Gold Access') {
+                    const startOfMonth = new Date();
+                    startOfMonth.setDate(1);
+                    startOfMonth.setHours(0, 0, 0, 0);
+                    
+                    const { count } = await supabase
+                      .from('sales')
+                      .select('id', { count: 'exact' })
+                      .eq('buyer_id', user.id)
+                      .gte('created_at', startOfMonth.toISOString());
+                    
+                    const totalLicenses = count || 0;
+                    const remainingLicenses = 10 - totalLicenses;
+                    
+                    setUserStats(prev => ({
+                      ...prev,
+                      totalLicenses,
+                      remainingLicenses
+                    }));
+                  }
+                } catch (err) {
+                  console.error('Error refreshing licenses:', err);
+                } finally {
+                  setLoading(false);
+                }
+              };
+              
+              fetchData();
+            }
+          }}
         />
       )}
     </div>
