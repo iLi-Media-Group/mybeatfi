@@ -69,14 +69,14 @@ export function ProducerBankingPage() {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Fetch producer balance
+      // Fetch producer balance using maybeSingle() instead of single()
       const { data: balanceData, error: balanceError } = await supabase
         .from('producer_balances')
         .select('available_balance, pending_balance')
         .eq('producer_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (balanceError && balanceError.code !== 'PGRST116') throw balanceError;
+      if (balanceError) throw balanceError;
       
       if (balanceData) {
         setBalance(balanceData.available_balance || 0);
@@ -88,7 +88,8 @@ export function ProducerBankingPage() {
           .insert({
             producer_id: user?.id,
             available_balance: 0,
-            pending_balance: 0
+            pending_balance: 0,
+            lifetime_earnings: 0
           });
 
         if (insertError) throw insertError;
