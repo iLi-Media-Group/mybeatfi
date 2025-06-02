@@ -259,7 +259,7 @@ export function ProducerBankingPage() {
 
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xl font-bold text-white">Payment Methods</p>
+              <p className="text-xl font-bold text-white">Payout Methods</p>
               <button
                 onClick={() => setShowBankForm(true)}
                 className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
