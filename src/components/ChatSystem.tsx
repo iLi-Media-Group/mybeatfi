@@ -424,15 +424,33 @@ export function ChatSystem() {
     if (!selectedRoom || !newMessage.trim()) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('chat_messages')
         .insert({
           room_id: selectedRoom.id,
           sender_id: user?.id,
           message: newMessage.trim()
-        });
+        })
+        .select(`
+          id,
+          message,
+          created_at,
+          is_system_message,
+          sender:profiles!sender_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .single();
 
       if (error) throw error;
+      
+      // Immediately add the new message to the state
+      if (data) {
+        setMessages(prev => [...prev, data]);
+      }
+      
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
