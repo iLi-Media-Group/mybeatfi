@@ -291,7 +291,7 @@ export function ProducerDashboard() {
   };
 
   const handleProposalStatusChange = async (action: 'accept' | 'reject') => {
-    if (!selectedProposal) return;
+    if (!selectedProposal || !user) return;
     
     try {
       // Update proposal status
@@ -312,7 +312,7 @@ export function ProducerDashboard() {
           proposal_id: selectedProposal.id,
           previous_status: 'pending',
           new_status: action === 'accept' ? 'accepted' : 'rejected',
-          changed_by: user?.id
+          changed_by: user.id
         });
 
       if (historyError) throw historyError;
@@ -394,6 +394,13 @@ export function ProducerDashboard() {
             >
               <Upload className="w-5 h-5 mr-2" />
               Upload New Track
+            </Link>
+            <Link
+              to="/producer/banking"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <DollarSign className="w-5 h-5 mr-2" />
+              Earnings & Payments
             </Link>
           </div>
         </div>
@@ -638,7 +645,16 @@ export function ProducerDashboard() {
 
             {/* Recent Sales Section */}
             <div>
-              <h3 className="text-xl font-bold text-white mb-4">Recent Sales</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Recent Sales</h3>
+                <Link
+                  to="/producer/banking"
+                  className="text-green-400 hover:text-green-300 transition-colors flex items-center text-sm"
+                >
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  View Earnings
+                </Link>
+              </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-4">
                 {recentSales.length === 0 ? (
                   <div className="text-center py-6">
