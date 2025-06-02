@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, User, X, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { PRODUCTS } from '../stripe-config';
+import { createCheckoutSession } from '../lib/stripe';
 
 interface SignupFormProps {
   onClose: () => void;
 }
 
 export function SignupForm({ onClose }: SignupFormProps) {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -21,6 +24,10 @@ export function SignupForm({ onClose }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  
+  // Get redirect and product info from URL params
+  const redirectTo = searchParams.get('redirect') || '';
+  const productId = searchParams.get('product') || '';
 
   const validatePassword = (password: string) => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -89,6 +96,26 @@ export function SignupForm({ onClose }: SignupFormProps) {
       }
 
       onClose();
+      
+      // Handle redirect based on URL params
+      if (redirectTo === 'pricing' && productId && accountType === 'client') {
+        // Find the product and proceed with subscription
+        const product = PRODUCTS.find(p => p.id === productId);
+        if (product) {
+          try {
+            const checkoutUrl = await createCheckoutSession(product.priceId, product.mode);
+            window.location.href = checkoutUrl;
+            return;
+          } catch (err) {
+            console.error('Error creating checkout session:', err);
+            // If checkout fails, just navigate to dashboard
+            navigate(accountType === 'producer' ? '/producer/dashboard' : '/dashboard');
+            return;
+          }
+        }
+      }
+
+      // Default navigation
       navigate(accountType === 'producer' ? '/producer/dashboard' : '/dashboard');
     } catch (err) {
       console.error('Signup error:', err);

@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LogIn, KeyRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export function ClientLogin() {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  
+  // Get redirect and product info from URL params
+  const redirectTo = searchParams.get('redirect') || '';
+  const productId = searchParams.get('product') || '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +56,25 @@ export function ClientLogin() {
         throw signInError;
       }
 
+      // Handle redirect based on URL params
+      if (redirectTo === 'pricing' && productId) {
+        // Find the product and proceed with subscription
+        const product = PRODUCTS.find(p => p.id === productId);
+        if (product) {
+          try {
+            const checkoutUrl = await createCheckoutSession(product.priceId, product.mode);
+            window.location.href = checkoutUrl;
+            return;
+          } catch (err) {
+            console.error('Error creating checkout session:', err);
+            // If checkout fails, just navigate to pricing page
+            navigate('/pricing');
+            return;
+          }
+        }
+      }
+
+      // Default navigation
       navigate(isAdmin ? '/admin' : '/dashboard');
     } catch (err) {
       console.error('Login error:', err);

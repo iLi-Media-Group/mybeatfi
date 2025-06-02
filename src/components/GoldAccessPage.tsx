@@ -1,22 +1,148 @@
 import React, { useState } from 'react';
-import { Music, Star, Zap, Gift, PlayCircle, Video, Headphones, FileCheck, Loader2 } from 'lucide-react';
+import { Music, Star, Zap, Gift, PlayCircle, Video, Headphones, FileCheck, Loader2, Mail, ArrowRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../stripe-config';
 import { createCheckoutSession } from '../lib/stripe';
+import { supabase } from '../lib/supabase';
+
+interface EmailCheckDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onContinue: (email: string, exists: boolean) => void;
+}
+
+function EmailCheckDialog({ isOpen, onClose, onContinue }: EmailCheckDialogProps) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      // Check if the email exists in the system
+      const { data, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+
+      // Continue with the appropriate flow
+      onContinue(email, !!data);
+    } catch (err) {
+      console.error('Error checking email:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-white">Subscribe to Gold Access</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-center">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Your Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              We'll check if you already have an account
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <ArrowRight className="w-5 h-5 mr-2" />
+                Continue
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export function GoldAccessPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailCheck, setShowEmailCheck] = useState(false);
 
   const handleUpgrade = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
+    if (user) {
+      // User is already logged in, proceed with subscription
+      await proceedWithSubscription();
+    } else {
+      // User is not logged in, show email check dialog
+      setShowEmailCheck(true);
     }
+  };
 
+  const handleEmailContinue = (email: string, exists: boolean) => {
+    setShowEmailCheck(false);
+    
+    if (exists) {
+      // Account exists, redirect to login with email prefilled
+      navigate(`/login?email=${encodeURIComponent(email)}&redirect=pricing&product=prod_SQOhLQJIM6Rji8`);
+    } else {
+      // No account exists, redirect to signup with email prefilled
+      navigate(`/signup?email=${encodeURIComponent(email)}&redirect=pricing&product=prod_SQOhLQJIM6Rji8`);
+    }
+  };
+
+  const proceedWithSubscription = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -172,6 +298,12 @@ export function GoldAccessPage() {
           </div>
         )}
       </div>
+
+      <EmailCheckDialog
+        isOpen={showEmailCheck}
+        onClose={() => setShowEmailCheck(false)}
+        onContinue={handleEmailContinue}
+      />
     </div>
   );
 }

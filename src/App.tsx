@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
 import { SearchBox } from './components/SearchBox';
 import { ProducerLogin } from './components/ProducerLogin';
 import { ClientLogin } from './components/ClientLogin';
@@ -37,9 +37,20 @@ import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 
 function App() {
+  const [searchParams] = useSearchParams();
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Check if we have email and redirect params that should trigger opening the signup dialog
+  useEffect(() => {
+    const email = searchParams.get('email');
+    const redirect = searchParams.get('redirect');
+    
+    if (email && redirect === 'pricing' && !user) {
+      setIsSignupOpen(true);
+    }
+  }, [searchParams, user]);
 
   const LayoutWrapper = ({ children }: { children: React.ReactNode }) => (
     <Layout onSignupClick={() => setIsSignupOpen(true)}>
@@ -189,6 +200,12 @@ function App() {
         <Route path="/login" element={
           <LayoutWrapper>
             <ClientLogin />
+          </LayoutWrapper>
+        } />
+
+        <Route path="/signup" element={
+          <LayoutWrapper>
+            <ClientSignupDialog isOpen={true} onClose={() => navigate('/')} />
           </LayoutWrapper>
         } />
 
