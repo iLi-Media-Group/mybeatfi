@@ -1,4 +1,4 @@
-This is the LicenseDialog.tsx: import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, FileText, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -130,28 +130,32 @@ export function LicenseDialog({
 
       const purchaseDate = new Date().toISOString();
 
-      // Create license record with explicit producer_id from track
+      // Create license record with explicit producer_id from track and specify the exact columns to return
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
           track_id: track.id,
           buyer_id: user.id,
-          producer_id: track.producer_id, // Explicitly set producer_id from track
+          producer_id: track.producer_id,
           license_type: membershipType,
           amount: 0,
           payment_method: 'subscription',
           created_at: purchaseDate,
           licensee_info: {
-            name: ${profile.first_name} ${profile.last_name},
+            name: `${profile.first_name} ${profile.last_name}`,
             email: profile.email
           }
         })
-        .select('id')
+        .select('sales.id')
         .single();
 
       if (licenseError) {
         console.error('License creation error:', licenseError);
         throw new Error('Failed to create license. Please try again.');
+      }
+
+      if (!license) {
+        throw new Error('No license data returned after creation');
       }
 
       setCreatedLicenseId(license.id);
