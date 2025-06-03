@@ -207,7 +207,7 @@ export function ProducerDashboard() {
         setRecentSales(salesData);
       }
       
-      // Calculate total sales and revenue directly from the database
+      // Calculate total sales count directly from the database
       const { count: totalSalesCount, error: countError } = await supabase
         .from('sales')
         .select('id', { count: 'exact', head: true })
@@ -223,6 +223,7 @@ export function ProducerDashboard() {
         
       if (revenueError) throw revenueError;
       
+      // Calculate total revenue, handling null values
       const totalRevenue = revenueData.reduce((sum, sale) => sum + (sale.amount || 0), 0);
       
       setStats(prev => ({
