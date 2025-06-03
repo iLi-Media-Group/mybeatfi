@@ -2,13 +2,7 @@ import { supabase } from './supabase';
 
 export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription') {
   try {
-    // First try to refresh the session to ensure we have a valid token
-    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError) {
-      throw new Error('Unable to refresh authentication session');
-    }
-
-    // Get the current session with the refreshed token
+    // Get the current session - this implicitly handles refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !session) {
