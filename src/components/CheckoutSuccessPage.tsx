@@ -235,4 +235,5 @@ export function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
-  }
+  );
+}
