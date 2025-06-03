@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, BarChart3, Upload, MessageSquare, XCircle } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, BarChart3, Upload, MessageSquare, XCircle, PieChart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -13,6 +13,7 @@ import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
 import { ProposalHistoryDialog } from './ProposalHistoryDialog';
 import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 import { TrackProposalsDialog } from './TrackProposalsDialog';
+import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
 
 interface UserStats {
   totalTracks: number;
@@ -66,6 +67,7 @@ export function ProducerDashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTrackProposalsDialog, setShowTrackProposalsDialog] = useState(false);
+  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
   
   // Proposal action states
   const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
@@ -439,7 +441,10 @@ export function ProducerDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+          <div 
+            className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20 cursor-pointer hover:bg-white/10 transition-colors"
+            onClick={() => setShowRevenueBreakdown(true)}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400">Total Revenue</p>
@@ -447,8 +452,12 @@ export function ProducerDashboard() {
                   ${stats.totalRevenue.toFixed(2)}
                 </p>
               </div>
-              <DollarSign className="w-12 h-12 text-green-500" />
+              <div className="relative">
+                <DollarSign className="w-12 h-12 text-green-500" />
+                <PieChart className="w-5 h-5 text-blue-400 absolute -bottom-1 -right-1" />
+              </div>
             </div>
+            <p className="text-xs text-blue-400 mt-2">Click for breakdown</p>
           </div>
 
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
@@ -737,6 +746,15 @@ export function ProducerDashboard() {
           }}
           trackId={selectedTrack.id}
           trackTitle={selectedTrack.title}
+        />
+      )}
+
+      {/* Revenue Breakdown Dialog */}
+      {user && showRevenueBreakdown && (
+        <RevenueBreakdownDialog
+          isOpen={showRevenueBreakdown}
+          onClose={() => setShowRevenueBreakdown(false)}
+          producerId={user.id}
         />
       )}
 

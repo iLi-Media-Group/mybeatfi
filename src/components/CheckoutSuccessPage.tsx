@@ -81,7 +81,6 @@ export function CheckoutSuccessPage() {
                       .insert({
                         track_id: trackData.id,
                         buyer_id: user.id,
-                        producer_id: trackData.producer_id,
                         license_type: 'Single Track',
                         amount: matchingOrder.amount_total / 100, // Convert from cents
                         payment_method: 'stripe',
@@ -236,5 +235,4 @@ export function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
-  );
-}
+  }
