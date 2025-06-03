@@ -2,9 +2,16 @@ import { supabase } from './supabase';
 
 export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription') {
   try {
-    const { data: accessToken, error: tokenError } = await supabase.auth.getSession();
+    // First try to refresh the session to ensure we have a valid token
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      throw new Error('Unable to refresh authentication session');
+    }
+
+    // Get the current session with the refreshed token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (tokenError || !accessToken) {
+    if (sessionError || !session) {
       throw new Error('You must be logged in to make a purchase');
     }
 
@@ -12,7 +19,7 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken.session.access_token}`,
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         price_id: priceId,
