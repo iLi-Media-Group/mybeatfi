@@ -188,16 +188,16 @@ export function ProducerDashboard() {
           license_type,
           amount,
           created_at,
-          buyer:profiles!buyer_id (
+          buyer:profiles!sales_buyer_id_fkey (
             first_name,
             last_name,
             email
           ),
-          track:tracks!track_id (
+          track:tracks!sales_track_id_fkey (
             title
           )
         `)
-        .in('track_id', tracksData?.map(t => t.id) || [])
+        .eq('producer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -205,25 +205,25 @@ export function ProducerDashboard() {
       
       if (salesData) {
         setRecentSales(salesData);
-        
-        // Calculate total sales and revenue
-        const { data: totalSalesData, error: totalSalesError } = await supabase
-          .from('sales')
-          .select('amount')
-          .in('track_id', tracksData?.map(t => t.id) || []);
+      }
+      
+      // Calculate total sales and revenue directly from the database
+      const { data: salesStatsData, error: salesStatsError } = await supabase
+        .from('sales')
+        .select('id, amount', { count: 'exact' })
+        .eq('producer_id', user.id);
 
-        if (totalSalesError) throw totalSalesError;
+      if (salesStatsError) throw salesStatsError;
+      
+      if (salesStatsData) {
+        const totalSales = salesStatsData.length;
+        const totalRevenue = salesStatsData.reduce((sum, sale) => sum + (sale.amount || 0), 0);
         
-        if (totalSalesData) {
-          const totalSales = totalSalesData.length;
-          const totalRevenue = totalSalesData.reduce((sum, sale) => sum + sale.amount, 0);
-          
-          setStats(prev => ({
-            ...prev,
-            totalSales,
-            totalRevenue
-          }));
-        }
+        setStats(prev => ({
+          ...prev,
+          totalSales,
+          totalRevenue
+        }));
       }
 
     } catch (err) {
