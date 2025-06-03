@@ -44,13 +44,13 @@ export function LicenseAgreement() {
             created_at,
             track:tracks (
               title,
-              producer:profiles (
+              producer:profiles!tracks_producer_id_fkey (
                 first_name,
                 last_name,
                 email
               )
             ),
-            buyer:profiles (
+            buyer:profiles!sales_buyer_id_fkey (
               first_name,
               last_name,
               email
