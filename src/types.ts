@@ -17,6 +17,7 @@ export interface Track {
   trackoutsUrl?: string;
   hasVocals?: boolean;
   vocalsUsageType?: 'normal' | 'sync_only';
+  producerId: string; // Added explicit producerId field
   producer?: {
     id: string;
     firstName: string;
