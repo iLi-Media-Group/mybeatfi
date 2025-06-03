@@ -130,12 +130,13 @@ export function LicenseDialog({
 
       const purchaseDate = new Date().toISOString();
 
-      // Create license record without explicitly specifying producer_id
+      // Create license record with explicit producer_id from track
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
           track_id: track.id,
           buyer_id: user.id,
+          producer_id: track.producer_id, // Explicitly set producer_id from track
           license_type: membershipType,
           amount: 0,
           payment_method: 'subscription',
@@ -145,7 +146,7 @@ export function LicenseDialog({
             email: profile.email
           }
         })
-        .select('id')  // Only select id to avoid potential joins or ambiguous fields
+        .select('id')
         .single();
 
       if (licenseError) {
@@ -244,7 +245,7 @@ export function LicenseDialog({
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full pl-4" // Increased left padding
+                  className="w-full pl-4"
                   required
                 />
               </div>
@@ -257,7 +258,7 @@ export function LicenseDialog({
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full pl-4" // Increased left padding
+                  className="w-full pl-4"
                   required
                 />
               </div>
@@ -270,7 +271,7 @@ export function LicenseDialog({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-4" // Increased left padding
+                  className="w-full pl-4"
                   required
                 />
               </div>
