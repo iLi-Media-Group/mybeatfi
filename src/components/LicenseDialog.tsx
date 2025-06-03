@@ -146,7 +146,7 @@ export function LicenseDialog({
             email: profile.email
           }
         }])
-        .select('sales.id')
+        .select('id')
         .single();
 
       if (licenseError) {
