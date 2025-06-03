@@ -98,6 +98,7 @@ export function TrackPage() {
           hasStingEnding: trackData.has_sting_ending || false,
           mp3Url: trackData.mp3_url || '',
           trackoutsUrl: trackData.trackouts_url || '',
+          producerId: trackData.producer_id,
           producer: trackData.producer ? {
             id: trackData.producer.id,
             firstName: trackData.producer.first_name || '',
@@ -221,6 +222,9 @@ export function TrackPage() {
           throw new Error('Single Track product not found');
         }
         
+        // Store the track ID in localStorage for retrieval after checkout
+        localStorage.setItem('pending_license_track_id', track.id);
+        
         // Create checkout session
         const checkoutUrl = await createCheckoutSession(
           singleTrackProduct.priceId, 
@@ -231,6 +235,7 @@ export function TrackPage() {
         window.location.href = checkoutUrl;
       } catch (error) {
         console.error('Error creating checkout session:', error);
+        setError('Error creating checkout session: ' + (error instanceof Error ? error.message : 'Unknown error'));
       } finally {
         setCheckoutLoading(false);
       }
