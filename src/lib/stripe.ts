@@ -2,9 +2,9 @@ import { supabase } from './supabase';
 
 export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription') {
   try {
-    const { data, error } = await supabase.auth.getSession();
+    const { data: accessToken, error: tokenError } = await supabase.auth.getSession();
     
-    if (error || !data.session) {
+    if (tokenError || !accessToken) {
       throw new Error('You must be logged in to make a purchase');
     }
 
@@ -12,7 +12,7 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${data.session.access_token}`,
+        'Authorization': `Bearer ${accessToken.session.access_token}`,
       },
       body: JSON.stringify({
         price_id: priceId,
