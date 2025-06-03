@@ -130,7 +130,7 @@ export function LicenseDialog({
 
       const purchaseDate = new Date().toISOString();
 
-      // Create license record without explicit producer_id
+      // Create license record with explicit producer_id from track
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
@@ -145,7 +145,7 @@ export function LicenseDialog({
             email: profile.email
           }
         })
-        .select('id')
+        .select('id, track_id')
         .single();
 
       if (licenseError) {
