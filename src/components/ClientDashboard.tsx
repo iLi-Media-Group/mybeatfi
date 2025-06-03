@@ -255,7 +255,7 @@ export function ClientDashboard() {
       }
 
       // Calculate remaining licenses for Gold Access
-      if (profileData.membership_plan === 'Gold Access') {
+      if (membershipPlan === 'Gold Access') {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -455,6 +455,8 @@ export function ClientDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
               <p className="text-gray-300">
+                <span className="font-semibold text-white">Current Plan: {membershipPlan}</span>
+                <br />
                 {membershipPlan === 'Gold Access' ? (
                   <>
                     You have used {userStats.totalLicenses} of your 10 monthly licenses

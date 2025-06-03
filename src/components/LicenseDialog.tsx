@@ -145,7 +145,7 @@ export function LicenseDialog({
             email: profile.email
           }
         })
-        .select('id, track_id')
+        .select('id')  // Only select id to avoid potential joins or ambiguous fields
         .single();
 
       if (licenseError) {
@@ -244,7 +244,7 @@ export function LicenseDialog({
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full"
+                  className="w-full pl-4" // Increased left padding
                   required
                 />
               </div>
@@ -257,7 +257,7 @@ export function LicenseDialog({
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full"
+                  className="w-full pl-4" // Increased left padding
                   required
                 />
               </div>
@@ -270,7 +270,7 @@ export function LicenseDialog({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
+                  className="w-full pl-4" // Increased left padding
                   required
                 />
               </div>
