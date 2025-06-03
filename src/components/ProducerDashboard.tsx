@@ -208,23 +208,28 @@ export function ProducerDashboard() {
       }
       
       // Calculate total sales and revenue directly from the database
-      const { data: salesStatsData, error: salesStatsError } = await supabase
+      const { count: totalSalesCount, error: countError } = await supabase
         .from('sales')
-        .select('id, amount', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('producer_id', user.id);
-
-      if (salesStatsError) throw salesStatsError;
-      
-      if (salesStatsData) {
-        const totalSales = salesStatsData.length;
-        const totalRevenue = salesStatsData.reduce((sum, sale) => sum + (sale.amount || 0), 0);
         
-        setStats(prev => ({
-          ...prev,
-          totalSales,
-          totalRevenue
-        }));
-      }
+      if (countError) throw countError;
+      
+      // Get sum of all sales amounts
+      const { data: revenueData, error: revenueError } = await supabase
+        .from('sales')
+        .select('amount')
+        .eq('producer_id', user.id);
+        
+      if (revenueError) throw revenueError;
+      
+      const totalRevenue = revenueData.reduce((sum, sale) => sum + (sale.amount || 0), 0);
+      
+      setStats(prev => ({
+        ...prev,
+        totalSales: totalSalesCount || 0,
+        totalRevenue: totalRevenue
+      }));
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
