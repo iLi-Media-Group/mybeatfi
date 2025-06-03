@@ -116,7 +116,7 @@ function EmailCheckDialog({ isOpen, onClose, onContinue, product }: EmailCheckDi
 
 export function PricingCarousel() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshMembership } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +134,11 @@ export function PricingCarousel() {
     try {
       const subscription = await getUserSubscription();
       setCurrentSubscription(subscription);
+      
+      // If we have an active subscription, refresh membership info
+      if (subscription?.subscription_id && subscription?.status === 'active') {
+        await refreshMembership();
+      }
     } catch (err) {
       console.error('Error fetching subscription:', err);
     }

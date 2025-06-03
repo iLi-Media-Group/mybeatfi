@@ -140,7 +140,7 @@ export function ClientDashboard() {
             bpm,
             audio_url,
             image_url,
-            producer:profiles!producer_id (
+            producer:profiles!tracks_producer_id_fkey (
               first_name,
               last_name,
               email
@@ -234,6 +234,7 @@ export function ClientDashboard() {
           fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
           pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
           leaseAgreementUrl: '',
+          producerId: track.producer?.id,
           producer: track.producer ? {
             id: track.producer.id,
             firstName: track.producer.first_name || '',
@@ -941,7 +942,7 @@ export function ClientDashboard() {
                         bpm,
                         audio_url,
                         image_url,
-                        producer:profiles!producer_id (
+                        producer:profiles!tracks_producer_id_fkey (
                           first_name,
                           last_name,
                           email
