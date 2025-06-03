@@ -130,13 +130,29 @@ export function LicenseDialog({
 
       const purchaseDate = new Date().toISOString();
 
+      // Get the producer_id from the track
+      const { data: trackData, error: trackError } = await supabase
+        .from('tracks')
+        .select('producer_id')
+        .eq('id', track.id)
+        .single();
+
+      if (trackError) {
+        console.error('Error fetching track producer:', trackError);
+        throw new Error('Failed to fetch track information');
+      }
+
+      if (!trackData || !trackData.producer_id) {
+        throw new Error('Track producer information not found');
+      }
+
       // Create license record with explicit producer_id from track
       const { data: license, error: licenseError } = await supabase
         .from('sales')
         .insert({
           track_id: track.id,
           buyer_id: user.id,
-          producer_id: track.producer_id, // Explicitly set producer_id from track
+          producer_id: trackData.producer_id,
           license_type: membershipType,
           amount: 0,
           payment_method: 'subscription',
