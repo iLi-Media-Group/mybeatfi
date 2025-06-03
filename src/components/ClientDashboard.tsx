@@ -140,7 +140,9 @@ export function ClientDashboard() {
             bpm,
             audio_url,
             image_url,
+            producer_id,
             producer:profiles!tracks_producer_id_fkey (
+              id,
               first_name,
               last_name,
               email
@@ -168,7 +170,31 @@ export function ClientDashboard() {
         .from('favorites')
         .select(`
           track_id,
-          tracks (*)
+          tracks (
+            id,
+            title,
+            artist,
+            genres,
+            moods,
+            duration,
+            bpm,
+            audio_url,
+            image_url,
+            has_sting_ending,
+            is_one_stop,
+            mp3_url,
+            trackouts_url,
+            has_vocals,
+            vocals_usage_type,
+            sub_genres,
+            producer_id,
+            producer:profiles!tracks_producer_id_fkey (
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          )
         `)
         .eq('user_id', user.id);
 
@@ -189,7 +215,14 @@ export function ClientDashboard() {
           trackoutsUrl: f.tracks.trackouts_url,
           hasVocals: f.tracks.has_vocals,
           vocalsUsageType: f.tracks.vocals_usage_type,
-          subGenres: [],
+          subGenres: f.tracks.sub_genres || [],
+          producerId: f.tracks.producer_id,
+          producer: f.tracks.producer ? {
+            id: f.tracks.producer.id,
+            firstName: f.tracks.producer.first_name || '',
+            lastName: f.tracks.producer.last_name || '',
+            email: f.tracks.producer.email
+          } : undefined,
           fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
           pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
           leaseAgreementUrl: ''
@@ -208,6 +241,8 @@ export function ClientDashboard() {
           image_url,
           has_vocals,
           vocals_usage_type,
+          sub_genres,
+          producer_id,
           producer:profiles!producer_id (
             id,
             first_name,
@@ -230,17 +265,17 @@ export function ClientDashboard() {
           image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
           hasVocals: track.has_vocals,
           vocalsUsageType: track.vocals_usage_type,
-          subGenres: [],
-          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-          leaseAgreementUrl: '',
-          producerId: track.producer?.id,
+          subGenres: track.sub_genres || [],
+          producerId: track.producer_id,
           producer: track.producer ? {
             id: track.producer.id,
             firstName: track.producer.first_name || '',
             lastName: track.producer.last_name || '',
             email: track.producer.email
-          } : undefined
+          } : undefined,
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
         }));
         setNewTracks(formattedNewTracks);
       }
@@ -675,6 +710,7 @@ export function ClientDashboard() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+                          
                           </div>
                         </div>
                         <div className="text-sm text-gray-400 space-y-1">
@@ -942,6 +978,7 @@ export function ClientDashboard() {
                         bpm,
                         audio_url,
                         image_url,
+                        producer_id,
                         producer:profiles!tracks_producer_id_fkey (
                           first_name,
                           last_name,
