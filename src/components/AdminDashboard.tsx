@@ -25,6 +25,7 @@ interface UserDetails {
   last_name: string | null;
   account_type: 'client' | 'producer';
   created_at: string;
+  producer_number?: string | null;
   total_tracks?: number;
   total_sales?: number;
   total_revenue?: number;
@@ -52,100 +53,122 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        setError(null);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
-        // Fetch admin profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('first_name, email')
-          .eq('id', user.id)
-          .maybeSingle();
+  const fetchData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch admin profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, email')
+        .eq('id', user.id)
+        .maybeSingle();
           
-        if (profileError) throw profileError;
-        if (profileData) {
-          setProfile(profileData);
-        }
+      if (profileError) throw profileError;
+      if (profileData) {
+        setProfile(profileData);
+      }
 
-        // Fetch all users with their details
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('*');
+      // Fetch all users with their details
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*');
 
-        if (userError) throw userError;
+      if (userError) throw userError;
 
-        // Process user data
-        const clients = userData.filter(u => u.account_type === 'client');
-        const producerUsers = userData.filter(u => 
-          u.account_type === 'producer' || 
-          ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(u.email)
-        );
+      // Process user data
+      const clients = userData.filter(u => u.account_type === 'client');
+      const producerUsers = userData.filter(u => 
+        u.account_type === 'producer' || 
+        ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(u.email)
+      );
 
-        // Update stats with user counts
+      // Update stats with user counts
+      setStats(prev => ({
+        ...prev,
+        total_clients: clients.length,
+        total_producers: producerUsers.length
+      }));
+
+      // Fetch sales analytics
+      const { data: analyticsData, error: analyticsError } = await supabase
+        .from('sales_analytics')
+        .select('*')
+        .order('month', { ascending: false });
+
+      if (analyticsError) {
+        console.error('Analytics error:', analyticsError);
+      } else {
+        // Get the most recent analytics data or use default values
+        const latestAnalytics = analyticsData && analyticsData.length > 0 ? analyticsData[0] : {
+          monthly_sales_count: 0,
+          monthly_revenue: 0,
+          track_count: 0,
+          producer_sales_count: 0,
+          producer_revenue: 0
+        };
+
+        // Update stats with sales data
         setStats(prev => ({
           ...prev,
-          total_clients: clients.length,
-          total_producers: producerUsers.length
+          total_sales: latestAnalytics.monthly_sales_count || 0,
+          total_revenue: latestAnalytics.monthly_revenue || 0
         }));
 
-        // Fetch sales analytics
-        const { data: analyticsData, error: analyticsError } = await supabase
-          .from('sales_analytics')
-          .select('*')
-          .order('month', { ascending: false });
+        // Transform producer data - create a map of producer analytics by producer_id
+        const producerAnalyticsMap = analyticsData.reduce((map, item) => {
+          if (item.producer_id) {
+            if (!map[item.producer_id]) {
+              map[item.producer_id] = {
+                producer_sales_count: item.producer_sales_count || 0,
+                producer_revenue: item.producer_revenue || 0,
+                track_count: item.track_count || 0
+              };
+            }
+          }
+          return map;
+        }, {});
 
-        if (analyticsError) {
-          console.error('Analytics error:', analyticsError);
-        } else {
-          // Get the most recent analytics data or use default values
-          const latestAnalytics = analyticsData && analyticsData.length > 0 ? analyticsData[0] : {
-            monthly_sales_count: 0,
-            monthly_revenue: 0,
-            track_count: 0,
+        // Map producer users to include their analytics
+        const transformedProducers = producerUsers.map(producer => {
+          const analytics = producerAnalyticsMap[producer.id] || {
             producer_sales_count: 0,
-            producer_revenue: 0
+            producer_revenue: 0,
+            track_count: 0
           };
+          
+          return {
+            id: producer.id,
+            email: producer.email,
+            first_name: producer.first_name,
+            last_name: producer.last_name,
+            account_type: 'producer' as const,
+            created_at: producer.created_at,
+            producer_number: producer.producer_number,
+            total_tracks: analytics.track_count,
+            total_sales: analytics.producer_sales_count,
+            total_revenue: analytics.producer_revenue
+          };
+        });
 
-          // Update stats with sales data
-          setStats(prev => ({
-            ...prev,
-            total_sales: latestAnalytics.monthly_sales_count || 0,
-            total_revenue: latestAnalytics.monthly_revenue || 0
-          }));
-
-          // Transform producer data
-          const transformedProducers = producerUsers.map(producer => {
-            const producerAnalytics = latestAnalytics;
-            return {
-              id: producer.id,
-              email: producer.email,
-              first_name: producer.first_name,
-              last_name: producer.last_name,
-              account_type: 'producer' as const,
-              created_at: producer.created_at,
-              total_tracks: producerAnalytics?.track_count || 0,
-              total_sales: producerAnalytics?.producer_sales_count || 0,
-              total_revenue: producerAnalytics?.producer_revenue || 0
-            };
-          });
-
-          setProducers(transformedProducers);
-        }
-
-      } catch (err) {
-        console.error('Error fetching admin data:', err);
-        setError('Failed to load dashboard data. Please try refreshing the page.');
-      } finally {
-        setLoading(false);
+        setProducers(transformedProducers);
       }
-    };
 
-    fetchData();
-  }, [user]);
+    } catch (err) {
+      console.error('Error fetching admin data:', err);
+      setError('Failed to load dashboard data. Please try refreshing the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProducerSort = (field: keyof UserDetails) => {
     if (producerSortField === field) {
@@ -163,7 +186,8 @@ export function AdminDashboard() {
       return (
         producer.email.toLowerCase().includes(searchLower) ||
         (producer.first_name?.toLowerCase() || '').includes(searchLower) ||
-        (producer.last_name?.toLowerCase() || '').includes(searchLower)
+        (producer.last_name?.toLowerCase() || '').includes(searchLower) ||
+        (producer.producer_number?.toLowerCase() || '').includes(searchLower)
       );
     })
     .sort((a, b) => {
@@ -379,6 +403,17 @@ export function AdminDashboard() {
                     </th>
                     <th className="px-6 py-3 text-left">
                       <button
+                        onClick={() => handleProducerSort('producer_number')}
+                        className="flex items-center text-sm font-semibold text-gray-300 hover:text-white"
+                      >
+                        ID
+                        {producerSortField === 'producer_number' && (
+                          <span className="ml-1">{producerSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left">
+                      <button
                         onClick={() => handleProducerSort('total_tracks')}
                         className="flex items-center text-sm font-semibold text-gray-300 hover:text-white"
                       >
@@ -443,6 +478,9 @@ export function AdminDashboard() {
                           </p>
                           <p className="text-sm text-gray-400">{producer.email}</p>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-300">
+                        {producer.producer_number || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-gray-300">{producer.total_tracks || 0}</td>
                       <td className="px-6 py-4 text-gray-300">{producer.total_sales || 0}</td>
