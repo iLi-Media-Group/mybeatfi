@@ -202,5 +202,3 @@ export function ClientsCarousel() {
     </div>
   );
 }
-
-export { ClientsCarousel }
