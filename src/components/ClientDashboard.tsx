@@ -706,4 +706,4 @@ export function ClientDashboard() {
                 <h3 className="text-xl font-bold text-white flex items-center">
                   <Star className="w-5 h-5 mr-2 text-yellow-400" />
                   Favorite Tracks
-                </h
+                </h3>
