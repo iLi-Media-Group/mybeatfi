@@ -7,10 +7,6 @@ import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
 import { calculateTimeRemaining } from '../utils/dateUtils';
 import { ClientProfile } from './ClientProfile';
-import { DeleteLicenseDialog } from './DeleteLicenseDialog';
-import { EditRequestDialog } from './EditRequestDialog';
-import { LicenseDialog } from './LicenseDialog';
-import { SyncProposalDialog } from './SyncProposalDialog';
 
 interface License {
   id: string;
@@ -41,6 +37,201 @@ interface CustomSyncRequest {
   created_at: string;
 }
 
+interface EditRequestDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  request: CustomSyncRequest;
+  onSave: (updatedRequest: Partial<CustomSyncRequest>) => Promise<void>;
+}
+
+interface DeleteLicenseDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  license: License;
+  onConfirm: () => Promise<void>;
+}
+
+function DeleteLicenseDialog({ isOpen, onClose, license, onConfirm }: DeleteLicenseDialogProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      console.error('Error deleting license:', err);
+      setError('Failed to delete license');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isExpired = new Date(license.expiry_date) <= new Date();
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+        <h3 className="text-xl font-bold text-white mb-4">Delete License</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="mb-6">
+          <p className="text-gray-300 mb-4">
+            Are you sure you want to delete your license for "{license.track.title}"?
+          </p>
+          
+          {!isExpired && (
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-yellow-400 text-sm">
+                This license is still valid until {new Date(license.expiry_date).toLocaleDateString()}.
+                Deleting it will revoke your rights to use this track after the expiration date.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center">
+                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                Deleting...
+              </span>
+            ) : (
+              <span>Delete License</span>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequestDialogProps) {
+  const [title, setTitle] = useState(request.project_title);
+  const [description, setDescription] = useState(request.project_description);
+  const [syncFee, setSyncFee] = useState(request.sync_fee.toString());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError('');
+
+      await onSave({
+        project_title: title,
+        project_description: description,
+        sync_fee: parseFloat(syncFee)
+      });
+
+      onClose();
+    } catch (err) {
+      console.error('Error updating request:', err);
+      setError('Failed to update request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-lg">
+        <h3 className="text-xl font-bold text-white mb-4">Edit Sync Request</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Project Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Project Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Sync Fee
+            </label>
+            <input
+              type="number"
+              value={syncFee}
+              onChange={(e) => setSyncFee(e.target.value)}
+              className="w-full"
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
   const date = new Date(purchaseDate);
   switch (membershipType) {
@@ -67,7 +258,7 @@ const getExpiryStatus = (expiryDate: string): 'expired' | 'expiring-soon' | 'act
 };
 
 export function ClientDashboard() {
-  const { user, membershipPlan, refreshMembership } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [favorites, setFavorites] = useState<Track[]>([]);
@@ -92,200 +283,135 @@ export function ClientDashboard() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
-  const [showLicenseDialog, setShowLicenseDialog] = useState(false);
-  const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
-  const [showProposalDialog, setShowProposalDialog] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      // Refresh membership info first to ensure we have the latest data
-      refreshMembership().then(() => {
-        fetchDashboardData();
-      });
-    }
-  }, [user, membershipPlan]);
-
-  const fetchDashboardData = async () => {
     if (!user) return;
     
-    try {
-      setLoading(true);
-      setError('');
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError('');
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('first_name, email, membership_plan')
-        .eq('id', user.id)
-        .single();
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('first_name, email, membership_plan')
+          .eq('id', user.id)
+          .single();
 
-      if (profileData) {
-        setProfile(profileData);
-        setUserStats(prev => ({
-          ...prev,
-          membershipType: profileData.membership_plan as UserStats['membershipType']
-        }));
-      }
+        if (profileData) {
+          setProfile(profileData);
+          setUserStats(prev => ({
+            ...prev,
+            membershipType: profileData.membership_plan as UserStats['membershipType']
+          }));
+        }
 
-      const { data: licensesData } = await supabase
-        .from('sales')
-        .select(`
-          id,
-          license_type,
-          created_at,
-          expiry_date,
-          track:tracks (
-            id,
-            title,
-            genres,
-            bpm,
-            audio_url,
-            image_url,
-            producer:profiles!producer_id (
-              first_name,
-              last_name,
-              email
-            )
-          )
-        `)
-        .eq('buyer_id', user.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (licensesData) {
-        const formattedLicenses = licensesData.map(license => ({
-          ...license,
-          expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
-          track: {
-            ...license.track,
-            genres: license.track.genres.split(',').map((g: string) => g.trim()),
-            image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
-          }
-        }));
-        setLicenses(formattedLicenses);
-      }
-
-      const { data: favoritesData } = await supabase
-        .from('favorites')
-        .select(`
-          track_id,
-          tracks (*)
-        `)
-        .eq('user_id', user.id);
-
-      if (favoritesData) {
-        const formattedFavorites = favoritesData.map(f => ({
-          id: f.tracks.id,
-          title: f.tracks.title,
-          artist: f.tracks.artist,
-          genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
-          moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
-          duration: f.tracks.duration || '3:30',
-          bpm: f.tracks.bpm,
-          audioUrl: f.tracks.audio_url,
-          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-          hasStingEnding: f.tracks.has_sting_ending,
-          isOneStop: f.tracks.is_one_stop,
-          mp3Url: f.tracks.mp3_url,
-          trackoutsUrl: f.tracks.trackouts_url,
-          hasVocals: f.tracks.has_vocals,
-          vocalsUsageType: f.tracks.vocals_usage_type,
-          subGenres: [],
-          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-          leaseAgreementUrl: ''
-        }));
-        setFavorites(formattedFavorites);
-      }
-
-      const { data: newTracksData } = await supabase
-        .from('tracks')
-        .select(`
-          id,
-          title,
-          genres,
-          bpm,
-          audio_url,
-          image_url,
-          has_vocals,
-          vocals_usage_type,
-          producer:profiles!producer_id (
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (newTracksData) {
-        const formattedNewTracks = newTracksData.map(track => ({
-          id: track.id,
-          title: track.title,
-          artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
-          genres: track.genres.split(',').map((g: string) => g.trim()),
-          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
-          bpm: track.bpm,
-          audioUrl: track.audio_url,
-          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-          hasVocals: track.has_vocals,
-          vocalsUsageType: track.vocals_usage_type,
-          subGenres: [],
-          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-          leaseAgreementUrl: '',
-          producer: track.producer ? {
-            id: track.producer.id,
-            firstName: track.producer.first_name || '',
-            lastName: track.producer.last_name || '',
-            email: track.producer.email
-          } : undefined
-        }));
-        setNewTracks(formattedNewTracks);
-      }
-
-      const { data: syncRequestsData } = await supabase
-        .from('custom_sync_requests')
-        .select('*')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (syncRequestsData) {
-        setSyncRequests(syncRequestsData);
-      }
-
-      // Calculate remaining licenses for Gold Access
-      if (profileData.membership_plan === 'Gold Access') {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-
-        const { count } = await supabase
+        const { data: licensesData } = await supabase
           .from('sales')
-          .select('id', { count: 'exact' })
+          .select(`
+            id,
+            license_type,
+            created_at,
+            expiry_date,
+            track:tracks (
+              id,
+              title,
+              genres,
+              bpm,
+              audio_url,
+              image_url,
+              producer:profiles!producer_id (
+                first_name,
+                last_name,
+                email
+              )
+            )
+          `)
           .eq('buyer_id', user.id)
-          .gte('created_at', startOfMonth.toISOString());
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
 
-        const totalLicenses = count || 0;
-        const remainingLicenses = 10 - totalLicenses;
+        if (licensesData) {
+          const formattedLicenses = licensesData.map(license => ({
+            ...license,
+            expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
+            track: {
+              ...license.track,
+              genres: license.track.genres.split(',').map((g: string) => g.trim()),
+              image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+            }
+          }));
+          setLicenses(formattedLicenses);
+        }
 
-        setUserStats(prev => ({
-          ...prev,
-          totalLicenses,
-          remainingLicenses,
-          currentPeriodStart: startOfMonth,
-          currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
-          daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-        }));
+        const { data: favoritesData } = await supabase
+          .from('favorites')
+          .select(`
+            track_id,
+            tracks (*)
+          `)
+          .eq('user_id', user.id);
+
+        if (favoritesData) {
+          const formattedFavorites = favoritesData.map(f => ({
+            id: f.tracks.id,
+            title: f.tracks.title,
+            artist: f.tracks.artist,
+            genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
+            moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
+            duration: f.tracks.duration || '3:30',
+            bpm: f.tracks.bpm,
+            audioUrl: f.tracks.audio_url,
+            image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+            hasStingEnding: f.tracks.has_sting_ending,
+            isOneStop: f.tracks.is_one_stop,
+            mp3Url: f.tracks.mp3_url,
+            trackoutsUrl: f.tracks.trackouts_url,
+            hasVocals: f.tracks.has_vocals,
+            vocalsUsageType: f.tracks.vocals_usage_type,
+            subGenres: [],
+            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+            leaseAgreementUrl: ''
+          }));
+          setFavorites(formattedFavorites);
+        }
+
+        const { data: newTracksData } = await supabase
+          .from('tracks')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (newTracksData) {
+          const formattedNewTracks = newTracksData.map(track => ({
+            ...track,
+            genres: track.genres.split(',').map((g: string) => g.trim()),
+            moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : []
+          }));
+          setNewTracks(formattedNewTracks);
+        }
+
+        const { data: syncRequestsData } = await supabase
+          .from('custom_sync_requests')
+          .select('*')
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (syncRequestsData) {
+          setSyncRequests(syncRequestsData);
+        }
+
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
+    };
 
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, [user]);
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -318,17 +444,18 @@ export function ClientDashboard() {
     }
   };
 
-  const handleLicenseClick = (track: Track) => {
-    // For sync-only tracks, show the proposal dialog
-    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
-      setSelectedTrackToLicense(track);
-      setShowProposalDialog(true);
+  const handleLicenseClick = (trackId: string) => {
+    if (!userStats.membershipType || userStats.membershipType === 'Single Track') {
+      navigate('/pricing');
       return;
     }
-    
-    // For regular tracks, show the license dialog
-    setSelectedTrackToLicense(track);
-    setShowLicenseDialog(true);
+
+    if (userStats.membershipType === 'Gold Access' && userStats.remainingLicenses <= 0) {
+      navigate('/upgrade');
+      return;
+    }
+
+    navigate(`/license/${trackId}`);
   };
 
   const handleUpdateRequest = async (requestId: string, updates: Partial<CustomSyncRequest>) => {
@@ -455,12 +582,12 @@ export function ClientDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
               <p className="text-gray-300">
-                {membershipPlan === 'Gold Access' ? (
+                {userStats.membershipType === 'Gold Access' ? (
                   <>
                     You have used {userStats.totalLicenses} of your 10 monthly licenses
                     ({userStats.remainingLicenses} remaining)
                   </>
-                ) : membershipPlan === 'Platinum Access' || membershipPlan === 'Ultimate Access' ? (
+                ) : userStats.membershipType === 'Platinum Access' || userStats.membershipType === 'Ultimate Access' ? (
                   'You have unlimited licenses available'
                 ) : (
                   'Single track license'
@@ -477,14 +604,14 @@ export function ClientDashboard() {
                 </p>
               )}
             </div>
-            {membershipPlan === 'Gold Access' && userStats.remainingLicenses < 3 && (
+            {userStats.membershipType === 'Gold Access' && userStats.remainingLicenses < 3 && (
               <div className="flex items-center text-yellow-400">
                 <AlertCircle className="w-5 h-5 mr-2" />
                 <span>Running low on licenses</span>
               </div>
             )}
           </div>
-          {membershipPlan === 'Gold Access' && (
+          {userStats.membershipType === 'Gold Access' && (
             <div className="mt-4 w-full bg-gray-700 rounded-full h-2">
               <div
                 className="bg-purple-600 rounded-full h-2 transition-all duration-300"
@@ -632,6 +759,7 @@ export function ClientDashboard() {
                 return (
                   <div
                     key={license.id}
+                
                     className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
                       expiryStatus === 'expired' ? 'border-red-500/20' :
                       expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
@@ -642,17 +770,11 @@ export function ClientDashboard() {
                       <img
                         src={license.track.image}
                         alt={license.track.title}
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer"
-                        onClick={() => navigate(`/track/${license.track.id}`)}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <button
-                            onClick={() => navigate(`/track/${license.track.id}`)}
-                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
-                          >
-                            {license.track.title}
-                          </button>
+                          <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
                           <button
                             onClick={() => setSelectedLicenseToDelete(license)}
                             className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
@@ -679,7 +801,7 @@ export function ClientDashboard() {
                           </div>
                         </div>
                       </div>
-                      <AudioPlayer url={license.track.audioUrl} title={license.track.title} />
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
                     </div>
 
                     {expiryStatus === 'expired' && (
@@ -747,17 +869,16 @@ export function ClientDashboard() {
                         <img
                           src={track.image}
                           alt={track.title}
-                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => navigate(`/track/${track.id}`)}
+                          className="w-16 h-16 object-cover rounded-lg"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <button 
-                              onClick={() => navigate(`/track/${track.id}`)}
-                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
+                            <Link 
+                              to={`/catalog?track=${track.id}`}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate"
                             >
                               {track.title}
-                            </button>
+                            </Link>
                             <button
                               onClick={() => handleRemoveFavorite(track.id)}
                               disabled={removingFavorite === track.id}
@@ -772,26 +893,13 @@ export function ClientDashboard() {
                           </p>
                           <div className="mt-2 flex items-center justify-between">
                             <AudioPlayer url={track.audioUrl} title={track.title} />
-                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
-                              <button
-                                onClick={() => {
-                                  setSelectedTrackToLicense(track);
-                                  setShowProposalDialog(true);
-                                }}
-                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                <span>Submit Proposal</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleLicenseClick(track)}
-                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                <span>License Track</span>
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleLicenseClick(track.id)}
+                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                              <span>License Track</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -815,51 +923,11 @@ export function ClientDashboard() {
                   newTracks.map((track) => (
                     <div
                       key={track.id}
-                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/20"
                     >
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={track.image}
-                          alt={track.title}
-                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                          onClick={() => navigate(`/track/${track.id}`)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <button
-                              onClick={() => navigate(`/track/${track.id}`)}
-                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
-                            >
-                              {track.title}
-                            </button>
-                          </div>
-                          <p className="text-sm text-gray-400">
-                            {track.genres.join(', ')} • {track.bpm} BPM
-                          </p>
-                          <div className="mt-2 flex items-center justify-between">
-                            <AudioPlayer url={track.audioUrl} title={track.title} />
-                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
-                              <button
-                                onClick={() => {
-                                  setSelectedTrackToLicense(track);
-                                  setShowProposalDialog(true);
-                                }}
-                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                <span>Submit Proposal</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleLicenseClick(track)}
-                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                <span>License Track</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                      <div className="font-medium text-white">{track.title}</div>
+                      <div className="text-sm text-gray-400">
+                        {track.genres.join(', ')} • {track.bpm} BPM
                       </div>
                     </div>
                   ))
@@ -895,105 +963,6 @@ export function ClientDashboard() {
         isOpen={showProfileDialog}
         onClose={() => setShowProfileDialog(false)}
       />
-
-      {selectedTrackToLicense && showLicenseDialog && (
-        <LicenseDialog
-          isOpen={showLicenseDialog}
-          onClose={() => {
-            setShowLicenseDialog(false);
-            setSelectedTrackToLicense(null);
-          }}
-          track={selectedTrackToLicense}
-          membershipType={membershipPlan || 'Single Track'}
-          remainingLicenses={userStats.remainingLicenses}
-          onLicenseCreated={() => {
-            // Refresh the dashboard data after a new license is created
-            if (user) {
-              setLoading(true);
-              const fetchData = async () => {
-                try {
-                  const { data: licensesData } = await supabase
-                    .from('sales')
-                    .select(`
-                      id,
-                      license_type,
-                      created_at,
-                      expiry_date,
-                      track:tracks (
-                        id,
-                        title,
-                        genres,
-                        bpm,
-                        audio_url,
-                        image_url,
-                        producer:profiles!producer_id (
-                          first_name,
-                          last_name,
-                          email
-                        )
-                      )
-                    `)
-                    .eq('buyer_id', user.id)
-                    .is('deleted_at', null)
-                    .order('created_at', { ascending: false });
-                  
-                  if (licensesData) {
-                    const formattedLicenses = licensesData.map(license => ({
-                      ...license,
-                      expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, membershipPlan || 'Single Track'),
-                      track: {
-                        ...license.track,
-                        genres: license.track.genres.split(',').map((g: string) => g.trim()),
-                        image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
-                      }
-                    }));
-                    setLicenses(formattedLicenses);
-                  }
-                  
-                  // Update license count for Gold Access
-                  if (membershipPlan === 'Gold Access') {
-                    const startOfMonth = new Date();
-                    startOfMonth.setDate(1);
-                    startOfMonth.setHours(0, 0, 0, 0);
-                    
-                    const { count } = await supabase
-                      .from('sales')
-                      .select('id', { count: 'exact' })
-                      .eq('buyer_id', user.id)
-                      .gte('created_at', startOfMonth.toISOString());
-                    
-                    const totalLicenses = count || 0;
-                    const remainingLicenses = 10 - totalLicenses;
-                    
-                    setUserStats(prev => ({
-                      ...prev,
-                      totalLicenses,
-                      remainingLicenses
-                    }));
-                  }
-                } catch (err) {
-                  console.error('Error refreshing licenses:', err);
-                } finally {
-                  setLoading(false);
-                }
-              };
-              
-              fetchData();
-            }
-          }}
-        />
-      )}
-
-      {selectedTrackToLicense && showProposalDialog && (
-        <SyncProposalDialog
-          isOpen={showProposalDialog}
-          onClose={() => {
-            setShowProposalDialog(false);
-            setSelectedTrackToLicense(null);
-          }}
-          track={selectedTrackToLicense}
-        />
-      )}
     </div>
   );
 }
