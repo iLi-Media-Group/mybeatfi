@@ -9,7 +9,7 @@ import { SyncProposalDialog } from './SyncProposalDialog';
 import { EditRequestDialog } from './EditRequestDialog';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
-export default function ClientDashboard() {
+export function ClientDashboard() {
   const { user } = useAuth();
   const [licenses, setLicenses] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -345,5 +345,3 @@ export default function ClientDashboard() {
     </div>
   );
 }
-
-export { ClientDashboard }
