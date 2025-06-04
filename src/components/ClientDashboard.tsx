@@ -345,3 +345,5 @@ export default function ClientDashboard() {
     </div>
   );
 }
+
+export { ClientDashboard }
