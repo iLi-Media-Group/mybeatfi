@@ -3,7 +3,7 @@ Here's the fixed script with all missing closing brackets added:
 ```javascript
                               {new Date(license.expiry_date).toLocaleDateString()}
                             </span>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
+                            <span className={\`px-2 py-1 rounded-full text-xs ${
                               expiryStatus === 'expired' ? 'bg-red-500/20 text-red-400' :
                               expiryStatus === 'expiring-soon' ? 'bg-yellow-500/20 text-yellow-400' :
                               'bg-green-500/20 text-green-400'
