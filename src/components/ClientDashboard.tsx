@@ -4,9 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { DollarSign, Star, X, Loader2 } from 'lucide-react';
 import { ClientProfile } from './ClientProfile';
-import LicenseDialog from './LicenseDialog';
+import { LicenseDialog } from './LicenseDialog';
 import SyncProposalDialog from './SyncProposalDialog';
-import EditRequestDialog from './EditRequestDialog';
+import { EditRequestDialog } from './EditRequestDialog';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
 export default function ClientDashboard() {
