@@ -1,6 +1,3 @@
-Here's the fixed script with all missing closing brackets added:
-
-```javascript
                               {new Date(license.expiry_date).toLocaleDateString()}
                             </span>
                             <span className={\`px-2 py-1 rounded-full text-xs ${
@@ -165,5 +162,3 @@ Here's the fixed script with all missing closing brackets added:
       )}
     </div>
   );
-}
-```
