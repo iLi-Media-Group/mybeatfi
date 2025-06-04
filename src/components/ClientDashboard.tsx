@@ -7,7 +7,7 @@ import { ClientProfile } from './ClientProfile';
 import LicenseDialog from './LicenseDialog';
 import SyncProposalDialog from './SyncProposalDialog';
 import EditRequestDialog from './EditRequestDialog';
-import DeleteLicenseDialog from './DeleteLicenseDialog';
+import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
 export default function ClientDashboard() {
   const { user } = useAuth();
