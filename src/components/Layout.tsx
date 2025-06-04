@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign } from 'lucide-react';
+import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign, ListMusic } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Footer } from './Footer';
@@ -133,6 +133,15 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                   >
                     <Mic className="w-4 h-4 mr-2" />
                     Full Tracks with Vocals
+                  </Link>
+
+                  <Link
+                    to="/playlists"
+                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <ListMusic className="w-4 h-4 mr-2" />
+                    Playlists
                   </Link>
 
                   <Link

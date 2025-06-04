@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign } from 'lucide-react';
+import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign, ListMusic } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Track } from '../types';
@@ -10,6 +10,7 @@ import { SyncProposalDialog } from './SyncProposalDialog';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
+import { AddToPlaylistButton } from './AddToPlaylistButton';
 
 interface UserStats {
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
@@ -22,7 +23,6 @@ export function TrackPage() {
   const navigate = useNavigate();
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
   const [showProposalDialog, setShowProposalDialog] = useState(false);
   const [showProducerProfile, setShowProducerProfile] = useState(false);
@@ -33,6 +33,7 @@ export function TrackPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!trackId) {
@@ -75,9 +76,9 @@ export function TrackPage() {
       
       if (trackData) {
         // Convert comma-separated strings to arrays
-        const genres = trackData.genres ? trackData.genres.split(',').map((g: string) => g.trim()) : [];
-        const moods = trackData.moods ? trackData.moods.split(',').map((m: string) => m.trim()) : [];
-        const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map((g: string) => g.trim()) : [];
+        const genres = trackData.genres ? trackData.genres.split(',').map(g => g.trim()) : [];
+        const moods = trackData.moods ? trackData.moods.split(',').map(m => m.trim()) : [];
+        const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map(g => g.trim()) : [];
 
         // Map the database fields to the Track interface
         const mappedTrack: Track = {
@@ -96,9 +97,9 @@ export function TrackPage() {
           vocalsUsageType: trackData.vocals_usage_type || 'normal',
           isOneStop: trackData.is_one_stop || false,
           hasStingEnding: trackData.has_sting_ending || false,
-          mp3Url: trackData.mp3_url || '',
-          trackoutsUrl: trackData.trackouts_url || '',
-          producerId: trackData.producer_id,
+          mp3Url: trackData.mp3_url,
+          trackoutsUrl: trackData.trackouts_url,
+          producerId: trackData.producer_id, // Add producer_id to the mapped track
           producer: trackData.producer ? {
             id: trackData.producer.id,
             firstName: trackData.producer.first_name || '',
@@ -155,6 +156,7 @@ export function TrackPage() {
           remainingLicenses
         });
       }
+
     } catch (error) {
       console.error('Error fetching track data:', error);
       setError('Failed to load track details');
@@ -389,69 +391,36 @@ export function TrackPage() {
                 </div>
               )}
 
-              <div className="space-y-4">
-                {user ? (
-                  <button
-                    onClick={handleActionClick}
-                    disabled={checkoutLoading}
-                    className={`w-full py-3 px-6 rounded-lg text-white font-semibold transition-colors flex items-center justify-center ${
-                      isSyncOnly 
-                        ? 'bg-purple-600 hover:bg-purple-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } disabled:opacity-50`}
-                  >
-                    {checkoutLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <DollarSign className="w-5 h-5 mr-2" />
-                        {isSyncOnly ? 'Submit Sync Proposal' : (
-                          membershipPlan === 'Single Track' 
-                            ? 'Purchase License ($9.99)' 
-                            : 'License This Track'
-                        )}
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => navigate('/login')}
-                      className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                    >
-                      Login to License This Track
-                    </button>
-                    <button
-                      onClick={() => navigate('/signup')}
-                      className="w-full py-3 px-6 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                    >
-                      Create Account
-                    </button>
-                  </div>
+              <div className="flex flex-wrap gap-4">
+                {user && (
+                  <AddToPlaylistButton trackId={track.id} />
                 )}
                 
-                {track.mp3Url && (
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-2">Available Formats</h3>
-                    <div className="flex items-center space-x-4">
-                      {track.mp3Url && (
-                        <div className="flex items-center text-gray-300">
-                          <FileMusic className="w-4 h-4 mr-2 text-blue-400" />
-                          <span>MP3</span>
-                        </div>
+                <button
+                  onClick={handleActionClick}
+                  disabled={checkoutLoading}
+                  className={`py-3 px-6 rounded-lg text-white font-semibold transition-colors flex items-center ${
+                    isSyncOnly 
+                      ? 'bg-purple-600 hover:bg-purple-700' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } disabled:opacity-50`}
+                >
+                  {checkoutLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="w-5 h-5 mr-2" />
+                      {isSyncOnly ? 'Submit Sync Proposal' : (
+                        membershipPlan === 'Single Track' 
+                          ? 'Purchase License ($9.99)' 
+                          : 'License This Track'
                       )}
-                      {track.trackoutsUrl && (
-                        <div className="flex items-center text-gray-300">
-                          <Layers className="w-4 h-4 mr-2 text-green-400" />
-                          <span>Trackouts</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
