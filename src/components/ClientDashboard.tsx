@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { DollarSign, Star, X, Loader2 } from 'lucide-react';
-import ClientProfile from './ClientProfile';
+import { ClientProfile } from './ClientProfile';
 import LicenseDialog from './LicenseDialog';
 import SyncProposalDialog from './SyncProposalDialog';
 import EditRequestDialog from './EditRequestDialog';
