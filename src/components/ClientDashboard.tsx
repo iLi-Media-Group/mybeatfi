@@ -723,4 +723,4 @@ export function ClientDashboard() {
                           <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
                           <div className="flex items-center space-x-4">
                             <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1 text-purple-
+                              <Calendar className="w-4 h-4 mr-1 text-purple-400" />
