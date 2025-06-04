@@ -165,63 +165,69 @@ export function ClientDashboard() {
         }));
         setLicenses(formattedLicenses);
       }
-
+      
+      // First, get the track_ids from favorites
       const { data: favoritesData } = await supabase
         .from('favorites')
-        .select(`
-          track_id,
-          tracks (
-            id,
-            title,
-            artist,
-            genres,
-            moods,
-            duration,
-            bpm,
-            audio_url,
-            image_url,
-            has_sting_ending,
-            is_one_stop,
-            mp3_url,
-            trackouts_url,
-            has_vocals,
-            vocals_usage_type,
-            sub_genres,
-            producer_id,
-            producer:profiles!tracks_producer_id_fkey (
-              id,
-              first_name,
-              last_name,
-              email
-            )
-          )
-        `)
+        .select('track_id')
         .eq('user_id', user.id);
 
-      if (favoritesData) {
-        const formattedFavorites = favoritesData.map(f => ({
-          id: f.tracks.id,
-          title: f.tracks.title,
-          artist: f.tracks.artist,
-          genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
-          moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
-          duration: f.tracks.duration || '3:30',
-          bpm: f.tracks.bpm,
-          audioUrl: f.tracks.audio_url,
-          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-          hasStingEnding: f.tracks.has_sting_ending,
-          isOneStop: f.tracks.is_one_stop,
-          mp3Url: f.tracks.mp3_url,
-          trackoutsUrl: f.tracks.trackouts_url,
-          hasVocals: f.tracks.has_vocals,
-          vocalsUsageType: f.tracks.vocals_usage_type,
-          subGenres: f.tracks.sub_genres || [],
-          producerId: f.tracks.producer_id,
-          producer: f.tracks.producer ? {
-            id: f.tracks.producer.id,
-            firstName: f.tracks.producer.first_name || '',
-            lastName: f.tracks.producer.last_name || '',
-            email: f.tracks.producer.email
+      // Then, get the track details using the track_ids
+      const trackIds = favoritesData?.map(f => f.track_id) || [];
+      
+      const { data: tracksData } = await supabase
+        .from('tracks')
+        .select(`
+          id,
+          title,
+          artist,
+          genres,
+          moods,
+          duration,
+          bpm,
+          audio_url,
+          image_url,
+          has_sting_ending,
+          is_one_stop,
+          mp3_url,
+          trackouts_url,
+          has_vocals,
+          vocals_usage_type,
+          sub_genres,
+          producer_id,
+          producer:profiles!tracks_producer_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .in('id', trackIds);
+
+      if (tracksData) {
+        const formattedFavorites = tracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          genres: track.genres.split(',').map((g: string) => g.trim()),
+          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+          duration: track.duration || '3:30',
+          bpm: track.bpm,
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasStingEnding: track.has_sting_ending,
+          isOneStop: track.is_one_stop,
+          mp3Url: track.mp3_url,
+          trackoutsUrl: track.trackouts_url,
+          hasVocals: track.has_vocals,
+          vocalsUsageType: track.vocals_usage_type,
+          subGenres: track.sub_genres || [],
+          producerId: track.producer_id,
+          producer: track.producer ? {
+            id: track.producer.id,
+            firstName: track.producer.first_name || '',
+            lastName: track.producer.last_name || '',
+            email: track.producer.email
           } : undefined,
           fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
           pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
