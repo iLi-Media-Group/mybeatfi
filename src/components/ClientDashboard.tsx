@@ -1,6 +1,3 @@
-Here's the fixed version with all missing closing brackets added:
-
-```javascript
                 </div>
               </div>
 
@@ -138,5 +135,5 @@ Here's the fixed version with all missing closing brackets added:
     </div>
   );
 }
-```
+
                   
