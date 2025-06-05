@@ -218,7 +218,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onSelect(track);
+                navigate(`/track/${track.id}`);
               }}
               className={`py-1.5 px-3 rounded text-xs font-medium transition-all duration-300 ${
                 isSyncOnly 
