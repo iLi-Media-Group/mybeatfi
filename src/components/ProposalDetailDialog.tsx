@@ -6,28 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProposalDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
+  proposal: any;
   onAccept: (proposalId: string) => void;
-}
-
-interface ProposalDetail {
-  id: string;
-  project_type: string;
-  sync_fee: number;
-  expiration_date: string;
-  is_urgent: boolean;
-  status: string;
-  client_status: string;
-  payment_status: string;
-  payment_terms: string;
-  created_at: string;
-  track: {
-    title: string;
-  };
-  producer: {
-    first_name: string;
-    last_name: string;
-  };
 }
 
 interface NegotiationMessage {
@@ -46,52 +26,24 @@ interface NegotiationMessage {
 export function ProposalDetailDialog({
   isOpen,
   onClose,
-  proposalId,
+  proposal,
   onAccept
 }: ProposalDetailDialogProps) {
   const { user } = useAuth();
-  const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && proposalId) {
-      fetchProposalDetails();
+    if (isOpen && proposal) {
+      fetchNegotiationMessages();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposal]);
 
-  const fetchProposalDetails = async () => {
+  const fetchNegotiationMessages = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch proposal details
-      const { data: proposalData, error: proposalError } = await supabase
-        .from('sync_proposals')
-        .select(`
-          id,
-          project_type,
-          sync_fee,
-          expiration_date,
-          is_urgent,
-          status,
-          client_status,
-          payment_status,
-          payment_terms,
-          created_at,
-          track:tracks!inner (
-            title
-          ),
-          producer:profiles!producer_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('id', proposalId)
-        .single();
-
-      if (proposalError) throw proposalError;
 
       // Fetch negotiation messages
       const { data: messagesData, error: messagesError } = await supabase
@@ -108,16 +60,15 @@ export function ProposalDetailDialog({
             email
           )
         `)
-        .eq('proposal_id', proposalId)
+        .eq('proposal_id', proposal.id)
         .order('created_at', { ascending: true });
 
       if (messagesError) throw messagesError;
 
-      setProposal(proposalData);
       setMessages(messagesData || []);
     } catch (err) {
-      console.error('Error fetching proposal details:', err);
-      setError('Failed to load proposal details');
+      console.error('Error fetching negotiation messages:', err);
+      setError('Failed to load negotiation history');
     } finally {
       setLoading(false);
     }
@@ -195,10 +146,10 @@ export function ProposalDetailDialog({
                 <div>
                   <h3 className="text-xl font-semibold text-white">{proposal.track.title}</h3>
                   <p className="text-gray-400">
-                    Producer: {proposal.producer.first_name} {proposal.producer.last_name}
+                    Producer: {proposal.track.producer.first_name} {proposal.track.producer.last_name}
                   </p>
                 </div>
-                {getStatusBadge(proposal.status, proposal.client_status, proposal.payment_status)}
+                {getStatusBadge(proposal.status, proposal.client_status || 'pending', proposal.payment_status || 'pending')}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -208,7 +159,7 @@ export function ProposalDetailDialog({
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Payment Terms</p>
-                  <p className="text-white">{formatPaymentTerms(proposal.payment_terms)}</p>
+                  <p className="text-white">{formatPaymentTerms(proposal.payment_terms || 'immediate')}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Submitted</p>
@@ -234,7 +185,7 @@ export function ProposalDetailDialog({
                         The producer has accepted your proposal. Please review and accept to proceed with payment.
                       </p>
                       <button
-                        onClick={() => onAccept(proposalId)}
+                        onClick={() => onAccept(proposal.id)}
                         className="mt-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center text-sm"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />

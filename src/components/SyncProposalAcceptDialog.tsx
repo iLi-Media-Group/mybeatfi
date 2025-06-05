@@ -7,18 +7,7 @@ import { createCheckoutSession } from '../lib/stripe';
 interface SyncProposalAcceptDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposal: {
-    id: string;
-    sync_fee: number;
-    payment_terms: string;
-    track: {
-      title: string;
-    };
-    producer: {
-      first_name: string;
-      last_name: string;
-    };
-  };
+  proposal: any;
   onAccept: () => void;
 }
 
@@ -64,16 +53,29 @@ export function SyncProposalAcceptDialog({
 
       if (historyError) throw historyError;
 
-      // Create Stripe invoice based on payment terms
-      let dueDate = new Date();
-      
-      if (proposal.payment_terms === 'net30') {
-        dueDate.setDate(dueDate.getDate() + 30);
-      } else if (proposal.payment_terms === 'net60') {
-        dueDate.setDate(dueDate.getDate() + 60);
-      } else if (proposal.payment_terms === 'net90') {
-        dueDate.setDate(dueDate.getDate() + 90);
-      }
+      // Get producer email for notification
+      const { data: producerData, error: producerError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', proposal.track.producer.id)
+        .single();
+
+      if (producerError) throw producerError;
+
+      // Send notification to producer
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-proposal-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          proposalId: proposal.id,
+          action: 'client_accept',
+          trackTitle: proposal.track.title,
+          producerEmail: producerData.email
+        })
+      });
 
       // Create a checkout session for the sync fee
       const checkoutUrl = await createCheckoutSession(
@@ -82,10 +84,9 @@ export function SyncProposalAcceptDialog({
         undefined,
         {
           proposal_id: proposal.id,
-          amount: proposal.sync_fee * 100, // Convert to cents
+          amount: Math.round(proposal.sync_fee * 100), // Convert to cents
           description: `Sync license for "${proposal.track.title}"`,
-          payment_terms: proposal.payment_terms,
-          due_date: dueDate.toISOString()
+          payment_terms: proposal.payment_terms || 'immediate'
         }
       );
 
@@ -130,6 +131,30 @@ export function SyncProposalAcceptDialog({
         });
 
       if (historyError) throw historyError;
+
+      // Get producer email for notification
+      const { data: producerData, error: producerError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', proposal.track.producer.id)
+        .single();
+
+      if (producerError) throw producerError;
+
+      // Send notification to producer
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-proposal-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          proposalId: proposal.id,
+          action: 'client_reject',
+          trackTitle: proposal.track.title,
+          producerEmail: producerData.email
+        })
+      });
 
       onClose();
     } catch (err) {
@@ -183,7 +208,9 @@ export function SyncProposalAcceptDialog({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Producer:</span>
-                <span className="text-white font-medium">{proposal.producer.first_name} {proposal.producer.last_name}</span>
+                <span className="text-white font-medium">
+                  {proposal.track.producer.first_name} {proposal.track.producer.last_name}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Sync Fee:</span>
@@ -191,7 +218,7 @@ export function SyncProposalAcceptDialog({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Payment Terms:</span>
-                <span className="text-white">{formatPaymentTerms(proposal.payment_terms)}</span>
+                <span className="text-white">{formatPaymentTerms(proposal.payment_terms || 'immediate')}</span>
               </div>
             </div>
           </div>
