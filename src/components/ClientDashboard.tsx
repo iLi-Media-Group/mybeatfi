@@ -1,7 +1,4 @@
-Here's the fixed version with all closing brackets added:
-
-```javascript
-                  >
+>
                     <option value="">All Genres</option>
                     {Array.from(new Set(favorites.flatMap(track => track.genres))).map(genre => (
                       <option key={genre} value={genre}>{genre}</option>
@@ -153,4 +150,3 @@ Here's the fixed version with all closing brackets added:
     </div>
   );
 }
-```
