@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Music, MoreVertical, Edit, Trash2, Globe, Lock, Share2, X } from 'lucide-react';
+import { Music, Edit, Share2, Play, Pause, Clock, Plus, MoreVertical, Trash2, X, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditPlaylistDialog } from './EditPlaylistDialog';
@@ -156,21 +156,6 @@ export function PlaylistCard({ playlist, onRefresh }: PlaylistCardProps) {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-60 transition-opacity duration-300" />
-          
-          {/* Visibility Badge */}
-          <div className="absolute top-2 left-2">
-            {playlist.is_public ? (
-              <div className="flex items-center space-x-1 px-2 py-1 bg-green-500/20 backdrop-blur-sm rounded-full">
-                <Globe className="w-3 h-3 text-green-400" />
-                <span className="text-xs text-green-400">Public</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-1 px-2 py-1 bg-gray-500/20 backdrop-blur-sm rounded-full">
-                <Lock className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-400">Private</span>
-              </div>
-            )}
-          </div>
           
           {/* Track Count */}
           <div className="absolute bottom-2 left-2 flex items-center space-x-1 px-2 py-1 bg-black/40 backdrop-blur-sm rounded-full">

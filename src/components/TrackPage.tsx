@@ -8,6 +8,7 @@ import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
 import { SyncProposalDialog } from './SyncProposalDialog';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
+import { AddToPlaylistButton } from './AddToPlaylistButton';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
 import { AddToPlaylistButton } from './AddToPlaylistButton';
@@ -364,6 +365,10 @@ export function TrackPage() {
               )}
 
               <div className="flex flex-wrap gap-4">
+                {user && (
+                  <AddToPlaylistButton trackId={track.id} />
+                )}
+                
                 {user && (
                   <AddToPlaylistButton trackId={track.id} />
                 )}
