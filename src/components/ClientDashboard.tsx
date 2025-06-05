@@ -309,24 +309,26 @@ export function ClientDashboard() {
         const { data: licensesData } = await supabase
           .from('sales')
           .select(`
-            id,
-            license_type,
-            created_at,
-            expiry_date,
-            producer:profiles!tracks_producer_id_fkey (
-              id,
-              title,
-              genres,
-              bpm,
-              audio_url,
-              image_url,
-              producer:profiles!producer_id (
-                first_name,
-                last_name,
-                email
-              )
-            )
-          `)
+           id,
+           license_type,
+           created_at,
+           expiry_date,
+           track:tracks (
+             id,
+             title,
+             genres,
+             bpm,
+             audio_url,
+             image_url,
+             producer_id,
+             producer:profiles (
+               id,
+               first_name,
+               last_name,
+               email
+             )
+           )
+         `)
           .eq('buyer_id', user.id)
           .is('deleted_at', null)
           .order('created_at', { ascending: false });
@@ -761,207 +763,4 @@ export function ClientDashboard() {
                     key={license.id}
                     className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
                       expiryStatus === 'expired' ? 'border-red-500/20' :
-                      expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
-                      'border-purple-500/20'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-4">
-                      <img
-                        src={license.track.image}
-                        alt={license.track.title}
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-white mb-1">{license.track.title}</h3>
-                          <button
-                            onClick={() => setSelectedLicenseToDelete(license)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
-                            title="Delete License"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="text-sm text-gray-400 space-y-1">
-                          <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
-                          <div className="flex items-center space-x-4">
-                            <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1 text-purple-400" />
-                              Licensed: {new Date(license.created_at).toLocaleDateString()}
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className={`w-4 h-4 mr-1 ${
-                                expiryStatus === 'expired' ? 'text-red-400' :
-                                expiryStatus === 'expiring-soon' ? 'text-yellow-400' :
-                                'text-purple-400'
-                              }`} />
-                              Expires: {new Date(license.expiry_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
-                    </div>
-
-                    {expiryStatus === 'expired' && (
-                      <div className="mt-2 flex items-center text-red-400 text-sm">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        License expired
-                      </div>
-                    )}
-                    {expiryStatus === 'expiring-soon' && (
-                      <div className="mt-2 flex items-center text-yellow-400 text-sm">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        License expires soon
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="space-y-8">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-white flex items-center">
-                  <Star className="w-5 h-5 mr-2 text-yellow-400" />
-                  Favorite Tracks
-                </h3>
-                <div className="flex space-x-2">
-                  <select
-                    value={selectedGenre}
-                    onChange={(e) => setSelectedGenre(e.target.value)}
-                    className="bg-white/5 border border-purple-500/20 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    <option value="">All Genres</option>
-                    {Array.from(new Set(favorites.flatMap(t => t.genres))).map(genre => (
-                      <option key={genre} value={genre}>{genre}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => handleSort('bpm')}
-                    className="px-2 py-1 bg-white/5 border border-purple-500/20 rounded-lg text-sm text-white hover:bg-white/10"
-                  >
-                    BPM {sortField === 'bpm' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {sortedAndFilteredFavorites.length === 0 ? (
-                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
-                    <p className="text-gray-400">No favorite tracks yet</p>
-                    <Link
-                      to="/catalog"
-                      className="inline-block mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
-                    >
-                      Browse Catalog
-                    </Link>
-                  </div>
-                ) : (
-                  sortedAndFilteredFavorites.map((track) => (
-                    <div
-                      key={track.id}
-                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={track.image}
-                          alt={track.title}
-                          className="w-16 h-16 object-cover rounded-lg"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <Link 
-                              to={`/catalog?track=${track.id}`}
-                              className="text-white font-medium hover:text-blue-400 transition-colors truncate"
-                            >
-                              {track.title}
-                            </Link>
-                            <button
-                              onClick={() => handleRemoveFavorite(track.id)}
-                              disabled={removingFavorite === track.id}
-                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-                              aria-label="Remove from favorites"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <p className="text-sm text-gray-400">
-                            {track.genres.join(', ')} • {track.bpm} BPM
-                          </p>
-                          <div className="mt-2 flex items-center justify-between">
-                            <AudioPlayer url={track.audioUrl} title={track.title} />
-                            <button
-                              onClick={() => handleLicenseClick(track.id)}
-                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                            >
-                              <DollarSign className="w-4 h-4" />
-                              <span>License Track</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                <Music className="w-5 h-5 mr-2 text-purple-500" />
-                New Releases
-              </h3>
-              <div className="space-y-4">
-                {newTracks.length === 0 ? (
-                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
-                    <p className="text-gray-400">No new tracks available</p>
-                  </div>
-                ) : (
-                  newTracks.map((track) => (
-                    <div
-                      key={track.id}
-                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/20"
-                    >
-                      <div className="font-medium text-white">{track.title}</div>
-                      <div className="text-sm text-gray-400">
-                        {track.genres.join(', ')} • {track.bpm} BPM
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {selectedRequest && showEditDialog && (
-        <EditRequestDialog
-          isOpen={showEditDialog}
-          onClose={() => {
-            setShowEditDialog(false);
-            setSelectedRequest(null);
-          }}
-          request={selectedRequest}
-          onSave={(updates) => handleUpdateRequest(selectedRequest.id, updates)}
-        />
-      )}
-
-      {selectedLicenseToDelete && (
-        <DeleteLicenseDialog
-          isOpen={true}
-          onClose={() => setSelectedLicenseToDelete(null)}
-          license={selectedLicenseToDelete}
-          onConfirm={handleDeleteLicense}
-        />
-      )}
-
-      <ClientProfile
-        isOpen={showProfileDialog}
-        onClose={() => setShowProfileDialog(false)}
-      />
-    </div>
-  );
-}
+                      expiryStatus === 'expiring-soon' ? 'border-
