@@ -330,3 +330,5 @@ export function ClientDashboard() {
       setSortField(field);
       setSortOrder('asc');
     }
+  }
+}
