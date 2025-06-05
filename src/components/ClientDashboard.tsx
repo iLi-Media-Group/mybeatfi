@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 
 // Dummy components — replace with your actual imports
-import ProducerProfile from './ProducerProfile';
-import EditTrackModal from './EditTrackModal';
-import DeleteTrackDialog from './DeleteTrackDialog';
-import TrackProposalsDialog from './TrackProposalsDialog';
-import RevenueBreakdownDialog from './RevenueBreakdownDialog';
-import ProposalNegotiationDialog from './ProposalNegotiationDialog';
-import ProposalHistoryDialog from './ProposalHistoryDialog';
-import ProposalConfirmDialog from './ProposalConfirmDialog';
-import ProposalDetailDialog from './ProposalDetailDialog';
-import SyncProposalAcceptDialog from './SyncProposalAcceptDialog';
+import { ProducerProfile } from './ProducerProfile';
+import { EditTrackModal } from './EditTrackModal'; // ✅ for named export
+import { DeleteTrackDialog } from './DeleteTrackDialog'; // ✅ correct
+import { TrackProposalsDialog } from './TrackProposalsDialog';
+import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import { ProposalConfirmDialog } from './ProposalConfirmDialog';
+import { ProposalDetailDialog } from './ProposalDetailDialog';
+import { SyncProposalAcceptDialog } from './SyncProposalAcceptDialog';
 
 export function ClientDashboard() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
@@ -56,19 +56,17 @@ export function ClientDashboard() {
   return (
     <div>
       <ProducerProfile isOpen={showProfileDialog} />
-
-      <EditTrackModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        track={selectedTrack}
-        onUpdate={(updatedTrack) => {
-          setTracks((tracks) =>
-            tracks.map((t) => (t.id === updatedTrack.id ? updatedTrack : t))
-          );
-          setShowEditModal(false);
-        }}
-      />
-
+{selectedTrack && (
+  <EditTrackModal
+    isOpen={showEditModal}
+    onClose={() => setShowEditModal(false)}
+    track={selectedTrack}
+    onUpdate={(updatedTrack) => {
+      setTracks(tracks.map(t => t.id === updatedTrack.id ? updatedTrack : t));
+      setShowEditModal(false);
+    }}
+  />
+)}
       <DeleteTrackDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
