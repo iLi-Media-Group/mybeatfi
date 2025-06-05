@@ -11,7 +11,6 @@ import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { AddToPlaylistButton } from './AddToPlaylistButton';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
 
 interface UserStats {
   membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
@@ -365,10 +364,6 @@ export function TrackPage() {
               )}
 
               <div className="flex flex-wrap gap-4">
-                {user && (
-                  <AddToPlaylistButton trackId={track.id} />
-                )}
-                
                 {user && (
                   <AddToPlaylistButton trackId={track.id} />
                 )}

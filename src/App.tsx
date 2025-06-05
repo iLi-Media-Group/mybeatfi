@@ -39,8 +39,6 @@ import { WelcomePage } from './components/WelcomePage';
 import { TrackPage } from './components/TrackPage';
 import { PlaylistsPage } from './components/PlaylistsPage';
 import { PlaylistDetailPage } from './components/PlaylistDetailPage';
-import { PlaylistsPage } from './components/PlaylistsPage';
-import { PlaylistDetailPage } from './components/PlaylistDetailPage';
 
 function App() {
   const [searchParams] = useSearchParams();

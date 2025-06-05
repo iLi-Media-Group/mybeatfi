@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { useNavigate } from 'react-router-dom';
 import { AddToPlaylistButton } from './AddToPlaylistButton';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
 
 interface TrackCardProps {
   track: Track;
