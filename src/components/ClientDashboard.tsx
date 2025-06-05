@@ -327,4 +327,6 @@ export function ClientDashboard() {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setS
+      setSortField(field);
+      setSortOrder('asc');
+    }
