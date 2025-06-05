@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell } from 'lucide-react';
+import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
 import { ProposalAnalytics } from './ProposalAnalytics';
 import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
+import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
 import { ClientList } from './ClientList';
 import { AdminAnnouncementManager } from './AdminAnnouncementManager';
 import { CompensationSettings } from './CompensationSettings';
@@ -50,6 +51,7 @@ export function AdminDashboard() {
   const [producerSortField, setProducerSortField] = useState<keyof UserDetails>('total_revenue');
   const [producerSortOrder, setProducerSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProducer, setSelectedProducer] = useState<UserDetails | null>(null);
+  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
@@ -276,12 +278,22 @@ export function AdminDashboard() {
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400">Total Revenue</p>
+                <p className="text-gray-400">Total Revenue (Current Month)</p>
                 <p className="text-3xl font-bold text-white">
                   ${stats.total_revenue.toFixed(2)}
                 </p>
               </div>
-              <DollarSign className="w-12 h-12 text-blue-500" />
+              <div 
+                className="relative cursor-pointer group" 
+                onClick={() => setShowRevenueBreakdown(true)}
+                title="View revenue breakdown"
+              >
+                <DollarSign className="w-12 h-12 text-green-500" />
+                <PieChart className="w-5 h-5 text-blue-400 absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute -bottom-6 right-0 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Click for details
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -531,6 +543,12 @@ export function AdminDashboard() {
           }
         />
       )}
+      
+      {/* Revenue Breakdown Dialog */}
+      <RevenueBreakdownDialog
+        isOpen={showRevenueBreakdown}
+        onClose={() => setShowRevenueBreakdown(false)}
+      />
     </div>
   );
 }

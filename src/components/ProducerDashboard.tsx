@@ -14,6 +14,7 @@ import { ProposalHistoryDialog } from './ProposalHistoryDialog';
 import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 import { TrackProposalsDialog } from './TrackProposalsDialog';
 import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
+import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
 
 interface UserStats {
   totalTracks: number;
@@ -75,6 +76,9 @@ export function ProducerDashboard() {
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
+
+  // Revenue breakdown state
+  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -443,7 +447,7 @@ export function ProducerDashboard() {
 
           <div 
             className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20 cursor-pointer hover:bg-white/10 transition-colors"
-            onClick={() => setShowRevenueBreakdown(true)}
+            onClick={() => user && setShowRevenueBreakdown(true)}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -795,6 +799,15 @@ export function ProducerDashboard() {
           action={confirmAction}
           trackTitle={selectedProposal.track.title}
           clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+        />
+      )}
+      
+      {/* Revenue Breakdown Dialog */}
+      {user && showRevenueBreakdown && (
+        <RevenueBreakdownDialog
+          isOpen={showRevenueBreakdown}
+          onClose={() => setShowRevenueBreakdown(false)}
+          producerId={user.id}
         />
       )}
     </div>
