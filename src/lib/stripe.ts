@@ -1,12 +1,18 @@
 import { supabase } from './supabase';
 
-export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription') {
+export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription', trackId?: string) {
   try {
     // Get the current session - this implicitly handles refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !session) {
       throw new Error('You must be logged in to make a purchase');
+    }
+
+    // Prepare metadata for the checkout session
+    const metadata: Record<string, string> = {};
+    if (trackId) {
+      metadata.track_id = trackId;
     }
 
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
@@ -20,6 +26,7 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
         success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/pricing`,
         mode,
+        metadata
       }),
     });
 

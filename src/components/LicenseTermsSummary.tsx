@@ -35,13 +35,11 @@ export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseT
           throw new Error('Single Track product not found');
         }
         
-        // Store the track ID in localStorage for retrieval after checkout
-        localStorage.setItem('pending_license_track_id', trackId);
-        
         // Create checkout session
         const checkoutUrl = await createCheckoutSession(
           singleTrackProduct.priceId, 
-          singleTrackProduct.mode
+          singleTrackProduct.mode,
+          trackId
         );
         
         // Redirect to checkout

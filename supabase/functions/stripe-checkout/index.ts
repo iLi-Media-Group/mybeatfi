@@ -43,15 +43,16 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { price_id, success_url, cancel_url, mode } = await req.json();
+    const { price_id, success_url, cancel_url, mode, metadata = {} } = await req.json();
 
     const error = validateParameters(
-      { price_id, success_url, cancel_url, mode },
+      { price_id, success_url, cancel_url, mode, metadata },
       {
         cancel_url: 'string',
         price_id: 'string',
         success_url: 'string',
         mode: { values: ['payment', 'subscription'] },
+        metadata: 'object',
       },
     );
 
@@ -190,6 +191,7 @@ Deno.serve(async (req) => {
       mode,
       success_url,
       cancel_url,
+      metadata,
     });
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
@@ -202,7 +204,7 @@ Deno.serve(async (req) => {
 });
 
 type ExpectedType = 'string' | { values: string[] };
-type Expectations<T> = { [K in keyof T]: ExpectedType };
+type Expectations<T> = { [K in keyof T]: ExpectedType | 'object' };
 
 function validateParameters<T extends Record<string, any>>(values: T, expected: Expectations<T>): string | undefined {
   for (const parameter in values) {
@@ -215,6 +217,10 @@ function validateParameters<T extends Record<string, any>>(values: T, expected: 
       }
       if (typeof value !== 'string') {
         return `Expected parameter ${parameter} to be a string got ${JSON.stringify(value)}`;
+      }
+    } else if (expectation === 'object') {
+      if (value != null && typeof value !== 'object') {
+        return `Expected parameter ${parameter} to be an object got ${JSON.stringify(value)}`;
       }
     } else {
       if (!expectation.values.includes(value)) {

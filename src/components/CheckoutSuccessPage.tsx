@@ -55,51 +55,8 @@ export function CheckoutSuccessPage() {
           // For single track purchases, create a license record
           if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
             // Get the track ID from localStorage if available
-            const trackId = localStorage.getItem('pending_license_track_id');
-            
-            if (trackId) {
-              try {
-                // Get track details to get producer_id
-                const { data: trackData } = await supabase
-                  .from('tracks')
-                  .select('id, producer_id')
-                  .eq('id', trackId)
-                  .single();
-                
-                if (trackData) {
-                  // Get user profile for licensee info
-                  const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('first_name, last_name, email')
-                    .eq('id', user.id)
-                    .single();
-                  
-                  if (profileData) {
-                    // Create license record
-                    await supabase
-                      .from('sales')
-                      .insert({
-                        track_id: trackData.id,
-                        buyer_id: user.id,
-                        license_type: 'Single Track',
-                        amount: matchingOrder.amount_total / 100, // Convert from cents
-                        payment_method: 'stripe',
-                        transaction_id: matchingOrder.payment_intent_id,
-                        created_at: new Date().toISOString(),
-                        licensee_info: {
-                          name: `${profileData.first_name} ${profileData.last_name}`,
-                          email: profileData.email
-                        }
-                      });
-                    
-                    // Clear the pending track ID
-                    localStorage.removeItem('pending_license_track_id');
-                  }
-                }
-              } catch (err) {
-                console.error('Error creating license record:', err);
-              }
-            }
+            // Note: We no longer need this code as the license record is created by the webhook
+            // This ensures better data integrity and avoids race conditions
           }
         }
       } catch (error) {
