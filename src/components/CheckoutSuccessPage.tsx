@@ -10,6 +10,37 @@ export function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, refreshMembership } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState(null);
+  const [order, setOrder] = useState(null);
+  const [licenseCreated, setLicenseCreated] = useState(false);
+
+  const sessionId = searchParams.get('session_id');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!sessionId) {
+          navigate('/dashboard');
+          return;
+        }
+
+        // Refresh membership status
+        if (user) {
+          await refreshMembership();
+        }
+
+        // Get subscription details
+        const subscription = await getUserSubscription();
+        setSubscription(subscription);
+
+        // Get order details
+        const orders = await getUserOrders();
+        const matchingOrder = orders.find(o => o.checkout_session_id === sessionId);
+        
+        if (matchingOrder) {
+          setOrder(matchingOrder);
+
           // Check if a license was created for this order
           if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
             const { count } = await supabase
