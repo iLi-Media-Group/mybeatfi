@@ -18,12 +18,14 @@ export function CheckoutSuccessPage() {
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchData() {
       try {
         if (!sessionId) {
           navigate('/dashboard');
           return;
         }
+
+        let licenseCreated = false;
 
         // Refresh membership status
         if (user) {
@@ -56,7 +58,7 @@ export function CheckoutSuccessPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     fetchData();
   }, [sessionId, navigate, user, refreshMembership]);

@@ -15,12 +15,6 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
       metadata.track_id = trackId;
     }
 
-    // Prepare metadata for the checkout session
-    const metadata: Record<string, string> = {};
-    if (trackId) {
-      metadata.track_id = trackId;
-    }
-
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
       method: 'POST',
       headers: {
@@ -31,7 +25,6 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
         price_id: priceId,
         success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/pricing`,
-        mode,
         mode,
         metadata
       }),
