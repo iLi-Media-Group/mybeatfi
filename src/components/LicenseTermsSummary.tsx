@@ -33,6 +33,7 @@ export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseT
         
         if (!singleTrackProduct) {
           throw new Error('Single Track product not found');
+        }
         const checkoutUrl = await createCheckoutSession(
           singleTrackProduct.priceId, 
           singleTrackProduct.mode,
