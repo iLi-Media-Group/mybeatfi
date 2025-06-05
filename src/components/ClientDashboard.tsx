@@ -696,15 +696,15 @@ export function ClientDashboard() {
                 </h3>
                 <div className="flex space-x-2">
                   <select
-                    value={selectedGenre}
-                    onChange={(e) => setSelectedGenre(e.target.value)}
-                    className="bg-white/5 border border-purple-500/20 rounded-lg px-2 py-1 text-sm text-white"
-                  >
-                    <option value="">All Genres</option>
-{Array.from(new Set(favorites.flatMap(t => t.genres))).map(genre => (
-  <option key={genre} value={genre}>
-    {genre}
-  </option>
- ))}
+  value={genreFilter}
+  onChange={(e) => setGenreFilter(e.target.value)}
+  className="ml-2 px-3 py-2 rounded-lg bg-white/10 text-white border border-purple-500/30"
+>
+  <option value="">All Genres</option>
+  {Array.from(new Set(favorites.flatMap(t => t.genres))).map((genre) => (
+    <option key={genre} value={genre}>
+      {genre}
+    </option>
+  ))}
 </select>
                   
