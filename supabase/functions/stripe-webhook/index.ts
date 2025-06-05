@@ -99,6 +99,7 @@ async function handleEvent(event: Stripe.Event) {
           amount_total,
           currency,
           metadata
+          metadata
         } = stripeData as Stripe.Checkout.Session;
 
         // Insert the order into the stripe_orders table
@@ -111,6 +112,7 @@ async function handleEvent(event: Stripe.Event) {
           currency,
           payment_status,
           status: 'completed', // assuming we want to mark it as completed since payment is successful
+          status: 'completed', // assuming we want to mark it as completed since payment is successful
           metadata
         });
 
@@ -118,6 +120,158 @@ async function handleEvent(event: Stripe.Event) {
           console.error('Error inserting order:', orderError);
           return;
         }
+        
+        // Get the user_id associated with this customer
+        const { data: customerData, error: customerError } = await supabase
+          .from('stripe_customers')
+          .select('user_id')
+          .eq('customer_id', customerId)
+          .single();
+        
+        if (customerError) {
+          console.error('Error fetching customer data:', customerError);
+          return;
+        }
+        
+        // Check if this is a sync proposal payment
+        if (metadata?.proposal_id) {
+          // Get proposal details
+          const { data: proposalData, error: proposalError } = await supabase
+            .from('sync_proposals')
+            .select(`
+              id, 
+              track_id, 
+              client_id,
+              track:tracks!inner (
+                producer_id,
+                title
+              )
+            `)
+            .eq('id', metadata.proposal_id)
+            .single();
+            
+          if (proposalError) {
+            console.error('Error fetching proposal data:', proposalError);
+            return;
+          }
+          
+          // Update proposal payment status
+          const { error: updateError } = await supabase
+            .from('sync_proposals')
+            .update({
+              payment_status: 'paid',
+              payment_date: new Date().toISOString(),
+              invoice_id: payment_intent
+            })
+            .eq('id', metadata.proposal_id);
+            
+          if (updateError) {
+            console.error('Error updating proposal payment status:', updateError);
+            return;
+          }
+          
+          // Get producer email for notification
+          const { data: producerData, error: producerError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', proposalData.track.producer_id)
+            .single();
+            
+          if (producerError) {
+            console.error('Error fetching producer email:', producerError);
+            return;
+          }
+          
+          // Get client email for notification
+          const { data: clientData, error: clientError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', proposalData.client_id)
+            .single();
+            
+          if (clientError) {
+            console.error('Error fetching client email:', clientError);
+            return;
+          }
+          
+          // Send notifications
+          try {
+            await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-proposal-update`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                proposalId: metadata.proposal_id,
+                action: 'payment_complete',
+                trackTitle: proposalData.track.title,
+                producerEmail: producerData.email,
+                clientEmail: clientData.email
+              })
+            });
+          } catch (notifyError) {
+            console.error('Error sending payment notification:', notifyError);
+          }
+          
+          console.info(`Successfully processed sync proposal payment for proposal: ${metadata.proposal_id}`);
+          return;
+        }
+        
+        // Handle regular track purchase
+        const trackId = metadata?.track_id;
+        
+        if (trackId && customerData?.user_id) {
+          // Get track details to get producer_id
+          const { data: trackData, error: trackError } = await supabase
+            .from('tracks')
+            .select('id, producer_id')
+            .eq('id', trackId)
+            .single();
+          
+          if (trackError) {
+            console.error('Error fetching track data:', trackError);
+            return;
+          }
+          
+          // Get user profile for licensee info
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email')
+            .eq('id', customerData.user_id)
+            .single();
+          
+          if (profileError) {
+            console.error('Error fetching profile data:', profileError);
+            return;
+          }
+          
+          // Create license record
+          const { error: saleError } = await supabase
+            .from('sales')
+            .insert({
+              track_id: trackData.id,
+              producer_id: trackData.producer_id,
+              buyer_id: customerData.user_id,
+              license_type: 'Single Track',
+              amount: amount_total / 100, // Convert from cents to dollars
+              payment_method: 'stripe',
+              transaction_id: payment_intent,
+              created_at: new Date().toISOString(),
+              licensee_info: {
+                name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+                email: profileData.email
+              }
+            });
+          
+          if (saleError) {
+            console.error('Error creating license record:', saleError);
+            return;
+          }
+          
+          console.info(`Successfully created license record for track ${trackId}`);
+        }
+        
         
         // Get the user_id associated with this customer
         const { data: customerData, error: customerError } = await supabase

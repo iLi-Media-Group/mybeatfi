@@ -68,14 +68,12 @@ export function ProducerDashboard() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTrackProposalsDialog, setShowTrackProposalsDialog] = useState(false);
   const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
-  
-  // Proposal action states
+   
   const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
-
 
   useEffect(() => {
     if (user) {
@@ -307,7 +305,8 @@ export function ProducerDashboard() {
       const { error } = await supabase
         .from('sync_proposals')
         .update({ 
-          status: action === 'accept' ? 'accepted' : 'rejected',
+          status: action === 'accept' ? 'accepted' : 'rejected', 
+          client_status: action === 'accept' ? 'pending' : null,
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedProposal.id);
@@ -600,6 +599,11 @@ export function ProducerDashboard() {
                             <p className="text-xs text-gray-400">
                               Expires: {new Date(proposal.expiration_date).toLocaleDateString()}
                             </p>
+                            {proposal.is_urgent && (
+                              <span className="ml-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">
+                                Urgent
+                              </span>
+                            )}
                           </div>
                         </div>
                         
@@ -735,78 +739,4 @@ export function ProducerDashboard() {
           }}
           trackTitle={selectedTrack.title}
           onConfirm={confirmDeleteTrack}
-        />
-      )}
-
-      {selectedTrack && showTrackProposalsDialog && (
-        <TrackProposalsDialog
-          isOpen={showTrackProposalsDialog}
-          onClose={() => {
-            setShowTrackProposalsDialog(false);
-            setSelectedTrack(null);
-          }}
-          trackId={selectedTrack.id}
-          trackTitle={selectedTrack.title}
-        />
-      )}
-
-      {/* Revenue Breakdown Dialog */}
-      {user && showRevenueBreakdown && (
-        <RevenueBreakdownDialog
-          isOpen={showRevenueBreakdown}
-          onClose={() => setShowRevenueBreakdown(false)}
-          producerId={user.id}
-        />
-      )}
-
-      {/* Proposal Action Dialogs */}
-      {selectedProposal && showNegotiationDialog && (
-        <ProposalNegotiationDialog
-          isOpen={showNegotiationDialog}
-          onClose={() => {
-            setShowNegotiationDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-          currentOffer={selectedProposal.sync_fee}
-          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
-          trackTitle={selectedProposal.track.title}
-        />
-      )}
-
-      {selectedProposal && showHistoryDialog && (
-        <ProposalHistoryDialog
-          isOpen={showHistoryDialog}
-          onClose={() => {
-            setShowHistoryDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-        />
-      )}
-
-      {selectedProposal && showConfirmDialog && (
-        <ProposalConfirmDialog
-          isOpen={showConfirmDialog}
-          onClose={() => {
-            setShowConfirmDialog(false);
-            setSelectedProposal(null);
-          }}
-          onConfirm={() => handleProposalStatusChange(confirmAction)}
-          action={confirmAction}
-          trackTitle={selectedProposal.track.title}
-          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
-        />
-      )}
-      
-      {/* Revenue Breakdown Dialog */}
-      {user && showRevenueBreakdown && (
-        <RevenueBreakdownDialog
-          isOpen={showRevenueBreakdown}
-          onClose={() => setShowRevenueBreakdown(false)}
-          producerId={user.id}
-        />
-      )}
-    </div>
-  );
-}
+        
