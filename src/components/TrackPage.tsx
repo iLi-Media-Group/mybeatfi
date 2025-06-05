@@ -212,8 +212,6 @@ export function TrackPage() {
       return;
     }
     
-    // For regular tracks, handle based on membership
-        setError('Error creating checkout session: ' + (error instanceof Error ? error.message : 'Unknown error'));
     // Show the license dialog for all users
     // The LicenseTermsSummary component will handle the Stripe checkout if needed
     setShowLicenseDialog(true);
