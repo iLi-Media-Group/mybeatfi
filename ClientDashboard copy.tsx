@@ -313,7 +313,7 @@ export function ClientDashboard() {
             license_type,
             created_at,
             expiry_date,
-            track:tracks (
+            producer:profiles!tracks_producer_id_fkey (
               id,
               title,
               genres,

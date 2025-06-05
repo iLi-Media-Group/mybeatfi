@@ -160,7 +160,7 @@ export function ClientDashboard() {
             bpm,
             audio_url,
             image_url,
-            producer:profiles!producer_id (
+            producer:profiles!tracks_producer_id_fkey (
               first_name,
               last_name,
               email
@@ -254,7 +254,7 @@ export function ClientDashboard() {
           image_url,
           has_vocals,
           vocals_usage_type,
-          producer:profiles!producer_id (
+          producer:profiles!tracks_producer_id_fkey (
             id,
             first_name,
             last_name,
