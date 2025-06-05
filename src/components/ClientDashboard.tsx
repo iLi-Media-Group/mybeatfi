@@ -697,7 +697,7 @@ export function ClientDashboard() {
                 <div className="flex space-x-2">
                   <select
   value={genreFilter}
-  onChange={(e) => setGenreFilter(e.target.value)}
+  onChange={(e) => setSelectedGenre(e.target.value)}
   className="ml-2 px-3 py-2 rounded-lg bg-white/10 text-white border border-purple-500/30"
 >
   <option value="">All Genres</option>
