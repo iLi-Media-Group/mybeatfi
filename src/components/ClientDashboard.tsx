@@ -705,6 +705,6 @@ export function ClientDashboard() {
   <option key={genre} value={genre}>
     {genre}
   </option>
-))}
-                  </select>
+ ))}
+</select>
                   
