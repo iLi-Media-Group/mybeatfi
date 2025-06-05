@@ -13,11 +13,6 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
     let checkoutMetadata = customData || {};
     if (trackId) {
       checkoutMetadata.track_id = trackId;
-    }
-
-    // Prepare metadata for the checkout session
-    let checkoutMetadata = customData || {};
-    if (trackId) {
       checkoutMetadata.track_id = trackId;
     }
 
@@ -32,9 +27,7 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
         success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/pricing`,
         mode,
-        metadata: checkoutMetadata,
-        custom_amount: customData?.amount
-        metadata: checkoutMetadata,
+        metadata: checkoutMetadata, 
         custom_amount: customData?.amount
       }),
     });

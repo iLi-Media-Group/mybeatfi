@@ -733,4 +733,5 @@ export function ProducerDashboard() {
 
       {/* Modals and Dialogs */}
       <ProducerProfile
-        isOpen={show
+        isOpen={showProfileDialog}
+      />
