@@ -788,13 +788,21 @@ const handleTrackAction = (track: TrackType) => {
                                 <span>Submit Proposal</span>
                               </button>
                             ) : (
-                              <button
-                                onClick={() => handleLicenseClick(track)}
-                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                <span>License Track</span>
-                              </button>
+                             <button
+  onClick={() => handleTrackAction(track)}
+  className={`ml-4 px-4 py-2 ${
+    track.hasVocals && track.vocalsUsageType === 'sync_only'
+      ? 'bg-purple-600 hover:bg-purple-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white rounded-lg transition-colors flex items-center space-x-2 text-sm`}
+>
+  <DollarSign className="w-4 h-4" />
+  <span>
+    {track.hasVocals && track.vocalsUsageType === 'sync_only'
+      ? 'Submit Proposal'
+      : 'License Track'}
+  </span>
+</button>
                             )}
                           </div>
                         </div>
