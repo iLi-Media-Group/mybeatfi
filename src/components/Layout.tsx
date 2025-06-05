@@ -141,7 +141,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <ListMusic className="w-4 h-4 mr-2" />
-                    Playlists
+                    <span>Playlists</span>
                   </Link>
 
                   <Link
