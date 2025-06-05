@@ -701,5 +701,8 @@ export function ClientDashboard() {
                     className="bg-white/5 border border-purple-500/20 rounded-lg px-2 py-1 text-sm text-white"
                   >
                     <option value="">All Genres</option>
-                    {Array.from(new Set(favorites.flatMap(t => t.genres))).map(genre => (
-                      <option key={genre} value
+{Array.from(new Set(favorites.flatMap(t => t.genres))).map(genre => (
+  <option key={genre} value={genre}>
+    {genre}
+  </option>
+))}
