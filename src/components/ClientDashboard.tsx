@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Dummy components — replace with your actual imports
-
+import { ProducerProfile } from './ProducerProfile';
 import { EditTrackModal } from './EditTrackModal'; // ✅ for named export
 import { DeleteTrackDialog } from './DeleteTrackDialog'; // ✅ correct
 import { TrackProposalsDialog } from './TrackProposalsDialog';
