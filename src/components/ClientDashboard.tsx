@@ -706,3 +706,5 @@ export function ClientDashboard() {
     {genre}
   </option>
 ))}
+                  </select>
+                  
