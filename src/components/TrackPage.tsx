@@ -213,38 +213,10 @@ export function TrackPage() {
     }
     
     // For regular tracks, handle based on membership
-    if (membershipPlan === 'Single Track') {
-      try {
-        setCheckoutLoading(true);
-        
-        // Find the Single Track product
-        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
-        
-        if (!singleTrackProduct) {
-          throw new Error('Single Track product not found');
-        }
-        
-        // Store the track ID in localStorage for retrieval after checkout
-        localStorage.setItem('pending_license_track_id', track.id);
-        
-        // Create checkout session
-        const checkoutUrl = await createCheckoutSession(
-          singleTrackProduct.priceId, 
-          singleTrackProduct.mode
-        );
-        
-        // Redirect to checkout
-        window.location.href = checkoutUrl;
-      } catch (error) {
-        console.error('Error creating checkout session:', error);
         setError('Error creating checkout session: ' + (error instanceof Error ? error.message : 'Unknown error'));
-      } finally {
-        setCheckoutLoading(false);
-      }
-    } else {
-      // For subscription users, show the license dialog
-      setShowLicenseDialog(true);
-    }
+    // Show the license dialog for all users
+    // The LicenseTermsSummary component will handle the Stripe checkout if needed
+    setShowLicenseDialog(true);
   };
 
   if (loading) {

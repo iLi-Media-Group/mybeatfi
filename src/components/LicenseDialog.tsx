@@ -231,6 +231,7 @@ export function LicenseDialog({
           {step === 'terms' && (
             <LicenseTermsSummary
               licenseType={membershipType}
+              trackId={track.id}
               onAccept={() => {
                 if (!profile?.first_name || !profile?.last_name || !profile?.email) {
                   setStep('profile');
