@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription', trackId?: string) {
+export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription', trackId?: string, customData?: any) {
   try {
     // Get the current session - this implicitly handles refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -10,9 +10,9 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
     }
 
     // Prepare metadata for the checkout session
-    let checkoutMetadata = {};
+    let checkoutMetadata = customData || {};
     if (trackId) {
-      checkoutMetadata = { track_id: trackId };
+      checkoutMetadata.track_id = trackId;
     }
 
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
@@ -26,7 +26,8 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
         success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/pricing`,
         mode,
-        metadata: checkoutMetadata
+        metadata: checkoutMetadata,
+        custom_amount: customData?.amount
       }),
     });
 
