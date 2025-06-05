@@ -43,16 +43,17 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { price_id, success_url, cancel_url, mode, metadata = {} } = await req.json();
+    const { price_id, success_url, cancel_url, mode, metadata = {}, custom_amount } = await req.json();
 
     const error = validateParameters(
-      { price_id, success_url, cancel_url, mode, metadata },
+      { price_id, success_url, cancel_url, mode, metadata, custom_amount },
       {
         cancel_url: 'string',
         price_id: 'string',
         success_url: 'string',
         mode: { values: ['payment', 'subscription'] },
         metadata: 'object',
+        custom_amount: 'optional_number',
       },
     );
 
@@ -178,21 +179,56 @@ Deno.serve(async (req) => {
       }
     }
 
-    // create Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: price_id,
-          quantity: 1,
-        },
-      ],
-      mode,
-      success_url,
-      cancel_url,
-      metadata,
-    });
+    let session;
+    
+    // Handle custom price for sync proposals
+    if (price_id === 'price_custom' && custom_amount && mode === 'payment') {
+      // Create a one-time price
+      const product = await stripe.products.create({
+        name: metadata.description || 'Custom Sync License',
+        metadata: {
+          proposal_id: metadata.proposal_id
+        }
+      });
+      
+      const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: custom_amount,
+        currency: 'usd',
+      });
+      
+      // Create checkout session with the custom price
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: price.id,
+            quantity: 1,
+          },
+        ],
+        mode,
+        success_url,
+        cancel_url,
+        metadata,
+      });
+    } else {
+      // Regular checkout session
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: price_id,
+            quantity: 1,
+          },
+        ],
+        mode,
+        success_url,
+        cancel_url,
+        metadata,
+      });
+    }
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
 
@@ -204,7 +240,7 @@ Deno.serve(async (req) => {
 });
 
 type ExpectedType = 'string' | { values: string[] };
-type Expectations<T> = { [K in keyof T]: ExpectedType | 'object' };
+type Expectations<T> = { [K in keyof T]: ExpectedType | 'object' | 'optional_number' };
 
 function validateParameters<T extends Record<string, any>>(values: T, expected: Expectations<T>): string | undefined {
   for (const parameter in values) {
@@ -221,6 +257,10 @@ function validateParameters<T extends Record<string, any>>(values: T, expected: 
     } else if (expectation === 'object') {
       if (value != null && typeof value !== 'object') {
         return `Expected parameter ${parameter} to be an object got ${JSON.stringify(value)}`;
+      }
+    } else if (expectation === 'optional_number') {
+      if (value != null && typeof value !== 'number') {
+        return `Expected parameter ${parameter} to be a number got ${JSON.stringify(value)}`;
       }
     } else {
       if (!expectation.values.includes(value)) {
