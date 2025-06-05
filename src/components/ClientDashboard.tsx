@@ -20,7 +20,7 @@ export function ClientDashboard() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTrackProposalsDialog, setShowTrackProposalsDialog] = useState(false);
   const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({ id: 'user-123' }); // Replace with context or auth if applicable
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
