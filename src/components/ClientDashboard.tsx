@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2 } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -67,7 +67,7 @@ const getExpiryStatus = (expiryDate: string): 'expired' | 'expiring-soon' | 'act
 };
 
 export function ClientDashboard() {
-  const { user } = useAuth();
+  const { user, membershipPlan, refreshMembership } = useAuth();
   const navigate = useNavigate();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [favorites, setFavorites] = useState<Track[]>([]);
@@ -97,190 +97,231 @@ export function ClientDashboard() {
   const [showProposalDialog, setShowProposalDialog] = useState(false);
 
   useEffect(() => {
+    if (user) {
+      // Refresh membership info first to ensure we have the latest data
+      refreshMembership().then(() => {
+        fetchDashboardData();
+      });
+    }
+  }, [user, membershipPlan]);
+
+  const fetchDashboardData = async () => {
     if (!user) return;
     
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError('');
+    try {
+      setLoading(true);
+      setError('');
 
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('first_name, email, membership_plan')
-          .eq('id', user.id)
-          .single();
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, email, membership_plan')
+        .eq('id', user.id)
+        .single();
 
-        if (profileData) {
-          setProfile(profileData);
-          setUserStats(prev => ({
-            ...prev,
-            membershipType: profileData.membership_plan as UserStats['membershipType']
-          }));
-        }
+      if (profileData) {
+        setProfile(profileData);
+        setUserStats(prev => ({
+          ...prev,
+          membershipType: profileData.membership_plan as UserStats['membershipType']
+        }));
+      }
 
-        const { data: licensesData } = await supabase
-          .from('sales')
-          .select(`
-            id,
-            license_type,
-            created_at,
-            expiry_date,
-            track:tracks (
-              id,
-              title,
-              genres,
-              bpm,
-              audio_url,
-              image_url,
-              producer:profiles!producer_id (
-                first_name,
-                last_name,
-                email
-              )
-            )
-          `)
-          .eq('buyer_id', user.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (licensesData) {
-          const formattedLicenses = licensesData.map(license => ({
-            ...license,
-            expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
-            track: {
-              ...license.track,
-              genres: license.track.genres.split(',').map((g: string) => g.trim()),
-              image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
-            }
-          }));
-          setLicenses(formattedLicenses);
-        }
-
-        const { data: favoritesData } = await supabase
-          .from('favorites')
-          .select(`
-            track_id,
-            tracks (*)
-          `)
-          .eq('user_id', user.id);
-
-        if (favoritesData) {
-          const formattedFavorites = favoritesData.map(f => ({
-            id: f.tracks.id,
-            title: f.tracks.title,
-            artist: f.tracks.artist,
-            genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
-            moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
-            duration: f.tracks.duration || '3:30',
-            bpm: f.tracks.bpm,
-            audioUrl: f.tracks.audio_url,
-            image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-            hasStingEnding: f.tracks.has_sting_ending,
-            isOneStop: f.tracks.is_one_stop,
-            mp3Url: f.tracks.mp3_url,
-            trackoutsUrl: f.tracks.trackouts_url,
-            hasVocals: f.tracks.has_vocals,
-            vocalsUsageType: f.tracks.vocals_usage_type,
-            subGenres: [],
-            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-            leaseAgreementUrl: ''
-          }));
-          setFavorites(formattedFavorites);
-        }
-
-        const { data: newTracksData } = await supabase
-          .from('tracks')
-          .select(`
+      const { data: licensesData } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          license_type,
+          created_at,
+          expiry_date,
+          track:tracks (
             id,
             title,
             genres,
             bpm,
             audio_url,
             image_url,
-            has_vocals,
-            vocals_usage_type,
-            producer:profiles!producer_id (
+            producer_id,
+            producer:profiles!tracks_producer_id_fkey (
               id,
               first_name,
               last_name,
               email
             )
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5);
+          )
+        `)
+        .eq('buyer_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
 
-        if (newTracksData) {
-          const formattedNewTracks = newTracksData.map(track => ({
-            id: track.id,
-            title: track.title,
-            artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
-            genres: track.genres.split(',').map((g: string) => g.trim()),
-            moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
-            bpm: track.bpm,
-            audioUrl: track.audio_url,
-            image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-            hasVocals: track.has_vocals,
-            vocalsUsageType: track.vocals_usage_type,
-            subGenres: [],
-            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-            leaseAgreementUrl: '',
-            producer: track.producer ? {
-              id: track.producer.id,
-              firstName: track.producer.first_name || '',
-              lastName: track.producer.last_name || '',
-              email: track.producer.email
-            } : undefined
-          }));
-          setNewTracks(formattedNewTracks);
-        }
-
-        const { data: syncRequestsData } = await supabase
-          .from('custom_sync_requests')
-          .select('*')
-          .eq('client_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (syncRequestsData) {
-          setSyncRequests(syncRequestsData);
-        }
-
-        // Calculate remaining licenses for Gold Access
-        if (profileData.membership_plan === 'Gold Access') {
-          const startOfMonth = new Date();
-          startOfMonth.setDate(1);
-          startOfMonth.setHours(0, 0, 0, 0);
-
-          const { count } = await supabase
-            .from('sales')
-            .select('id', { count: 'exact' })
-            .eq('buyer_id', user.id)
-            .gte('created_at', startOfMonth.toISOString());
-
-          const totalLicenses = count || 0;
-          const remainingLicenses = 10 - totalLicenses;
-
-          setUserStats(prev => ({
-            ...prev,
-            totalLicenses,
-            remainingLicenses,
-            currentPeriodStart: startOfMonth,
-            currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
-            daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-          }));
-        }
-
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+      if (licensesData) {
+        const formattedLicenses = licensesData.map(license => ({
+          ...license,
+          expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
+          track: {
+            ...license.track,
+            genres: license.track.genres.split(',').map((g: string) => g.trim()),
+            image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+          }
+        }));
+        setLicenses(formattedLicenses);
       }
-    };
 
-    fetchData();
-  }, [user]);
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select(`
+          track_id,
+          tracks (
+            id,
+            title,
+            artist,
+            genres,
+            moods,
+            duration,
+            bpm,
+            audio_url,
+            image_url,
+            has_sting_ending,
+            is_one_stop,
+            mp3_url,
+            trackouts_url,
+            has_vocals,
+            vocals_usage_type,
+            sub_genres,
+            producer_id,
+            producer:profiles!tracks_producer_id_fkey (
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (favoritesData) {
+        const formattedFavorites = favoritesData.map(f => ({
+          id: f.tracks.id,
+          title: f.tracks.title,
+          artist: f.tracks.artist,
+          genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
+          moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
+          duration: f.tracks.duration || '3:30',
+          bpm: f.tracks.bpm,
+          audioUrl: f.tracks.audio_url,
+          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasStingEnding: f.tracks.has_sting_ending,
+          isOneStop: f.tracks.is_one_stop,
+          mp3Url: f.tracks.mp3_url,
+          trackoutsUrl: f.tracks.trackouts_url,
+          hasVocals: f.tracks.has_vocals,
+          vocalsUsageType: f.tracks.vocals_usage_type,
+          subGenres: f.tracks.sub_genres || [],
+          producerId: f.tracks.producer_id,
+          producer: f.tracks.producer ? {
+            id: f.tracks.producer.id,
+            firstName: f.tracks.producer.first_name || '',
+            lastName: f.tracks.producer.last_name || '',
+            email: f.tracks.producer.email
+          } : undefined,
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
+        }));
+        setFavorites(formattedFavorites);
+      }
+
+      const { data: newTracksData } = await supabase
+        .from('tracks')
+        .select(`
+          id,
+          title,
+          genres,
+          bpm,
+          audio_url,
+          image_url,
+          has_vocals,
+          vocals_usage_type,
+          sub_genres,
+          producer_id,
+          producer:profiles!producer_id (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (newTracksData) {
+        const formattedNewTracks = newTracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
+          genres: track.genres.split(',').map((g: string) => g.trim()),
+          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+          bpm: track.bpm,
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasVocals: track.has_vocals,
+          vocalsUsageType: track.vocals_usage_type,
+          subGenres: track.sub_genres || [],
+          producerId: track.producer_id,
+          producer: track.producer ? {
+            id: track.producer.id,
+            firstName: track.producer.first_name || '',
+            lastName: track.producer.last_name || '',
+            email: track.producer.email
+          } : undefined,
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
+        }));
+        setNewTracks(formattedNewTracks);
+      }
+
+      const { data: syncRequestsData } = await supabase
+        .from('custom_sync_requests')
+        .select('*')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (syncRequestsData) {
+        setSyncRequests(syncRequestsData);
+      }
+
+      // Calculate remaining licenses for Gold Access
+      if (membershipPlan === 'Gold Access') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count } = await supabase
+          .from('sales')
+          .select('id', { count: 'exact' })
+          .eq('buyer_id', user.id)
+          .gte('created_at', startOfMonth.toISOString());
+
+        const totalLicenses = count || 0;
+        const remainingLicenses = 10 - totalLicenses;
+
+        setUserStats(prev => ({
+          ...prev,
+          totalLicenses,
+          remainingLicenses,
+          currentPeriodStart: startOfMonth,
+          currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
+          daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        }));
+      }
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -378,6 +419,10 @@ export function ClientDashboard() {
     setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
   };
 
+  const handleViewLicenseAgreement = (licenseId: string) => {
+    navigate(`/license-agreement/${licenseId}`);
+  };
+
   const sortedAndFilteredLicenses = licenses
     .filter(license => !selectedGenre || license.track.genres.includes(selectedGenre))
     .sort((a, b) => {
@@ -450,12 +495,14 @@ export function ClientDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
               <p className="text-gray-300">
-                {userStats.membershipType === 'Gold Access' ? (
+                <span className="font-semibold text-white">Current Plan: {membershipPlan}</span>
+                <br />
+                {membershipPlan === 'Gold Access' ? (
                   <>
                     You have used {userStats.totalLicenses} of your 10 monthly licenses
                     ({userStats.remainingLicenses} remaining)
                   </>
-                ) : userStats.membershipType === 'Platinum Access' || userStats.membershipType === 'Ultimate Access' ? (
+                ) : membershipPlan === 'Platinum Access' || membershipPlan === 'Ultimate Access' ? (
                   'You have unlimited licenses available'
                 ) : (
                   'Single track license'
@@ -472,14 +519,14 @@ export function ClientDashboard() {
                 </p>
               )}
             </div>
-            {userStats.membershipType === 'Gold Access' && userStats.remainingLicenses < 3 && (
+            {membershipPlan === 'Gold Access' && userStats.remainingLicenses < 3 && (
               <div className="flex items-center text-yellow-400">
                 <AlertCircle className="w-5 h-5 mr-2" />
                 <span>Running low on licenses</span>
               </div>
             )}
           </div>
-          {userStats.membershipType === 'Gold Access' && (
+          {membershipPlan === 'Gold Access' && (
             <div className="mt-4 w-full bg-gray-700 rounded-full h-2">
               <div
                 className="bg-purple-600 rounded-full h-2 transition-all duration-300"
@@ -648,13 +695,23 @@ export function ClientDashboard() {
                           >
                             {license.track.title}
                           </button>
-                          <button
-                            onClick={() => setSelectedLicenseToDelete(license)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
-                            title="Delete License"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleViewLicenseAgreement(license.id)}
+                              className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-400/10"
+                              title="View License Agreement"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setSelectedLicenseToDelete(license)}
+                              className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                              title="Delete License"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          
+                          </div>
                         </div>
                         <div className="text-sm text-gray-400 space-y-1">
                           <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
@@ -722,139 +779,274 @@ export function ClientDashboard() {
                 </div>
               </div>
               <div className="space-y-4">
-              {sortedAndFilteredFavorites.length === 0 ? (
-                <div className="text-center py-8 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
-                  <Star className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-400">No favorite tracks yet</p>
-                  <Link
-                    to="/catalog"
-                    className="inline-block mt-4 text-purple-400 hover:text-purple-300"
-                  >
-                    Browse the catalog
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sortedAndFilteredFavorites.map((track) => (
+                {sortedAndFilteredFavorites.length === 0 ? (
+                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                    <p className="text-gray-400">No favorite tracks yet</p>
+                    <Link
+                      to="/catalog"
+                      className="inline-block mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+                    >
+                      Browse Catalog
+                    </Link>
+                  </div>
+                ) : (
+                  sortedAndFilteredFavorites.map((track) => (
                     <div
                       key={track.id}
                       className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
                     >
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-center space-x-4">
                         <img
                           src={track.image}
                           alt={track.title}
-                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-semibold truncate">{track.title}</h4>
-                          <p className="text-sm text-gray-400">{track.genres.join(', ')}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleLicenseClick(track)}
-                            className="p-2 text-purple-400 hover:text-purple-300 transition-colors"
-                          >
-                            <FileMusic className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveFavorite(track.id)}
-                            disabled={removingFavorite === track.id}
-                            className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                          >
-                            {removingFavorite === track.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
+                          <div className="flex items-center justify-between mb-1">
+                            <button 
+                              onClick={() => navigate(`/track/${track.id}`)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
+                            >
+                              {track.title}
+                            </button>
+                            <button
+                              onClick={() => handleRemoveFavorite(track.id)}
+                              disabled={removingFavorite === track.id}
+                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                              aria-label="Remove from favorites"
+                            >
                               <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <AudioPlayer url={track.audioUrl} title={track.title} />
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
                             )}
-                          </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
 
             <div>
               <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                <Layers className="w-5 h-5 mr-2" />
+                <Music className="w-5 h-5 mr-2 text-purple-500" />
                 New Releases
               </h3>
               <div className="space-y-4">
-                {newTracks.map((track) => (
-                  <div
-                    key={track.id}
-                    className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
-                  >
-                    <div className="flex items-start space-x-4">
-                      <img
-                        src={track.image}
-                        alt={track.title}
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-semibold truncate">{track.title}</h4>
-                        <p className="text-sm text-gray-400">
-                          {track.genres.join(', ')} • {track.bpm} BPM
-                        </p>
-                      </div>
-                      <AudioPlayer url={track.audioUrl} title={track.title} />
-                    </div>
+                {newTracks.length === 0 ? (
+                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                    <p className="text-gray-400">No new tracks available</p>
                   </div>
-                ))}
+                ) : (
+                  newTracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <button
+                              onClick={() => navigate(`/track/${track.id}`)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
+                            >
+                              {track.title}
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <AudioPlayer url={track.audioUrl} title={track.title} />
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {showEditDialog && selectedRequest && (
+      {selectedRequest && showEditDialog && (
         <EditRequestDialog
-          request={selectedRequest}
+          isOpen={showEditDialog}
           onClose={() => {
             setShowEditDialog(false);
             setSelectedRequest(null);
           }}
-          onUpdate={handleUpdateRequest}
-        />
-      )}
-
-      {showProfileDialog && (
-        <ClientProfile
-          onClose={() => setShowProfileDialog(false)}
+          request={selectedRequest}
+          onSave={(updates) => handleUpdateRequest(selectedRequest.id, updates)}
         />
       )}
 
       {selectedLicenseToDelete && (
         <DeleteLicenseDialog
-          license={selectedLicenseToDelete}
+          isOpen={true}
           onClose={() => setSelectedLicenseToDelete(null)}
+          license={selectedLicenseToDelete}
           onConfirm={handleDeleteLicense}
         />
       )}
 
-      {showLicenseDialog && selectedTrackToLicense && (
+      <ClientProfile
+        isOpen={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      />
+
+      {selectedTrackToLicense && showLicenseDialog && (
         <LicenseDialog
-          track={selectedTrackToLicense}
+          isOpen={showLicenseDialog}
           onClose={() => {
             setShowLicenseDialog(false);
             setSelectedTrackToLicense(null);
           }}
+          track={selectedTrackToLicense}
+          membershipType={membershipPlan || 'Single Track'}
+          remainingLicenses={userStats.remainingLicenses}
+          onLicenseCreated={() => {
+            // Refresh the dashboard data after a new license is created
+            if (user) {
+              setLoading(true);
+              const fetchData = async () => {
+                try {
+                  const { data: licensesData } = await supabase
+                    .from('sales')
+                    .select(`
+                      id,
+                      license_type,
+                      created_at,
+                      expiry_date,
+                      track:tracks (
+                        id,
+                        title,
+                        genres,
+                        bpm,
+                        audio_url,
+                        image_url,
+                        producer_id,
+                        producer:profiles!tracks_producer_id_fkey (
+                          first_name,
+                          last_name,
+                          email
+                        )
+                      )
+                    `)
+                    .eq('buyer_id', user.id)
+                    .is('deleted_at', null)
+                    .order('created_at', { ascending: false });
+                  
+                  if (licensesData) {
+                    const formattedLicenses = licensesData.map(license => ({
+                      ...license,
+                      expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, membershipPlan || 'Single Track'),
+                      track: {
+                        ...license.track,
+                        genres: license.track.genres.split(',').map((g: string) => g.trim()),
+                        image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+                      }
+                    }));
+                    setLicenses(formattedLicenses);
+                  }
+                  
+                  // Update license count for Gold Access
+                  if (membershipPlan === 'Gold Access') {
+                    const startOfMonth = new Date();
+                    startOfMonth.setDate(1);
+                    startOfMonth.setHours(0, 0, 0, 0);
+                    
+                    const { count } = await supabase
+                      .from('sales')
+                      .select('id', { count: 'exact' })
+                      .eq('buyer_id', user.id)
+                      .gte('created_at', startOfMonth.toISOString());
+                    
+                    const totalLicenses = count || 0;
+                    const remainingLicenses = 10 - totalLicenses;
+                    
+                    setUserStats(prev => ({
+                      ...prev,
+                      totalLicenses,
+                      remainingLicenses
+                    }));
+                  }
+                } catch (err) {
+                  console.error('Error refreshing licenses:', err);
+                } finally {
+                  setLoading(false);
+                }
+              };
+              
+              fetchData();
+            }
+          }}
         />
       )}
 
-      {showProposalDialog && selectedRequest && (
+      {selectedTrackToLicense && showProposalDialog && (
         <SyncProposalDialog
-          request={selectedRequest}
+          isOpen={showProposalDialog}
           onClose={() => {
             setShowProposalDialog(false);
-            setSelectedRequest(null);
+            setSelectedTrackToLicense(null);
           }}
+          track={selectedTrackToLicense}
         />
       )}
     </div>
   );
 }
-
-                  
