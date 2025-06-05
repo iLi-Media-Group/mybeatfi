@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export function ClientDashboard() {
   return (
@@ -71,6 +71,3 @@ export function ClientDashboard() {
       />
     </div>
   );
-}
-
-export { ClientDashboard }
