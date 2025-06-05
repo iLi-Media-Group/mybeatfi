@@ -788,21 +788,13 @@ const handleTrackAction = (track: TrackType) => {
                                 <span>Submit Proposal</span>
                               </button>
                             ) : (
-                             <button
-  onClick={() => handleTrackAction(track)}
-  className={`ml-4 px-4 py-2 ${
-    track.hasVocals && track.vocalsUsageType === 'sync_only'
-      ? 'bg-purple-600 hover:bg-purple-700'
-      : 'bg-blue-600 hover:bg-blue-700'
-  } text-white rounded-lg transition-colors flex items-center space-x-2 text-sm`}
->
-  <DollarSign className="w-4 h-4" />
-  <span>
-    {track.hasVocals && track.vocalsUsageType === 'sync_only'
-      ? 'Submit Proposal'
-      : 'License Track'}
-  </span>
-</button>
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -838,12 +830,21 @@ const handleTrackAction = (track: TrackType) => {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <button
-                              onClick={() => navigate(`/track/${track.id}`)}
-                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
-                            >
-                              {track.title}
-                            </button>
+                           <button
+  onClick={() => handleTrackAction(track)}
+  className={`ml-4 px-4 py-2 ${
+    track.hasVocals && track.vocalsUsageType === 'sync_only'
+      ? 'bg-purple-600 hover:bg-purple-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white rounded-lg transition-colors flex items-center space-x-2 text-sm`}
+>
+  <DollarSign className="w-4 h-4" />
+  <span>
+    {track.hasVocals && track.vocalsUsageType === 'sync_only'
+      ? 'Submit Proposal'
+      : 'License Track'}
+  </span>
+</button>
                           </div>
                           <p className="text-sm text-gray-400">
                             {track.genres.join(', ')} • {track.bpm} BPM
