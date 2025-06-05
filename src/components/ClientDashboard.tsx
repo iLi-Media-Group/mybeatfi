@@ -1,4 +1,3 @@
-{/* Modals and Dialogs */}
 import React from 'react';
 
 export function ClientDashboard() {
@@ -73,6 +72,3 @@ export function ClientDashboard() {
     </div>
   );
 }
-```
-
-export { ClientDashboard }
