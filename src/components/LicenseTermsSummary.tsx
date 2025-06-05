@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Info, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { createCheckoutSession } from '../lib/stripe';
