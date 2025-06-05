@@ -764,4 +764,12 @@ export function ClientDashboard() {
                 return (
                   <div
                     key={license.id}
-                    className={`bg-white
+                    className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
+                      expiryStatus === 'expired' 
+                        ? 'border-red-500/20' 
+                        : expiryStatus === 'expiring-soon' 
+                          ? 'border-yellow-500/20' 
+                          : 'border-purple-500/20'
+                    }`}
+                  >
+                    {/* Content goes here */}
