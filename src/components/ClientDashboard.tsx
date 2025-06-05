@@ -1,7 +1,9 @@
-Here's the fixed version with all closing brackets added:
-
-```javascript
 {/* Modals and Dialogs */}
+import React from 'react';
+
+export function ClientDashboard() {
+  return (
+    <div>
       <ProducerProfile
         isOpen={showProfileDialog}
       />
@@ -72,3 +74,5 @@ Here's the fixed version with all closing brackets added:
   );
 }
 ```
+
+export { ClientDashboard }
