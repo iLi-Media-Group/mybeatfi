@@ -14,7 +14,6 @@ import { ProposalHistoryDialog } from './ProposalHistoryDialog';
 import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 import { TrackProposalsDialog } from './TrackProposalsDialog';
 import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
-import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
 
 interface UserStats {
   totalTracks: number;
@@ -77,8 +76,6 @@ export function ProducerDashboard() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
 
-  // Revenue breakdown state
-  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
 
   useEffect(() => {
     if (user) {
