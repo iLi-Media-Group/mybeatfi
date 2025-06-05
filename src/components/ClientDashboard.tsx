@@ -72,3 +72,5 @@ export function ClientDashboard() {
     </div>
   );
 }
+
+export { ClientDashboard }
