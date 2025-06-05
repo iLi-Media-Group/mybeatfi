@@ -11,14 +11,14 @@ export function CheckoutSuccessPage() {
   const navigate = useNavigate();
   const { user, refreshMembership } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState(null);
-  const [order, setOrder] = useState(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [order, setOrder] = useState<any>(null);
   const [licenseCreated, setLicenseCreated] = useState(false);
 
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
         if (!sessionId) {
           navigate('/dashboard');
@@ -45,12 +45,12 @@ export function CheckoutSuccessPage() {
 
           // Check if a license was created for this order
           if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
-            const { count } = await supabase
+            const result = await supabase
               .from('sales')
               .select('*', { count: 'exact', head: true })
               .eq('transaction_id', matchingOrder.payment_intent_id);
             
-            setLicenseCreated(count > 0);
+            setLicenseCreated(result.count !== null && result.count > 0);
           }
         }
       } catch (error) {
@@ -58,7 +58,7 @@ export function CheckoutSuccessPage() {
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchData();
   }, [sessionId, navigate, user, refreshMembership]);

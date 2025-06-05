@@ -37,7 +37,6 @@ export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseT
         const checkoutUrl = await createCheckoutSession(
           singleTrackProduct.priceId, 
           singleTrackProduct.mode,
-          singleTrackProduct.mode,
           trackId
         );
         

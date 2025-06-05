@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2 } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, FileText, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -27,6 +27,24 @@ interface UserStats {
   currentPeriodStart: Date | null;
   currentPeriodEnd: Date | null;
   daysUntilReset: number | null;
+}
+
+interface SyncProposal {
+  id: string;
+  track_id: string;
+  project_type: string;
+  sync_fee: number;
+  expiration_date: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  negotiation_status: 'pending' | 'negotiating' | 'agreed' | 'declined';
+  created_at: string;
+  track: {
+    title: string;
+    producer: {
+      first_name: string;
+      last_name: string;
+    };
+  };
 }
 
 interface CustomSyncRequest {
@@ -67,11 +85,12 @@ const getExpiryStatus = (expiryDate: string): 'expired' | 'expiring-soon' | 'act
 };
 
 export function ClientDashboard() {
-  const { user } = useAuth();
+  const { user, membershipPlan, refreshMembership } = useAuth();
   const navigate = useNavigate();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [favorites, setFavorites] = useState<Track[]>([]);
   const [newTracks, setNewTracks] = useState<Track[]>([]);
+  const [syncProposals, setSyncProposals] = useState<SyncProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState<'renewal' | 'title' | 'genre' | 'bpm'>('renewal');
@@ -95,192 +114,224 @@ export function ClientDashboard() {
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
   const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
   const [showProposalDialog, setShowProposalDialog] = useState(false);
+  const [viewingProposalId, setViewingProposalId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (user) {
+      // Refresh membership info first to ensure we have the latest data
+      refreshMembership().then(() => {
+        fetchDashboardData();
+      });
+    }
+  }, [user, membershipPlan]);
+
+  const fetchDashboardData = async () => {
     if (!user) return;
     
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError('');
+    try {
+      setLoading(true);
+      setError('');
 
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('first_name, email, membership_plan')
-          .eq('id', user.id)
-          .single();
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, email, membership_plan')
+        .eq('id', user.id)
+        .single();
 
-        if (profileData) {
-          setProfile(profileData);
-          setUserStats(prev => ({
-            ...prev,
-            membershipType: profileData.membership_plan as UserStats['membershipType']
-          }));
-        }
+      if (profileData) {
+        setProfile(profileData);
+        setUserStats(prev => ({
+          ...prev,
+          membershipType: profileData.membership_plan as UserStats['membershipType']
+        }));
+      }
 
-        const { data: licensesData } = await supabase
-          .from('sales')
-          .select(`
-            id,
-            license_type,
-            created_at,
-            expiry_date,
-            track:tracks (
-              id,
-              title,
-              genres,
-              bpm,
-              audio_url,
-              image_url,
-              producer:profiles!producer_id (
-                first_name,
-                last_name,
-                email
-              )
-            )
-          `)
-          .eq('buyer_id', user.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (licensesData) {
-          const formattedLicenses = licensesData.map(license => ({
-            ...license,
-            expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
-            track: {
-              ...license.track,
-              genres: license.track.genres.split(',').map((g: string) => g.trim()),
-              image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
-            }
-          }));
-          setLicenses(formattedLicenses);
-        }
-
-        const { data: favoritesData } = await supabase
-          .from('favorites')
-          .select(`
-            track_id,
-            tracks (*)
-          `)
-          .eq('user_id', user.id);
-
-        if (favoritesData) {
-          const formattedFavorites = favoritesData.map(f => ({
-            id: f.tracks.id,
-            title: f.tracks.title,
-            artist: f.tracks.artist,
-            genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
-            moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
-            duration: f.tracks.duration || '3:30',
-            bpm: f.tracks.bpm,
-            audioUrl: f.tracks.audio_url,
-            image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-            hasStingEnding: f.tracks.has_sting_ending,
-            isOneStop: f.tracks.is_one_stop,
-            mp3Url: f.tracks.mp3_url,
-            trackoutsUrl: f.tracks.trackouts_url,
-            hasVocals: f.tracks.has_vocals,
-            vocalsUsageType: f.tracks.vocals_usage_type,
-            subGenres: [],
-            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-            leaseAgreementUrl: ''
-          }));
-          setFavorites(formattedFavorites);
-        }
-
-        const { data: newTracksData } = await supabase
-          .from('tracks')
-          .select(`
+      const { data: licensesData } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          license_type,
+          created_at,
+          expiry_date,
+          track:tracks (
             id,
             title,
             genres,
             bpm,
             audio_url,
             image_url,
-            has_vocals,
-            vocals_usage_type,
             producer:profiles!producer_id (
-              id,
               first_name,
               last_name,
               email
             )
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        `)
+        .eq('buyer_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
 
-        if (newTracksData) {
-          const formattedNewTracks = newTracksData.map(track => ({
-            id: track.id,
-            title: track.title,
-            artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
-            genres: track.genres.split(',').map((g: string) => g.trim()),
-            moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
-            bpm: track.bpm,
-            audioUrl: track.audio_url,
-            image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
-            hasVocals: track.has_vocals,
-            vocalsUsageType: track.vocals_usage_type,
-            subGenres: [],
-            fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-            pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-            leaseAgreementUrl: '',
-            producer: track.producer ? {
-              id: track.producer.id,
-              firstName: track.producer.first_name || '',
-              lastName: track.producer.last_name || '',
-              email: track.producer.email
-            } : undefined
-          }));
-          setNewTracks(formattedNewTracks);
-        }
-
-        const { data: syncRequestsData } = await supabase
-          .from('custom_sync_requests')
-          .select('*')
-          .eq('client_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (syncRequestsData) {
-          setSyncRequests(syncRequestsData);
-        }
-
-        // Calculate remaining licenses for Gold Access
-        if (profileData.membership_plan === 'Gold Access') {
-          const startOfMonth = new Date();
-          startOfMonth.setDate(1);
-          startOfMonth.setHours(0, 0, 0, 0);
-
-          const { count } = await supabase
-            .from('sales')
-            .select('id', { count: 'exact' })
-            .eq('buyer_id', user.id)
-            .gte('created_at', startOfMonth.toISOString());
-
-          const totalLicenses = count || 0;
-          const remainingLicenses = 10 - totalLicenses;
-
-          setUserStats(prev => ({
-            ...prev,
-            totalLicenses,
-            remainingLicenses,
-            currentPeriodStart: startOfMonth,
-            currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
-            daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-          }));
-        }
-
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+      if (licensesData) {
+        const formattedLicenses = licensesData.map(license => ({
+          ...license,
+          expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
+          track: {
+            ...license.track,
+            genres: license.track.genres.split(',').map((g: string) => g.trim()),
+            image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+          }
+        }));
+        setLicenses(formattedLicenses);
       }
-    };
 
-    fetchData();
-  }, [user]);
+      // Fetch sync proposals
+      const { data: proposalsData } = await supabase
+        .from('sync_proposals')
+        .select(`
+          id,
+          track_id,
+          project_type,
+          sync_fee,
+          expiration_date,
+          status,
+          negotiation_status,
+          created_at,
+          track:tracks (
+            title,
+            producer:profiles!producer_id (
+              first_name,
+              last_name
+            )
+          )
+        `)
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (proposalsData) {
+        setSyncProposals(proposalsData);
+      }
+
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select(`
+          track_id,
+          tracks (*)
+        `)
+        .eq('user_id', user.id);
+
+      if (favoritesData) {
+        const formattedFavorites = favoritesData.map(f => ({
+          id: f.tracks.id,
+          title: f.tracks.title,
+          artist: f.tracks.artist,
+          genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
+          moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
+          duration: f.tracks.duration || '3:30',
+          bpm: f.tracks.bpm,
+          audioUrl: f.tracks.audio_url,
+          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasStingEnding: f.tracks.has_sting_ending,
+          isOneStop: f.tracks.is_one_stop,
+          mp3Url: f.tracks.mp3_url,
+          trackoutsUrl: f.tracks.trackouts_url,
+          hasVocals: f.tracks.has_vocals,
+          vocalsUsageType: f.tracks.vocals_usage_type,
+          subGenres: [],
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
+        }));
+        setFavorites(formattedFavorites);
+      }
+
+      const { data: newTracksData } = await supabase
+        .from('tracks')
+        .select(`
+          id,
+          title,
+          genres,
+          bpm,
+          audio_url,
+          image_url,
+          has_vocals,
+          vocals_usage_type,
+          producer:profiles!producer_id (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (newTracksData) {
+        const formattedNewTracks = newTracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          artist: track.producer?.first_name || track.producer?.email?.split('@')[0] || 'Unknown Artist',
+          genres: track.genres.split(',').map((g: string) => g.trim()),
+          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+          bpm: track.bpm,
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasVocals: track.has_vocals,
+          vocalsUsageType: track.vocals_usage_type,
+          subGenres: [],
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: '',
+          producer: track.producer ? {
+            id: track.producer.id,
+            firstName: track.producer.first_name || '',
+            lastName: track.producer.last_name || '',
+            email: track.producer.email
+          } : undefined
+        }));
+        setNewTracks(formattedNewTracks);
+      }
+
+      const { data: syncRequestsData } = await supabase
+        .from('custom_sync_requests')
+        .select('*')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (syncRequestsData) {
+        setSyncRequests(syncRequestsData);
+      }
+
+      // Calculate remaining licenses for Gold Access
+      if (membershipPlan === 'Gold Access') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count } = await supabase
+          .from('sales')
+          .select('id', { count: 'exact' })
+          .eq('buyer_id', user.id)
+          .gte('created_at', startOfMonth.toISOString());
+
+        const totalLicenses = count || 0;
+        const remainingLicenses = 10 - totalLicenses;
+
+        setUserStats(prev => ({
+          ...prev,
+          totalLicenses,
+          remainingLicenses,
+          currentPeriodStart: startOfMonth,
+          currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
+          daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        }));
+      }
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -378,6 +429,10 @@ export function ClientDashboard() {
     setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
   };
 
+  const handleViewLicenseAgreement = (licenseId: string) => {
+    navigate(`/license-agreement/${licenseId}`);
+  };
+
   const sortedAndFilteredLicenses = licenses
     .filter(license => !selectedGenre || license.track.genres.includes(selectedGenre))
     .sort((a, b) => {
@@ -444,6 +499,61 @@ export function ClientDashboard() {
             </Link>
           </div>
         </div>
+
+        {/* Sync Proposals Section */}
+        {syncProposals.length > 0 && (
+          <div className="mb-8 bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Your Sync Proposals</h2>
+            </div>
+            <div className="space-y-4">
+              {syncProposals.map((proposal) => {
+                const isExpired = new Date(proposal.expiration_date) < new Date();
+                const statusColor = 
+                  proposal.status === 'accepted' ? 'text-green-400 bg-green-500/20' :
+                  proposal.status === 'rejected' ? 'text-red-400 bg-red-500/20' :
+                  isExpired ? 'text-gray-400 bg-gray-500/20' :
+                  'text-yellow-400 bg-yellow-500/20';
+                
+                return (
+                  <div
+                    key={proposal.id}
+                    className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-blue-500/20"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-white mb-1">
+                          {proposal.track.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm mb-2">
+                          Producer: {proposal.track.producer.first_name} {proposal.track.producer.last_name}
+                        </p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-green-400">${proposal.sync_fee.toFixed(2)}</span>
+                          <span className="text-gray-400">
+                            Expires: {new Date(proposal.expiration_date).toLocaleDateString()}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs ${statusColor}`}>
+                            {proposal.status.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setViewingProposalId(proposal.id)}
+                          className="p-2 text-gray-400 hover:text-white transition-colors"
+                          title="View negotiations"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mb-8 p-6 glass-card rounded-lg">
           <div className="flex items-center justify-between">
@@ -644,17 +754,26 @@ export function ClientDashboard() {
                         <div className="flex items-center justify-between">
                           <button
                             onClick={() => navigate(`/track/${license.track.id}`)}
-                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
+                            className="text-lg font-semibold text-white hover:text-blue-400 transition-colors text-left"
                           >
                             {license.track.title}
                           </button>
-                          <button
-                            onClick={() => setSelectedLicenseToDelete(license)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
-                            title="Delete License"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleViewLicenseAgreement(license.id)}
+                              className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-400/10"
+                              title="View License Agreement"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setSelectedLicenseToDelete(license)}
+                              className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                              title="Delete License"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                         <div className="text-sm text-gray-400 space-y-1">
                           <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
@@ -988,6 +1107,41 @@ export function ClientDashboard() {
           }}
           track={selectedTrackToLicense}
         />
+      )}
+      
+      {/* Proposal Negotiation/History Dialog would go here */}
+      {viewingProposalId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Proposal Details</h2>
+              <button
+                onClick={() => setViewingProposalId(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-white/5 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-2">Proposal Status</h3>
+                <p className="text-gray-300">
+                  View the status and history of your proposal. You can communicate with the producer here.
+                </p>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setViewingProposalId(null)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

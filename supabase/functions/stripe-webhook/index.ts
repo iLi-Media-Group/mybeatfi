@@ -65,7 +65,7 @@ async function handleEvent(event: Stripe.Event) {
   }
 
   // for one time payments, we only listen for the checkout.session.completed event
-  if (event.type === 'payment_intent.succeeded' && 'invoice' in event.data.object && event.data.object.invoice === null) {
+  if (event.type === 'payment_intent.succeeded' && event.data.object.invoice === null) {
     return;
   }
 
@@ -132,74 +132,6 @@ async function handleEvent(event: Stripe.Event) {
         }
         
         // Get the track ID from metadata if available
-        const trackId = metadata?.track_id;
-        
-        if (trackId && customerData?.user_id) {
-          // Get track details to get producer_id
-          const { data: trackData, error: trackError } = await supabase
-            .from('tracks')
-            .select('id, producer_id')
-            .eq('id', trackId)
-            .single();
-          
-          if (trackError) {
-            console.error('Error fetching track data:', trackError);
-            return;
-          }
-          
-          // Get user profile for licensee info
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, email')
-            .eq('id', customerData.user_id)
-            .single();
-          
-          if (profileError) {
-            console.error('Error fetching profile data:', profileError);
-            return;
-          }
-          
-          // Create license record
-          const { error: saleError } = await supabase
-            .from('sales')
-            .insert({
-              track_id: trackData.id,
-              producer_id: trackData.producer_id,
-              buyer_id: customerData.user_id,
-              license_type: 'Single Track',
-              amount: amount_total / 100, // Convert from cents to dollars
-              payment_method: 'stripe',
-              transaction_id: payment_intent,
-              created_at: new Date().toISOString(),
-              licensee_info: {
-                name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-                email: profileData.email
-              }
-            });
-          
-          if (saleError) {
-            console.error('Error creating license record:', saleError);
-            return;
-          }
-          
-          console.info(`Successfully created license record for track ${trackId}`);
-        }
-        
-        
-        // Get the user_id associated with this customer
-        const { data: customerData, error: customerError } = await supabase
-          .from('stripe_customers')
-          .select('user_id')
-          .eq('customer_id', customerId)
-          .single();
-        
-        if (customerError) {
-          console.error('Error fetching customer data:', customerError);
-          return;
-        }
-        
-        // Get the pending track ID from metadata if available
-        const { metadata } = stripeData as Stripe.Checkout.Session;
         const trackId = metadata?.track_id;
         
         if (trackId && customerData?.user_id) {

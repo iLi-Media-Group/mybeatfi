@@ -10,9 +10,9 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
     }
 
     // Prepare metadata for the checkout session
-    const metadata: Record<string, string> = {};
+    let checkoutMetadata = {};
     if (trackId) {
-      metadata.track_id = trackId;
+      checkoutMetadata = { track_id: trackId };
     }
 
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
@@ -26,7 +26,7 @@ export async function createCheckoutSession(priceId: string, mode: 'payment' | '
         success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/pricing`,
         mode,
-        metadata
+        metadata: checkoutMetadata
       }),
     });
 
