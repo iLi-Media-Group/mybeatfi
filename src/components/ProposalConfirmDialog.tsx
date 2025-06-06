@@ -19,9 +19,10 @@ export default function ProposalConfirmDialog({
   if (!isOpen) return null;
 
   const trackTitle = proposal?.track?.title || 'this track';
-  const clientName = proposal?.client?.first_name && proposal?.client?.last_name 
-    ? `${proposal.client.first_name} ${proposal.client.last_name}`
-    : 'the client';
+  const clientName = proposal?.client?.first_name || proposal?.client?.last_name
+  ? `${proposal?.client?.first_name ?? ''} ${proposal?.client?.last_name ?? ''}`.trim()
+  : 'the client';
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
