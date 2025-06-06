@@ -37,8 +37,6 @@ import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 import { WelcomePage } from './components/WelcomePage';
 import { TrackPage } from './components/TrackPage';
-import { PlaylistsPage } from './components/PlaylistsPage';
-import { PlaylistDetailPage } from './components/PlaylistDetailPage';
 import { ProducerAnalytics } from './components/ProducerAnalytics';
 import { ProducerSalesPage } from './components/ProducerSalesPage';
 
@@ -164,30 +162,6 @@ function App() {
         <Route path="/checkout/success" element={<LayoutWrapper><CheckoutSuccessPage /></LayoutWrapper>} />
         <Route path="/welcome" element={<LayoutWrapper><WelcomePage /></LayoutWrapper>} />
         <Route path="/track/:trackId" element={<LayoutWrapper><TrackPage /></LayoutWrapper>} />
-
-        <Route path="/playlists" element={
-          <LayoutWrapper>
-            <PlaylistsPage />
-          </LayoutWrapper>
-        } />
-
-        <Route path="/playlist/:playlistId" element={
-          <LayoutWrapper>
-            <PlaylistDetailPage />
-          </LayoutWrapper>
-        } />
-
-        <Route path="/playlists" element={
-          <LayoutWrapper>
-            <PlaylistsPage />
-          </LayoutWrapper>
-        } />
-
-        <Route path="/playlist/:playlistId" element={
-          <LayoutWrapper>
-            <PlaylistDetailPage />
-          </LayoutWrapper>
-        } />
 
         <Route path="/chat" element={
           <ProtectedRoute>
