@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProposalAnalytics } from './ProposalAnalytics';
 import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
-import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
+import RevenueBreakdownDialog from './RevenueBreakdownDialog';
 import { ClientList } from './ClientList';
 import { AdminAnnouncementManager } from './AdminAnnouncementManager';
 import { CompensationSettings } from './CompensationSettings';
