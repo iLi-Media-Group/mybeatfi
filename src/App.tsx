@@ -39,6 +39,8 @@ import { WelcomePage } from './components/WelcomePage';
 import { TrackPage } from './components/TrackPage';
 import { PlaylistsPage } from './components/PlaylistsPage';
 import { PlaylistDetailPage } from './components/PlaylistDetailPage';
+import { ProducerAnalytics } from './components/ProducerAnalytics';
+import { ProducerSalesPage } from './components/ProducerSalesPage';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -265,6 +267,22 @@ function App() {
           <ProtectedRoute requiresProducer>
             <LayoutWrapper>
               <ProducerBankingPage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/producer/analytics" element={
+          <ProtectedRoute requiresProducer>
+            <LayoutWrapper>
+              <ProducerAnalytics />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/producer/sales" element={
+          <ProtectedRoute requiresProducer>
+            <LayoutWrapper>
+              <ProducerSalesPage />
             </LayoutWrapper>
           </ProtectedRoute>
         } />
