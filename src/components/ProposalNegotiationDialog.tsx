@@ -343,3 +343,5 @@ export function ProposalNegotiationDialog({
     </div>
   );
 }
+
+export default ProposalNegotiationDialog
