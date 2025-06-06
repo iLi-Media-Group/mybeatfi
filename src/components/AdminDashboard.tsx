@@ -75,6 +75,17 @@ export function AdminDashboard() {
       setLoading(true);
       setError(null);
 
+      // Check if user is admin
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user?.id)
+        .single();
+
+      if (!profileData || !['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(profileData.email)) {
+        throw new Error('Unauthorized access');
+      }
+
       // Fetch admin profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')

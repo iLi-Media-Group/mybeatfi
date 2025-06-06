@@ -40,7 +40,7 @@ function AnnouncementDetail({ announcement, onClose }: AnnouncementDetailProps) 
       .eq('id', user.id)
       .single();
       
-    if (data && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(data.email)) {
+    if (data && ['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(data.email)) {
       setIsAdmin(true);
     }
   };
@@ -140,7 +140,7 @@ export function AnnouncementsPage() {
       .eq('id', user.id)
       .single();
       
-    if (data && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(data.email)) {
+    if (data && ['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(data.email)) {
       setIsAdmin(true);
     }
   };
