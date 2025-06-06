@@ -44,7 +44,7 @@ export function ProtectedRoute({
 
   // Allow knockriobeats@gmail.com to access producer routes
   if (requiresProducer && accountType !== 'producer' && !isKnockriobeats) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard\" replace />;
   }
 
   if (requiresClient && accountType !== 'client' && !isAdmin) {
