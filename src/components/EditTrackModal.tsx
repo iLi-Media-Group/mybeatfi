@@ -14,10 +14,11 @@ interface EditTrackModalProps {
     hasVocals?: boolean;
     vocalsUsageType?: 'normal' | 'sync_only';
   };
-  onUpdate: () => void;
+  onUpdate: (updatedTrack?: any) => void;
+  onSuccess?: () => void;
 }
 
-export default function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackModalProps) {
+export default function EditTrackModal({ isOpen, onClose, track, onUpdate, onSuccess }: EditTrackModalProps) {
   // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
   
@@ -90,7 +91,12 @@ export default function EditTrackModal({ isOpen, onClose, track, onUpdate }: Edi
 
       if (updateError) throw updateError;
 
-      onUpdate();
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      onUpdate(track);
       onClose();
     } catch (err) {
       console.error('Error updating track:', err);

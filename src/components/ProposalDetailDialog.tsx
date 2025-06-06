@@ -4,6 +4,9 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+// Import missing React hooks
+import { useState } from 'react';
+
 interface ProposalDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,7 +38,7 @@ export default function ProposalDetailDialog({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     if (isOpen) {

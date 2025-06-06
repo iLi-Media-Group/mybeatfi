@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign, ListMusic } from 'lucide-react';
+import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign, ListMusic, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Footer } from './Footer';
@@ -14,9 +14,9 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const { user, accountType, signOut } = useAuth();
+  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -51,6 +51,133 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
       onSignupClick();
       setIsMenuOpen(false);
     }
+  };
+
+  // Generate menu items based on user role
+  const getMenuItems = () => {
+    // Common menu items for all users
+    const commonItems = [
+      {
+        to: "/catalog",
+        icon: <Library className="w-4 h-4 mr-2" />,
+        label: "Browse Catalog"
+      },
+      {
+        to: "/vocals",
+        icon: <Mic className="w-4 h-4 mr-2" />,
+        label: "Full Tracks with Vocals"
+      },
+      {
+        to: "/pricing",
+        icon: <CreditCard className="w-4 h-4 mr-2" />,
+        label: "Pricing Plans"
+      },
+      {
+        to: "/about",
+        icon: <Info className="w-4 h-4 mr-2" />,
+        label: "About Us"
+      },
+      {
+        to: "/contact",
+        icon: <Mail className="w-4 h-4 mr-2" />,
+        label: "Contact Us"
+      },
+      {
+        to: "/announcements",
+        icon: <Bell className="w-4 h-4 mr-2" />,
+        label: "Announcements"
+      }
+    ];
+
+    // Client-specific items
+    const clientItems = [
+      {
+        to: "/custom-sync-request",
+        icon: <FileText className="w-4 h-4 mr-2" />,
+        label: "Custom Sync Request"
+      }
+    ];
+
+    // Producer-specific items
+    const producerItems = [
+      {
+        to: "/chat",
+        icon: <MessageSquare className="w-4 h-4 mr-2" />,
+        label: "Internal Chat"
+      },
+      {
+        to: "/producer/banking",
+        icon: <DollarSign className="w-4 h-4 mr-2" />,
+        label: "Producer Payments"
+      },
+      {
+        to: "/producer/dashboard",
+        icon: <LayoutDashboard className="w-4 h-4 mr-2" />,
+        label: "Producer Dashboard"
+      }
+    ];
+
+    // Admin-specific items
+    const adminItems = [
+      {
+        to: "/open-sync-briefs",
+        icon: <Briefcase className="w-4 h-4 mr-2" />,
+        label: "Open Sync Briefs"
+      },
+      {
+        to: "/chat",
+        icon: <MessageSquare className="w-4 h-4 mr-2" />,
+        label: "Internal Chat"
+      },
+      {
+        to: "/admin/invite-producer",
+        icon: <UserCog className="w-4 h-4 mr-2" />,
+        label: "Invite Producer"
+      },
+      {
+        to: "/admin/banking",
+        icon: <DollarSign className="w-4 h-4 mr-2" />,
+        label: "Producer Payments"
+      },
+      {
+        to: "/admin",
+        icon: <Shield className="w-4 h-4 mr-2" />,
+        label: "Admin Dashboard"
+      }
+    ];
+
+    // Combine menu items based on user role
+    let menuItems = [...commonItems];
+
+    if (user) {
+      if (isAdmin) {
+        menuItems = [
+          ...commonItems,
+          ...adminItems
+        ];
+        
+        // If admin is also a producer, add producer dashboard
+        if (accountType === 'producer') {
+          menuItems.push({
+            to: "/producer/dashboard",
+            icon: <LayoutDashboard className="w-4 h-4 mr-2" />,
+            label: "Producer Dashboard"
+          });
+        }
+      } else if (accountType === 'producer') {
+        menuItems = [
+          ...commonItems,
+          ...producerItems
+        ];
+      } else if (accountType === 'client') {
+        menuItems = [
+          ...commonItems,
+          ...clientItems
+        ];
+      }
+    }
+
+    return menuItems;
   };
 
   const getDashboardLink = () => {
@@ -101,7 +228,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
               MYBEATFI <span className="text-blue-400">SYNC</span>
             </h1>
           </div>
-          
+
           <div className="flex items-center justify-end w-1/3">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -116,150 +243,46 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
 
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 rounded-lg bg-blue-900/90 backdrop-blur-sm border border-blue-500/20 shadow-xl z-[100] top-full">
-                <div className="py-1">
-                  <Link
-                    to="/catalog"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Library className="w-4 h-4 mr-2" />
-                    Browse Catalog
-                  </Link>
-
-                  <Link
-                    to="/vocals"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    Full Tracks with Vocals
-                  </Link>
-
-                  <Link
-                    to="/open-sync-briefs"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    Open Sync Briefs
-                  </Link>
-
-                  <Link
-                    to={user ? "/custom-sync-request" : "/pricing"}
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Custom Sync Request
-                  </Link>
-
-                  <Link
-                    to="/pricing"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Pricing Plans
-                  </Link>
-
-                  <div className="border-t border-blue-500/20 my-1"></div>
-
-                  <Link
-                    to="/about"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Info className="w-4 h-4 mr-2" />
-                    About Us
-                  </Link>
-
-                  <Link
-                    to="/contact"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Contact Us
-                  </Link>
-
-                  <Link
-                    to="/announcements"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Bell className="w-4 h-4 mr-2" />
-                    Announcements
-                  </Link>
-
-                  {(accountType === 'producer' || isAdmin) && (
+                <div className="py-1 max-h-[80vh] overflow-y-auto">
+                  {/* Dynamic menu items based on user role */}
+                  {getMenuItems().map((item, index) => (
                     <Link
-                      to="/chat"
+                      key={index}
+                      to={item.to}
                       className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Internal Chat
+                      {item.icon}
+                      {item.label}
                     </Link>
-                  )}
-
-                  {user ? (
+                  ))}
+                  
+                  {/* Divider */}
+                  <div className="border-t border-blue-500/20 my-1"></div>
+                  
+                  {/* Producer-specific actions */}
+                  {user && accountType === 'producer' && (
                     <>
-                      {isAdmin && (
-                        <>
-                          <Link
-                            to="/admin/invite-producer"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <UserCog className="w-4 h-4 mr-2" />
-                            Invite Producer
-                          </Link>
-                          <Link
-                            to="/admin/banking"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Producer Payments
-                          </Link>
-                        </>
-                      )}
                       <Link
-                        to={getDashboardLink()}
+                        to="/producer/upload"
                         className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        {getDashboardIcon()}
-                        {getDashboardLabel()}
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Track
                       </Link>
-                      {accountType === 'producer' && (
-                        <>
-                          <Link
-                            to="/producer/upload"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Track
-                          </Link>
-                          <Link
-                            to="/producer/banking"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Earnings & Payments
-                          </Link>
-                        </>
-                      )}
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </button>
                     </>
+                  )}
+                  
+                  {/* Authentication actions */}
+                  {user ? (
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </button>
                   ) : (
                     <>
                       <a

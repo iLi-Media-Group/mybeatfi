@@ -9,6 +9,11 @@ import { AudioPlayer } from './AudioPlayer';
 
 const FORM_STORAGE_KEY = 'trackUploadFormData';
 
+interface TrackUploadFormProps {
+  onClose?: () => void;
+  onSuccess?: () => void;
+}
+
 interface FormData {
   title: string;
   bpm: string;
@@ -24,7 +29,7 @@ interface FormData {
   vocalsUsageType: 'normal' | 'sync_only';
 }
 
-export default function TrackUploadForm() {
+export default function TrackUploadForm({ onClose, onSuccess }: TrackUploadFormProps = {}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -187,7 +192,13 @@ export default function TrackUploadForm() {
       if (trackError) throw trackError;
 
       clearSavedFormData();
-      navigate('/producer/dashboard');
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/producer/dashboard');
+      }
     } catch (err) {
       console.error('Submission error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save track. Please try again.');
@@ -197,10 +208,20 @@ export default function TrackUploadForm() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="bg-gray-900 rounded-xl border border-blue-500/20 p-8">
+    <div className={onClose ? "fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50" : "container mx-auto px-4 py-8 max-w-4xl"}>
+      <div className={`bg-gray-900 rounded-xl border border-blue-500/20 p-8 ${onClose ? "w-full max-w-4xl max-h-[90vh] overflow-y-auto" : ""}`}>
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white">Add New Track</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-white">Add New Track</h2>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            )}
+          </div>
           {error && (
             <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
               {error}

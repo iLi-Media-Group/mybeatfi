@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, Check, XCircle } from 'lucide-react';
+import { X, AlertTriangle, Check, XCircle, Loader2 } from 'lucide-react';
 
 interface ProposalConfirmDialogProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ export default function ProposalConfirmDialog({
   action,
   proposal
 }: ProposalConfirmDialogProps) {
+  const [loading, setLoading] = useState(false);
   const dialogRef = React.useRef<HTMLDivElement>(null);
   
   // Handle click outside to close dialog
@@ -35,6 +36,17 @@ export default function ProposalConfirmDialog({
     };
   }, [isOpen, onClose]);
   if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      await onConfirm();
+    } catch (error) {
+      console.error(`Error ${action}ing proposal:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const trackTitle = proposal?.track?.title || 'this track';
   const clientName = proposal?.client?.first_name || proposal?.client?.last_name
@@ -74,14 +86,17 @@ export default function ProposalConfirmDialog({
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
               action === 'accept'
                 ? 'bg-green-600 hover:bg-green-700 text-white'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
+            disabled={loading}
           >
-            {action === 'accept' ? (
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : action === 'accept' ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
                 Accept Proposal
