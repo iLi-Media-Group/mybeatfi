@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
 import { ProposalHistoryDialog } from './ProposalHistoryDialog';
-import { ProposalConfirmDialog } from './ProposalConfirmDialog';
+import ProposalConfirmDialog from './ProposalConfirmDialog';
 
 interface TrackProposalsDialogProps {
   isOpen: boolean;
