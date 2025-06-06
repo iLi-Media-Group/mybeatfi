@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
