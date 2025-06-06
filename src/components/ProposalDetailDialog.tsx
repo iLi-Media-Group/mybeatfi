@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, MessageSquare, FileText } from 'lucide-react';
+import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, MessageSquare, FileText, History } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,7 +7,7 @@ interface ProposalDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   proposal: any;
-  onAccept: (proposalId: string) => void;
+  onAccept?: (proposalId: string) => void;
 }
 
 interface NegotiationMessage {
@@ -32,10 +32,16 @@ export default function ProposalDetailDialog({
   const { user } = useAuth();
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  // State for dialog actions
+  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
 
   useEffect(() => {
-    if (isOpen && proposal) {
+    if (isOpen) {
       fetchNegotiationMessages();
     }
   }, [isOpen, proposal]);
@@ -113,6 +119,30 @@ export default function ProposalDetailDialog({
                     proposal.status === 'accepted' && 
                     proposal.client_status === 'pending' &&
                     new Date(proposal.expiration_date) > new Date();
+                    
+  const handleHistoryClick = () => {
+    // This would typically open a history dialog
+    // For now, we'll just log to console
+    console.log("View history for proposal:", proposal.id);
+  };
+  
+  const handleNegotiateClick = () => {
+    // This would typically open a negotiation dialog
+    console.log("Negotiate proposal:", proposal.id);
+  };
+  
+  const handleAcceptClick = () => {
+    // This would typically open a confirmation dialog for accepting
+    console.log("Accept proposal:", proposal.id);
+    if (onAccept) {
+      onAccept(proposal.id);
+    }
+  };
+  
+  const handleDeclineClick = () => {
+    // This would typically open a confirmation dialog for declining
+    console.log("Decline proposal:", proposal.id);
+  };
 
   if (!isOpen) return null;
 
@@ -185,7 +215,7 @@ export default function ProposalDetailDialog({
                         The producer has accepted your proposal. Please review and accept to proceed with payment.
                       </p>
                       <button
-                        onClick={() => onAccept(proposal.id)}
+                        onClick={handleAcceptClick}
                         className="mt-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center text-sm"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
@@ -232,6 +262,40 @@ export default function ProposalDetailDialog({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* Action buttons for producer view */}
+            {proposal.status === 'pending' && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={handleHistoryClick}
+                  className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
+                >
+                  <History className="w-4 h-4 mr-1" />
+                  View History
+                </button>
+                <button
+                  onClick={handleNegotiateClick}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Negotiate
+                </button>
+                <button
+                  onClick={handleAcceptClick}
+                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Accept
+                </button>
+                <button
+                  onClick={handleDeclineClick}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
+                >
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Decline
+                </button>
               </div>
             )}
           </div>
