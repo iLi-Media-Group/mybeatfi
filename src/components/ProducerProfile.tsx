@@ -8,7 +8,7 @@ interface ProducerProfileProps {
   onClose: () => void;
 }
 
-export default function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
+function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -318,3 +318,5 @@ export default function ProducerProfile({ isOpen, onClose }: ProducerProfileProp
     </div>
   );
 }
+
+export default ProducerProfile;
