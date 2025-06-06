@@ -702,4 +702,258 @@ export default function ProducerDashboard() {
                 <div className="text-center py-12">
                   <Music className="mx-auto h-12 w-12 text-gray-500" />
                   <h3 className="mt-2 text-sm font-medium text-white">No tracks</h3>
-                  <p className="mt-1 
+                  <p className="mt-1 text-sm text-gray-400">Get started by uploading your first track.</p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => setShowUploadForm(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Track
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'proposals' && (
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
+            <div className="px-6 py-4 border-b border-blue-500/20">
+              <h3 className="text-lg font-medium text-white">Sync Proposals</h3>
+            </div>
+            <div className="p-6">
+              {proposals.length > 0 ? (
+                <div className="space-y-4">
+                  {proposals.map((proposal) => {
+                    const isExpired = new Date(proposal.expiration_date) < new Date();
+                    const isPending = proposal.status === 'pending';
+                    
+                    return (
+                      <div 
+                        key={proposal.id} 
+                        className="p-6 bg-white/5 rounded-lg border border-purple-500/10 hover:border-purple-500/20 transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h4 className="text-lg font-semibold text-white">
+                                {proposal.client?.full_name || 'Unknown Client'}
+                              </h4>
+                              <div className={`flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(proposal.status)}`}>
+                                {getStatusIcon(proposal.status)}
+                                <span className="ml-1 capitalize">{proposal.status}</span>
+                              </div>
+                              {proposal.is_urgent && (
+                                <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs font-medium">
+                                  Urgent
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-400 mb-1">
+                              Track: <span className="text-white">{proposal.track?.title || 'Unknown Track'}</span>
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                              {proposal.client?.email}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-green-400">${proposal.sync_fee?.toFixed(2) || '0.00'}</p>
+                            <p className="text-sm text-gray-400">
+                              Submitted: {new Date(proposal.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              Expires: {new Date(proposal.expiration_date).toLocaleDateString()}
+                              {isExpired && <span className="text-red-400 ml-1">(Expired)</span>}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-black/20 rounded-lg p-4 mb-4">
+                          <h5 className="text-white font-medium mb-2">Project Details</h5>
+                          <p className="text-gray-300">{proposal.project_type}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
+                            <div>
+                              <span className="text-gray-400">Duration:</span>
+                              <span className="text-white ml-1">{proposal.duration}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Exclusive:</span>
+                              <span className="text-white ml-1">{proposal.is_exclusive ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Payment:</span>
+                              <span className="text-white ml-1">{proposal.payment_terms}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Status:</span>
+                              <span className="text-white ml-1 capitalize">{proposal.negotiation_status || 'pending'}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            onClick={() => handleViewProposalDetails(proposal)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </button>
+                          
+                          <button
+                            onClick={() => handleProposalAction(proposal, 'history')}
+                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center"
+                          >
+                            <History className="w-4 h-4 mr-2" />
+                            View History
+                          </button>
+                          
+                          {isPending && !isExpired && (
+                            <>
+                              <button
+                                onClick={() => handleProposalAction(proposal, 'negotiate')}
+                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+                              >
+                                <MessageSquare className="w-4 h-4 mr-2" />
+                                Negotiate
+                              </button>
+                              <button
+                                onClick={() => handleProposalAction(proposal, 'accept')}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleProposalAction(proposal, 'reject')}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Decline
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <MessageSquare className="mx-auto h-12 w-12 text-gray-500" />
+                  <h3 className="mt-2 text-sm font-medium text-white">No proposals</h3>
+                  <p className="mt-1 text-sm text-gray-400">Sync proposals will appear here when clients are interested in your tracks.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modals and Dialogs */}
+        {showUploadForm && (
+          <TrackUploadForm
+            onClose={() => setShowUploadForm(false)}
+            onSuccess={() => {
+              setShowUploadForm(false);
+              fetchDashboardData();
+            }}
+          />
+        )}
+
+        {showEditModal && selectedTrack && (
+          <EditTrackModal
+            track={selectedTrack}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedTrack(null);
+            }}
+            onSuccess={() => {
+              setShowEditModal(false);
+              setSelectedTrack(null);
+              fetchDashboardData();
+            }}
+          />
+        )}
+
+        {showDeleteDialog && selectedTrack && (
+          <DeleteTrackDialog
+            track={selectedTrack}
+            onClose={() => {
+              setShowDeleteDialog(false);
+              setSelectedTrack(null);
+            }}
+            onConfirm={confirmDeleteTrack}
+          />
+        )}
+
+        {showTrackProposalsDialog && selectedTrack && (
+          <TrackProposalsDialog
+            track={selectedTrack}
+            onClose={() => {
+              setShowTrackProposalsDialog(false);
+              setSelectedTrack(null);
+            }}
+          />
+        )}
+
+        {showProfileDialog && (
+          <ProducerProfile
+            onClose={() => setShowProfileDialog(false)}
+          />
+        )}
+
+        {showRevenueBreakdown && (
+          <RevenueBreakdownDialog
+            onClose={() => setShowRevenueBreakdown(false)}
+          />
+        )}
+
+        {showNegotiationDialog && selectedProposal && (
+          <ProposalNegotiationDialog
+            proposal={selectedProposal}
+            onClose={() => {
+              setShowNegotiationDialog(false);
+              setSelectedProposal(null);
+            }}
+            onSuccess={() => {
+              setShowNegotiationDialog(false);
+              setSelectedProposal(null);
+              fetchDashboardData();
+            }}
+          />
+        )}
+
+        {showHistoryDialog && selectedProposal && (
+          <ProposalHistoryDialog
+            proposal={selectedProposal}
+            onClose={() => {
+              setShowHistoryDialog(false);
+              setSelectedProposal(null);
+            }}
+          />
+        )}
+
+        {showConfirmDialog && selectedProposal && (
+          <ProposalConfirmDialog
+            proposal={selectedProposal}
+            action={confirmAction}
+            onClose={() => {
+              setShowConfirmDialog(false);
+              setSelectedProposal(null);
+            }}
+            onConfirm={() => handleProposalStatusChange(confirmAction)}
+          />
+        )}
+
+        {selectedProposalForDetails && (
+          <ProposalDetailDialog
+            proposal={selectedProposalForDetails}
+            onClose={() => setSelectedProposalForDetails(null)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
