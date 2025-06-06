@@ -10,7 +10,7 @@ interface ProposalConfirmDialogProps {
   clientName: string;
 }
 
-export function ProposalConfirmDialog({
+export default function ProposalConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
