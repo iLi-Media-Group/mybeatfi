@@ -5,6 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 import ProposalNegotiationDialog from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
+import ProposalNegotiationDialog from './ProposalNegotiationDialog';
+import ProposalHistoryDialog from './ProposalHistoryDialog';
+import ProposalConfirmDialog from './ProposalConfirmDialog';
 
 interface TrackProposalsDialogProps {
   isOpen: boolean;
@@ -40,6 +43,10 @@ export default function TrackProposalsDialog({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
+  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -93,6 +100,19 @@ export default function TrackProposalsDialog({
   };
 
   const handleProposalAction = (proposal: SyncProposal, action: 'negotiate' | 'history' | 'accept' | 'reject') => {
+    setSelectedProposal(proposal);
+    
+    if (action === 'negotiate') {
+      setShowNegotiationDialog(true);
+    } else if (action === 'history') {
+      setShowHistoryDialog(true);
+    } else if (action === 'accept') {
+      setConfirmAction('accept');
+      setShowConfirmDialog(true);
+    } else if (action === 'reject') {
+      setConfirmAction('reject');
+      setShowConfirmDialog(true);
+    }
     setSelectedProposal(proposal);
     
     if (action === 'negotiate') {
@@ -350,6 +370,50 @@ export default function TrackProposalsDialog({
           </div>
         </div>
       </div>
+
+      {/* Nested Dialogs */}
+      {selectedProposal && showNegotiationDialog && (
+        <ProposalNegotiationDialog
+          isOpen={showNegotiationDialog}
+          onClose={() => {
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+            fetchProposals(); // Refresh proposals after negotiation
+          }}
+          proposal={selectedProposal}
+          onUpdate={(updatedProposal) => {
+            setProposals(proposals.map(p => 
+              p.id === updatedProposal.id ? updatedProposal : p
+            ));
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+          }}
+        />
+      )}
+
+      {selectedProposal && showHistoryDialog && (
+        <ProposalHistoryDialog
+          isOpen={showHistoryDialog}
+          onClose={() => {
+            setShowHistoryDialog(false);
+            setSelectedProposal(null);
+          }}
+          proposal={selectedProposal}
+        />
+      )}
+
+      {selectedProposal && showConfirmDialog && (
+        <ProposalConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setSelectedProposal(null);
+          }}
+          onConfirm={() => handleProposalStatusChange(confirmAction)}
+          action={confirmAction}
+          proposal={selectedProposal}
+        />
+      )}
 
       {/* Nested Dialogs */}
       {selectedProposal && showNegotiationDialog && (

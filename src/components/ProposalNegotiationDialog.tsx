@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, DollarSign, Clock, Upload, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,32 +6,17 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProposalNegotiationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
-  currentOffer: number;
-  clientName: string;
-  trackTitle: string;
+  proposal: any;
+  onUpdate?: (updatedProposal: any) => void;
+  onSuccess?: () => void;
 }
 
-interface NegotiationMessage {
-  id: string;
-  sender: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  message: string;
-  counter_offer?: number;
-  counter_terms?: string;
-  created_at: string;
-}
-
-export default function ProposalNegotiationDialog({
+export function ProposalNegotiationDialog({
   isOpen,
   onClose,
-  proposalId,
-  currentOffer,
-  clientName,
-  trackTitle
+  proposal,
+  onUpdate,
+  onSuccess
 }: ProposalNegotiationDialogProps) {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
@@ -39,16 +24,41 @@ export default function ProposalNegotiationDialog({
   const [counterTerms, setCounterTerms] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [messages, setMessages] = useState<NegotiationMessage[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const proposalId = proposal?.id;
+  const currentOffer = proposal?.sync_fee;
+  const clientName = proposal?.client?.full_name;
+  const trackTitle = proposal?.track?.title;
 
   useEffect(() => {
     if (isOpen) {
       fetchNegotiationHistory();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposal]);
+
+  // Handle click outside to close dialog
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   const fetchNegotiationHistory = async () => {
+    if (!proposalId) return;
+    
     try {
       const { data, error } = await supabase
         .from('proposal_negotiations')
@@ -91,7 +101,7 @@ export default function ProposalNegotiationDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !proposalId) return;
 
     try {
       setLoading(true);
@@ -151,6 +161,17 @@ export default function ProposalNegotiationDialog({
         if (fileError) throw fileError;
       }
 
+      // Update proposal negotiation status
+      const { error: updateError } = await supabase
+        .from('sync_proposals')
+        .update({ 
+          negotiation_status: 'negotiating',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', proposalId);
+
+      if (updateError) throw updateError;
+
       // Send notification through edge function
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/handle-negotiation`, {
         method: 'POST',
@@ -167,14 +188,28 @@ export default function ProposalNegotiationDialog({
         })
       });
 
+      // Update parent component if callback provided
+      if (onUpdate) {
+        const updatedProposal = {
+          ...proposal,
+          negotiation_status: 'negotiating'
+        };
+        onUpdate(updatedProposal);
+      }
+      
       // Reset form
       setMessage('');
       setCounterOffer('');
       setCounterTerms('');
       setSelectedFile(null);
 
-      // Refresh messages
+      // Refresh messages - fetch the updated list instead of manually adding
       await fetchNegotiationHistory();
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err) {
       console.error('Error submitting negotiation:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit negotiation');
@@ -187,7 +222,7 @@ export default function ProposalNegotiationDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div ref={dialogRef} className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Negotiate Proposal</h2>
@@ -343,3 +378,5 @@ export default function ProposalNegotiationDialog({
     </div>
   );
 }
+
+export default ProposalNegotiationDialog;
