@@ -385,8 +385,7 @@ export default function TrackProposalsDialog({
           }}
           onConfirm={() => handleProposalStatusChange(confirmAction)}
           action={confirmAction}
-          trackTitle={trackTitle}
-          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+          proposal={selectedProposal}
         />
       )}
     </>

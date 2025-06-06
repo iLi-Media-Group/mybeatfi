@@ -24,7 +24,8 @@ import {
   FileText,
   History,
   User,
-  Settings
+  Settings,
+  X
 } from 'lucide-react';
 import TrackUploadForm from './TrackUploadForm';
 import EditTrackModal from './EditTrackModal';
@@ -213,6 +214,22 @@ export default function ProducerDashboard() {
     setSelectedProposalForDetails(proposal);
   };
 
+  const handleProposalAction = (proposal: Proposal, action: 'accept' | 'reject' | 'negotiate' | 'history') => {
+    setSelectedProposal(proposal);
+    
+    if (action === 'negotiate') {
+      setShowNegotiationDialog(true);
+    } else if (action === 'history') {
+      setShowHistoryDialog(true);
+    } else if (action === 'accept') {
+      setConfirmAction('accept');
+      setShowConfirmDialog(true);
+    } else if (action === 'reject') {
+      setConfirmAction('reject');
+      setShowConfirmDialog(true);
+    }
+  };
+
   const handleTrackEdit = (track: Track) => {
     setSelectedTrack(track);
     setShowEditModal(true);
@@ -245,19 +262,6 @@ export default function ProducerDashboard() {
   const handleViewProposals = (track: Track) => {
     setSelectedTrack(track);
     setShowTrackProposalsDialog(true);
-  };
-
-  const handleProposalAction = (proposal: Proposal, action: 'accept' | 'reject' | 'negotiate' | 'history') => {
-    setSelectedProposal(proposal);
-    
-    if (action === 'negotiate') {
-      setShowNegotiationDialog(true);
-    } else if (action === 'history') {
-      setShowHistoryDialog(true);
-    } else {
-      setConfirmAction(action);
-      setShowConfirmDialog(true);
-    }
   };
 
   const handleProposalStatusChange = async (action: 'accept' | 'reject') => {
@@ -686,328 +690,4 @@ export default function ProducerDashboard() {
                           {proposal.duration} • {proposal.is_exclusive ? 'Exclusive' : 'Non-exclusive'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-green-400 font-semibold">
-                        ${proposal.sync_fee.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                          proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
-                          proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          <span className="capitalize">{proposal.status}</span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium">
-                        <div className="flex space-x-2">
-                          {proposal.status === 'pending' && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'accept')}
-                                className="text-green-400 hover:text-green-300"
-                                title="Accept Proposal"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'reject')}
-                                className="text-red-400 hover:text-red-300"
-                                title="Reject Proposal"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'negotiate')}
-                                className="text-blue-400 hover:text-blue-300"
-                                title="Negotiate"
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                          <button
-                            onClick={() => handleProposalAction(proposal, 'history')}
-                            className="text-gray-400 hover:text-gray-300"
-                            title="View History"
-                          >
-                            <History className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {proposals.length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-gray-500" />
-                  <h3 className="mt-2 text-sm font-medium text-white">No proposals</h3>
-                  <p className="mt-1 text-sm text-gray-400">Sync proposals will appear here when clients are interested in your tracks.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Upload Form Modal */}
-        {showUploadForm && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-900 rounded-xl border border-purple-500/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">Upload New Track</h2>
-                  <button
-                    onClick={() => setShowUploadForm(false)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    <XCircle className="w-6 h-6" />
-                  </button>
-                </div>
-                <TrackUploadForm />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Links */}
-        <div className="mt-8 bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
-          <h3 className="text-lg font-medium text-white mb-4">Quick Links</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              to="/producer/analytics"
-              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <BarChart3 className="w-5 h-5 mr-2 text-blue-400" />
-              <span className="text-gray-300">View Analytics</span>
-            </Link>
-            <Link
-              to="/producer/banking"
-              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <Settings className="w-5 h-5 mr-2 text-blue-400" />
-              <span className="text-gray-300">Banking Settings</span>
-            </Link>
-            <Link
-              to="/producer/sales"
-              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <DollarSign className="w-5 h-5 mr-2 text-blue-400" />
-              <span className="text-gray-300">View All Sales</span>
-            </Link>
-          </div>
-        </div>
-
-        {showProfileDialog && (
-          <ProducerProfile
-            onClose={() => setShowProfileDialog(false)}
-            onUpdate={() => fetchDashboardData()}
-          />
-        )}
-
-        {showEditModal && selectedTrack && (
-          <EditTrackModal
-            track={selectedTrack}
-            onClose={() => {
-              setShowEditModal(false);
-              setSelectedTrack(null);
-            }}
-            onUpdate={(updatedTrack) => {
-              setTracks(tracks.map(t => t.id === updatedTrack.id ? updatedTrack : t));
-              setShowEditModal(false);
-              setSelectedTrack(null);
-            }}
-          />
-        )}
-
-        {showDeleteDialog && selectedTrack && (
-          <DeleteTrackDialog
-            track={selectedTrack}
-            onClose={() => {
-              setShowDeleteDialog(false);
-              setSelectedTrack(null);
-            }}
-            onConfirm={confirmDeleteTrack}
-          />
-        )}
-
-        {showTrackProposalsDialog && selectedTrack && (
-          <TrackProposalsDialog
-            track={selectedTrack}
-            onClose={() => {
-              setShowTrackProposalsDialog(false);
-              setSelectedTrack(null);
-            }}
-          />
-        )}
-
-        {showRevenueBreakdown && (
-          <RevenueBreakdownDialog
-            isOpen={showRevenueBreakdown}
-            onClose={() => setShowRevenueBreakdown(false)}
-            stats={stats}
-          />
-        )}
-
-        {showNegotiationDialog && selectedProposal && (
-          <ProposalNegotiationDialog
-            proposal={selectedProposal}
-            onClose={() => {
-              setShowNegotiationDialog(false);
-              setSelectedProposal(null);
-            }}
-            onUpdate={(updatedProposal) => {
-              setProposals(proposals.map(p => p.id === updatedProposal.id ? updatedProposal : p));
-              setShowNegotiationDialog(false);
-              setSelectedProposal(null);
-            }}
-          />
-        )}
-
-        {showHistoryDialog && selectedProposal && (
-          <ProposalHistoryDialog
-            proposal={selectedProposal}
-            onClose={() => {
-              setShowHistoryDialog(false);
-              setSelectedProposal(null);
-            }}
-          />
-        )}
-
-        {showConfirmDialog && selectedProposal && (
-          <ProposalConfirmDialog
-            proposal={selectedProposal}
-            action={confirmAction}
-            onClose={() => {
-              setShowConfirmDialog(false);
-              setSelectedProposal(null);
-            }}
-            onConfirm={() => handleProposalStatusChange(confirmAction)}
-          />
-        )}
-        
-        {/* Proposal Details Dialog */}
-        {selectedProposalForDetails && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Proposal Details</h2>
-                <button
-                  onClick={() => setSelectedProposalForDetails(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{selectedProposalForDetails.track?.title}</h3>
-                      <p className="text-gray-400">
-                        Client: {selectedProposalForDetails.client?.full_name}
-                      </p>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      selectedProposalForDetails.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                      selectedProposalForDetails.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
-                      selectedProposalForDetails.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                      'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      <span className="capitalize">{selectedProposalForDetails.status}</span>
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-400 text-sm">Sync Fee</p>
-                      <p className="text-2xl font-bold text-green-400">${selectedProposalForDetails.sync_fee.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Payment Terms</p>
-                      <p className="text-white">{selectedProposalForDetails.payment_terms || 'Immediate'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Submitted</p>
-                      <p className="text-white">{new Date(selectedProposalForDetails.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Expires</p>
-                      <p className="text-white">{new Date(selectedProposalForDetails.expiration_date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white/5 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Project Description</h4>
-                    <p className="text-gray-300 whitespace-pre-wrap">{selectedProposalForDetails.project_type}</p>
-                  </div>
-                  
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => {
-                        const proposal = selectedProposalForDetails;
-                        setSelectedProposalForDetails(null);
-                        setSelectedProposal(proposal);
-                        setShowHistoryDialog(true);
-                      }}
-                      className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
-                    >
-                      <History className="w-4 h-4 mr-1" />
-                      View History
-                    </button>
-                    
-                    {selectedProposalForDetails.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setShowNegotiationDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          Negotiate
-                        </button>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setConfirmAction('accept');
-                            setShowConfirmDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setConfirmAction('reject');
-                            setShowConfirmDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Decline
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export { ProducerDashboard };
+                      <td className="px-6 py-4 text-sm text-green-400 font-semib

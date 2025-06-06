@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface ProposalHistoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposal: any;
+  proposalId: string;
 }
 
 interface HistoryEntry {
@@ -50,7 +50,7 @@ interface ProposalFile {
 export default function ProposalHistoryDialog({
   isOpen,
   onClose,
-  proposal
+  proposalId
 }: ProposalHistoryDialogProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [negotiations, setNegotiations] = useState<NegotiationMessage[]>([]);
@@ -60,9 +60,9 @@ export default function ProposalHistoryDialog({
 
   useEffect(() => {
     if (isOpen) {
-      fetchHistory(proposal.id);
+      fetchHistory(proposalId);
     }
-  }, [isOpen, proposal]);
+  }, [isOpen, proposalId]);
 
   const fetchHistory = async (proposalId: string) => {
     try {
