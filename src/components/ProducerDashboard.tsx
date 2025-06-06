@@ -850,7 +850,3 @@ export default function ProducerDashboard() {
     </div>
   );
 }
-
-export { ProducerDashboard }
-
-export { ProducerDashboard }
