@@ -47,7 +47,7 @@ interface ProposalFile {
   };
 }
 
-export function ProposalHistoryDialog({
+export default function ProposalHistoryDialog({
   isOpen,
   onClose,
   proposalId
