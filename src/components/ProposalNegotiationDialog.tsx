@@ -40,9 +40,9 @@ export function ProposalNegotiationDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const proposalId = proposal?.id;
-  const currentOffer = proposal?.sync_fee || 0;
-  const clientName = proposal?.client?.full_name || 'Client';
-  const trackTitle = proposal?.track?.title || 'Track';
+  const currentOffer = proposal?.sync_fee;
+  const clientName = proposal?.client?.full_name;
+  const trackTitle = proposal?.track?.title;
 
   useEffect(() => {
     if (isOpen) {
@@ -52,19 +52,7 @@ export function ProposalNegotiationDialog({
 
   // Handle click outside to close dialog
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    // Keep dialog open even when clicking outside
   }, [isOpen, onClose]);
   const fetchNegotiationHistory = async () => {
     try {

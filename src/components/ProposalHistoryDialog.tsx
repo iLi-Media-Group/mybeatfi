@@ -58,6 +58,7 @@ export default function ProposalHistoryDialog({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
@@ -67,19 +68,7 @@ export default function ProposalHistoryDialog({
 
   // Handle click outside to close dialog
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    // Keep dialog open even when clicking outside
   }, [isOpen, onClose]);
   const fetchHistory = async (proposalId: string) => {
     try {
