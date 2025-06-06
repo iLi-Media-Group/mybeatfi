@@ -24,7 +24,7 @@ interface FormData {
   vocalsUsageType: 'normal' | 'sync_only';
 }
 
-export function TrackUploadForm() {
+export default function TrackUploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
