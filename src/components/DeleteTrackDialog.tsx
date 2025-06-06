@@ -8,7 +8,7 @@ interface DeleteTrackDialogProps {
   onConfirm: () => Promise<void>;
 }
 
-export function DeleteTrackDialog({ isOpen, onClose, trackTitle, onConfirm }: DeleteTrackDialogProps) {
+export default function DeleteTrackDialog({ isOpen, onClose, trackTitle, onConfirm }: DeleteTrackDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
