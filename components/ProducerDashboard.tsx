@@ -119,7 +119,7 @@ export default function ProducerDashboard() {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedProposalForDetails, setSelectedProposalForDetails] = useState<Proposal | null>(null);
-  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject' | null>(null);
   const [profile, setProfile] = useState<{ first_name?: string, last_name?: string, email: string, avatar_path?: string | null } | null>(null);
 
   // Add event listener for proposal actions from the ProposalDetailDialog
