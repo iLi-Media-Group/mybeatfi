@@ -17,7 +17,7 @@ interface EditTrackModalProps {
   onUpdate: () => void;
 }
 
-export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackModalProps) {
+export default function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackModalProps) {
   // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
   
