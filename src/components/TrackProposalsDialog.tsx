@@ -309,6 +309,7 @@ export default function TrackProposalsDialog({
                         <button
                           onClick={() => handleProposalAction(proposal, 'history')}
                           className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
+                          type="button"
                         >
                           <Clock className="w-3 h-3 mr-1" />
                           View History
