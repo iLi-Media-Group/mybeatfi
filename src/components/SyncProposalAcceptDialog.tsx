@@ -11,7 +11,7 @@ interface SyncProposalAcceptDialogProps {
   onAccept: () => void;
 }
 
-export function SyncProposalAcceptDialog({
+export default function SyncProposalAcceptDialog({
   isOpen,
   onClose,
   proposal,
