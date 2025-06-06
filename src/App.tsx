@@ -5,7 +5,7 @@ import { ProducerLogin } from './components/ProducerLogin';
 import { ClientLogin } from './components/ClientLogin';
 import { AdminLogin } from './components/AdminLogin';
 import { ProducerDashboard } from './components/ProducerDashboard';
-import { TrackUploadForm } from './components/TrackUploadForm';
+import TrackUploadForm from './components/TrackUploadForm';
 import { ClientSignupDialog } from './components/ClientSignupDialog';
 import { ClientDashboard } from './components/ClientDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
