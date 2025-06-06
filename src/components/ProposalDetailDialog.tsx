@@ -34,12 +34,6 @@ export default function ProposalDetailDialog({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // State for dialog actions
-  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
-
   useEffect(() => {
     if (isOpen) {
       fetchNegotiationMessages();
@@ -121,29 +115,74 @@ export default function ProposalDetailDialog({
                     proposal.status === 'accepted' && 
                     proposal.client_status === 'pending' &&
                     new Date(proposal.expiration_date) > new Date();
-                    
-  const handleHistoryClick = () => {
-    // This would typically open a history dialog
-    // For now, we'll just log to console
-    console.log("View history for proposal:", proposal.id);
+  
+  // Check if proposal is pending and not expired
+  const isPendingAndActive = proposal && 
+                            proposal.status === 'pending' && 
+                            new Date(proposal.expiration_date) > new Date();
+  
+  const handleHistoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close this dialog and open the history dialog via parent component
+    if (proposal?.id) {
+      onClose();
+      // Use the parent component's handler for history
+      const proposalEvent = new CustomEvent('proposal-action', {
+        detail: { action: 'history', proposal }
+      });
+      window.dispatchEvent(proposalEvent);
+    }
   };
   
-  const handleNegotiateClick = () => {
-    // This would typically open a negotiation dialog
-    console.log("Negotiate proposal:", proposal.id);
+  const handleNegotiateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close this dialog and open the negotiation dialog via parent component
+    if (proposal?.id) {
+      onClose();
+      // Use the parent component's handler for negotiation
+      const proposalEvent = new CustomEvent('proposal-action', {
+        detail: { action: 'negotiate', proposal }
+      });
+      window.dispatchEvent(proposalEvent);
+    }
   };
   
-  const handleAcceptClick = () => {
-    // This would typically open a confirmation dialog for accepting
-    console.log("Accept proposal:", proposal.id);
+  const handleAcceptClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close this dialog and open the accept confirmation dialog via parent component
+    if (proposal?.id) {
+      onClose();
+      // Use the parent component's handler for accept
+      const proposalEvent = new CustomEvent('proposal-action', {
+        detail: { action: 'accept', proposal }
+      });
+      window.dispatchEvent(proposalEvent);
+    }
+    
     if (onAccept) {
       onAccept(proposal.id);
     }
   };
   
-  const handleDeclineClick = () => {
-    // This would typically open a confirmation dialog for declining
-    console.log("Decline proposal:", proposal.id);
+  const handleDeclineClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close this dialog and open the reject confirmation dialog via parent component
+    if (proposal?.id) {
+      onClose();
+      // Use the parent component's handler for reject
+      const proposalEvent = new CustomEvent('proposal-action', {
+        detail: { action: 'reject', proposal }
+      });
+      window.dispatchEvent(proposalEvent);
+    }
   };
 
   if (!isOpen) return null;
@@ -294,7 +333,7 @@ export default function ProposalDetailDialog({
             )}
             
             {/* Action buttons for producer view */}
-            {proposal.status === 'pending' && proposal.id && (
+            {isPendingAndActive && (
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   onClick={handleHistoryClick}

@@ -122,6 +122,31 @@ export default function ProducerDashboard() {
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
   const [profile, setProfile] = useState<{ first_name?: string, last_name?: string, email: string, avatar_path?: string | null } | null>(null);
 
+  // Add event listener for proposal actions from the ProposalDetailDialog
+  useEffect(() => {
+    const handleProposalAction = (event: CustomEvent) => {
+      const { action, proposal } = event.detail;
+      if (proposal) {
+        setSelectedProposal(proposal);
+        
+        if (action === 'negotiate') {
+          setShowNegotiationDialog(true);
+        } else if (action === 'history') {
+          setShowHistoryDialog(true);
+        } else if (action === 'accept' || action === 'reject') {
+          setConfirmAction(action);
+          setShowConfirmDialog(true);
+        }
+      }
+    };
+    
+    window.addEventListener('proposal-action', handleProposalAction as EventListener);
+    
+    return () => {
+      window.removeEventListener('proposal-action', handleProposalAction as EventListener);
+    };
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchDashboardData();
