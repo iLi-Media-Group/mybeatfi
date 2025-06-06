@@ -308,8 +308,8 @@ export function RevenueBreakdownDialog({
         if (producerData) {
           doc.setFontSize(14);
           doc.setTextColor(60, 60, 60);
-          doc.text(`Producer: ${producerData.first_name} ${producerData.last_name}`, 14, 25);
-          doc.text(`Email: ${producerData.email}`, 14, 32);
+          doc.text(`Producer: ${producerData.first_name || ''} ${producerData.last_name || ''}`.trim(), 14, 25);
+          doc.text(`Email: ${producerData.email || ''}`, 14, 32);
           if (producerData.producer_number) {
             doc.text(`ID: ${producerData.producer_number}`, 14, 39);
           }

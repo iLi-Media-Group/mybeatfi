@@ -445,7 +445,10 @@ export default function ProducerDashboard() {
                       <div 
                         key={proposal.id} 
                         className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                        onClick={() => handleViewProposalDetails(proposal)}
+                        onClick={() => {
+                          // Set the selected proposal and show the details dialog
+                          setSelectedProposalForDetails(proposal);
+                        }}
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${
