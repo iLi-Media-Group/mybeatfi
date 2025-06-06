@@ -859,7 +859,7 @@ export default function ProducerDashboard() {
 
         {showTrackProposalsDialog && selectedTrack && (
           <TrackProposalsDialog
-            track={selectedTrack}
+            track={{id: selectedTrack.id, title: selectedTrack.title}}
             onClose={() => {
               setShowTrackProposalsDialog(false);
               setSelectedTrack(null);

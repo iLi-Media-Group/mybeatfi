@@ -31,14 +31,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/playlists" className="text-gray-400 hover:text-white transition-colors">
-                  <div className="flex items-center">
-                    <ListMusic className="w-4 h-4 mr-1" />
-                    <span>Playlists</span>
-                  </div>
-                </Link>
-              </li>
-              <li>
                 <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors">
                   Pricing Plans
                 </Link>

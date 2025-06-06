@@ -240,13 +240,22 @@ export function AdminDashboard() {
               </p>
             )}
           </div>
-          <button
-            onClick={() => setShowLogoUpload(!showLogoUpload)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Change Logo
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center"
+            >
+              <User className="w-5 h-5 mr-2" />
+              Profile
+            </button>
+            <button
+              onClick={() => setShowLogoUpload(!showLogoUpload)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Change Logo
+            </button>
+          </div>
         </div>
 
         {showLogoUpload && <LogoUpload />}
@@ -296,10 +305,12 @@ export function AdminDashboard() {
                 onClick={() => setShowRevenueBreakdown(true)}
                 title="View revenue breakdown"
               >
-                <DollarSign className="w-12 h-12 text-green-500" />
-                <PieChart className="w-5 h-5 text-blue-400 absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-6 right-0 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  Click for details
+                <div className="relative p-2 rounded-full hover:bg-white/10 transition-colors">
+                  <DollarSign className="w-12 h-12 text-green-500" />
+                  <PieChart className="w-5 h-5 text-blue-400 absolute -bottom-1 -right-1" />
+                  <div className="absolute -bottom-6 right-0 text-xs text-blue-400 whitespace-nowrap">
+                    Click for details
+                  </div>
                 </div>
               </div>
             </div>
@@ -557,6 +568,13 @@ export function AdminDashboard() {
         isOpen={showRevenueBreakdown}
         onClose={() => setShowRevenueBreakdown(false)}
       />
+        
+      {showProfileDialog && (
+        <ProducerProfile
+          onClose={() => setShowProfileDialog(false)}
+          onUpdate={() => fetchDashboardData()}
+        />
+      )}
     </div>
   );
 }

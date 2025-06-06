@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AudioPlayer } from './AudioPlayer';
 import { Track } from '../types';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, Play, User, ListMusic } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, Play, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { useNavigate } from 'react-router-dom';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
 
 interface TrackCardProps {
   track: Track;
@@ -212,8 +211,6 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-2">
-            <AddToPlaylistButton trackId={track.id} variant="icon" />
-            
             <button
               onClick={(e) => {
                 e.preventDefault();

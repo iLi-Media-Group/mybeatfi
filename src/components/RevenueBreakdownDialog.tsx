@@ -329,18 +329,23 @@ export function RevenueBreakdownDialog({
       if (producerDetails) {
           doc.setFontSize(14);
           doc.setTextColor(60, 60, 60);
-          
-          // Format producer name, handling null values
+
+          // Add producer details with proper spacing
           const firstName = producerDetails.first_name || '';
           const lastName = producerDetails.last_name || '';
           const producerName = `${firstName} ${lastName}`.trim() || 'Unknown';
           
-          doc.text(`Producer: ${producerName}`, 14, 25);
-          doc.text(`Email: ${producerDetails.email || 'N/A'}`, 14, 32);
+          let yPos = 25;
+          doc.text(`Producer: ${producerName}`, 14, yPos);
+          yPos += 7;
+          doc.text(`Email: ${producerDetails.email || 'N/A'}`, 14, yPos);
+          yPos += 7;
           if (producerDetails.producer_number) {
-            doc.text(`ID: ${producerDetails.producer_number}`, 14, 39);
+            doc.text(`Producer Number: ${producerDetails.producer_number}`, 14, yPos);
+            yPos += 7;
           }
-          doc.text(`Producer ID: ${producerDetails.id}`, 14, 46);
+          doc.text(`Producer ID: ${producerDetails.id}`, 14, yPos);
+          yPos += 7;
       }
       
       // Add date range
@@ -360,13 +365,13 @@ export function RevenueBreakdownDialog({
 
       // Adjust vertical position based on whether we have producer details
       const yPos = producerDetails ? 53 : 25;
-      doc.text(`Time Period: ${dateRangeText}`, 105, yPos, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 5, { align: 'center' });
+      doc.text(`Time Period: ${dateRangeText}`, 105, yPos + 5, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 12, { align: 'center' });
       
       // Add total revenue
       doc.setFontSize(16);
       doc.setTextColor(40, 40, 40);
-      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, yPos + 15, { align: 'center' });
+      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, yPos + 22, { align: 'center' });
       
       // Add revenue sources table
       doc.setFontSize(14);

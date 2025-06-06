@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign, ListMusic } from 'lucide-react';
+import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Track } from '../types';
@@ -8,7 +8,6 @@ import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
 import { SyncProposalDialog } from './SyncProposalDialog';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
 
@@ -362,10 +361,6 @@ export function TrackPage() {
               )}
 
               <div className="flex flex-wrap gap-4">
-                {user && (
-                  <AddToPlaylistButton trackId={track.id} />
-                )}
-                
                 <button
                   onClick={handleActionClick}
                   disabled={checkoutLoading}

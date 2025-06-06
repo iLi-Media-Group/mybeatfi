@@ -9,8 +9,10 @@ import ProposalConfirmDialog from './ProposalConfirmDialog';
 interface TrackProposalsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  trackId: string;
-  trackTitle: string;
+  track: {
+    id: string;
+    title: string;
+  };
 }
 
 interface SyncProposal {
@@ -31,8 +33,7 @@ interface SyncProposal {
 export default function TrackProposalsDialog({
   isOpen,
   onClose,
-  trackId,
-  trackTitle
+  track
 }: TrackProposalsDialogProps) {
   const { user } = useAuth();
   const [proposals, setProposals] = useState<SyncProposal[]>([]);
@@ -46,10 +47,10 @@ export default function TrackProposalsDialog({
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected' | 'expired'>('all');
 
   useEffect(() => {
-    if (isOpen && trackId) {
+    if (isOpen && track?.id) {
       fetchProposals();
     }
-  }, [isOpen, trackId, filter]);
+  }, [isOpen, track?.id, filter]);
 
   const fetchProposals = async () => {
     try {
@@ -72,7 +73,7 @@ export default function TrackProposalsDialog({
             email
           )
         `)
-        .eq('track_id', trackId)
+        .eq('track_id', track.id)
         .order('created_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -144,7 +145,7 @@ export default function TrackProposalsDialog({
         body: JSON.stringify({
           proposalId: selectedProposal.id,
           action,
-          trackTitle,
+          trackTitle: track.title,
           clientEmail: selectedProposal.client.email
         })
       });
@@ -187,7 +188,7 @@ export default function TrackProposalsDialog({
         <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white">Proposals for "{trackTitle}"</h2>
+              <h2 className="text-2xl font-bold text-white">Proposals for "{track.title}"</h2>
               <p className="text-gray-400">View and manage all sync proposals for this track</p>
             </div>
             <button
@@ -359,10 +360,14 @@ export default function TrackProposalsDialog({
             setSelectedProposal(null);
             fetchProposals(); // Refresh proposals after negotiation
           }}
-          proposalId={selectedProposal.id}
-          currentOffer={selectedProposal.sync_fee}
-          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
-          trackTitle={trackTitle}
+          proposal={selectedProposal}
+          onUpdate={(updatedProposal) => {
+            setProposals(proposals.map(p => 
+              p.id === updatedProposal.id ? updatedProposal : p
+            ));
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+          }}
         />
       )}
 
@@ -373,7 +378,7 @@ export default function TrackProposalsDialog({
             setShowHistoryDialog(false);
             setSelectedProposal(null);
           }}
-          proposalId={selectedProposal.id}
+          proposal={selectedProposal}
         />
       )}
 
