@@ -445,10 +445,7 @@ export default function ProducerDashboard() {
                       <div 
                         key={proposal.id} 
                         className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                        onClick={() => {
-                          // Set the selected proposal and show the details dialog
-                          setSelectedProposalForDetails(proposal);
-                        }}
+                        onClick={() => handleViewProposalDetails(proposal)}
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -891,122 +888,18 @@ export default function ProducerDashboard() {
         
         {/* Proposal Details Dialog */}
         {selectedProposalForDetails && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Proposal Details</h2>
-                <button
-                  onClick={() => setSelectedProposalForDetails(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{selectedProposalForDetails.track?.title}</h3>
-                      <p className="text-gray-400">
-                        Client: {selectedProposalForDetails.client?.full_name}
-                      </p>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      selectedProposalForDetails.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                      selectedProposalForDetails.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
-                      selectedProposalForDetails.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                      'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      <span className="capitalize">{selectedProposalForDetails.status}</span>
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-400 text-sm">Sync Fee</p>
-                      <p className="text-2xl font-bold text-green-400">${selectedProposalForDetails.sync_fee.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Payment Terms</p>
-                      <p className="text-white">{selectedProposalForDetails.payment_terms || 'Immediate'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Submitted</p>
-                      <p className="text-white">{new Date(selectedProposalForDetails.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm">Expires</p>
-                      <p className="text-white">{new Date(selectedProposalForDetails.expiration_date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white/5 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Project Description</h4>
-                    <p className="text-gray-300 whitespace-pre-wrap">{selectedProposalForDetails.project_type}</p>
-                  </div>
-                  
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => {
-                        const proposal = selectedProposalForDetails;
-                        setSelectedProposalForDetails(null);
-                        setSelectedProposal(proposal);
-                        setShowHistoryDialog(true);
-                      }}
-                      className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
-                    >
-                      <History className="w-4 h-4 mr-1" />
-                      View History
-                    </button>
-                    
-                    {selectedProposalForDetails.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setShowNegotiationDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          Negotiate
-                        </button>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setConfirmAction('accept');
-                            setShowConfirmDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => {
-                            const proposal = selectedProposalForDetails;
-                            setSelectedProposalForDetails(null);
-                            setSelectedProposal(proposal);
-                            setConfirmAction('reject');
-                            setShowConfirmDialog(true);
-                          }}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Decline
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProposalDetailDialog
+            isOpen={true}
+            onClose={() => setSelectedProposalForDetails(null)}
+            proposal={selectedProposalForDetails}
+            onAccept={(proposalId) => {
+              const proposal = selectedProposalForDetails;
+              setSelectedProposalForDetails(null);
+              setSelectedProposal(proposal);
+              setConfirmAction('accept');
+              setShowConfirmDialog(true);
+            }}
+          />
         )}
       </div>
     </div>
