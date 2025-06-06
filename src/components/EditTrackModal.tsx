@@ -21,13 +21,26 @@ export default function EditTrackModal({ isOpen, onClose, track, onUpdate }: Edi
   // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
   
-  const initialGenres = track.genres.map(genre => {
+  // Ensure track.genres is an array before mapping
+  const genresArray = Array.isArray(track.genres) 
+    ? track.genres 
+    : typeof track.genres === 'string'
+      ? track.genres.split(',').map(g => g.trim())
+      : [];
+      
+  const initialGenres = genresArray.map(genre => {
     // Find the matching genre from GENRES list
     return GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre)) || genre;
   });
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>(track.moods);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>(
+    Array.isArray(track.moods) 
+      ? track.moods 
+      : typeof track.moods === 'string'
+        ? track.moods.split(',').map(m => m.trim())
+        : []
+  );
   const [hasVocals, setHasVocals] = useState(track.hasVocals || false);
   const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(track.vocalsUsageType || 'normal');
   const [loading, setLoading] = useState(false);
@@ -91,7 +104,7 @@ export default function EditTrackModal({ isOpen, onClose, track, onUpdate }: Edi
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-card p-8 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-gray-900 p-8 rounded-xl border border-blue-500/20 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <Music className="w-6 h-6 text-blue-500 mr-2" />

@@ -198,7 +198,7 @@ export default function TrackUploadForm() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-8">
+      <div className="bg-gray-900 rounded-xl border border-blue-500/20 p-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white">Add New Track</h2>
           {error && (

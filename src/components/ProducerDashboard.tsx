@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { Link } from 'react-router-dom';
+import { AudioPlayer } from './AudioPlayer';
 import { 
   Upload, 
   Music, 
@@ -533,13 +535,15 @@ export default function ProducerDashboard() {
                     <tr key={track.id} className="hover:bg-white/5">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <img
-                            className="h-12 w-12 rounded-lg object-cover"
-                            src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'}
-                            alt={track.title}
-                          />
+                          <Link to={`/track/${track.id}`}>
+                            <img
+                              className="h-12 w-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'}
+                              alt={track.title}
+                            />
+                          </Link>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-white">{track.title}</div>
+                            <Link to={`/track/${track.id}`} className="text-sm font-medium text-white hover:text-blue-400 transition-colors">{track.title}</Link>
                             <div className="text-sm text-gray-400">{track.artist}</div>
                           </div>
                         </div>
@@ -555,6 +559,9 @@ export default function ProducerDashboard() {
                         <div className="text-sm text-gray-400">
                           {track.key} • {track.duration}
                         </div>
+                        <div className="mt-2">
+                          <AudioPlayer url={track.audio_url} title={track.title} />
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-400">
                         {new Date(track.created_at).toLocaleDateString()}
@@ -562,26 +569,42 @@ export default function ProducerDashboard() {
                       <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleViewProposals(track)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProposals(track);
+                            }}
                             className="text-blue-400 hover:text-blue-300"
                             title="View Proposals"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleTrackEdit(track)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTrackEdit(track);
+                            }}
                             className="text-purple-400 hover:text-purple-300"
                             title="Edit Track"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleTrackDelete(track)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTrackDelete(track);
+                            }}
                             className="text-red-400 hover:text-red-300"
                             title="Delete Track"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                          <Link 
+                            to={`/track/${track.id}`}
+                            className="text-green-400 hover:text-green-300"
+                            title="View Track Page"
+                          >
+                            <Music className="w-4 h-4" />
+                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -721,7 +744,7 @@ export default function ProducerDashboard() {
         {/* Upload Form Modal */}
         {showUploadForm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white/5 backdrop-blur-md rounded-xl border border-purple-500/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-900 rounded-xl border border-purple-500/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-white">Upload New Track</h2>
