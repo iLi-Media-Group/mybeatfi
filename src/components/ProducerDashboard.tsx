@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import TrackUploadForm from './TrackUploadForm';
 import EditTrackModal from './EditTrackModal';
-import { DeleteTrackDialog } from './DeleteTrackDialog';
+import DeleteTrackDialog from './DeleteTrackDialog';
 import TrackProposalsDialog from './TrackProposalsDialog';
 import ProducerProfile from './ProducerProfile';
 import RevenueBreakdownDialog from './RevenueBreakdownDialog';
@@ -697,3 +697,160 @@ export default function ProducerDashboard() {
               </table>
               {proposals.length === 0 && (
                 <div className="text-center py-12">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No proposals</h3>
+                  <p className="mt-1 text-sm text-gray-500">Sync proposals will appear here when clients are interested in your tracks.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Form Modal */}
+        {showUploadForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Upload New Track</h2>
+                  <button
+                    onClick={() => setShowUploadForm(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+                </div>
+                <TrackUploadForm
+                  onSuccess={() => {
+                    setShowUploadForm(false);
+                    fetchDashboardData();
+                  }}
+                  onCancel={() => setShowUploadForm(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Links */}
+        <div className="mt-8 bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              to="/producer/analytics"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 mr-2" />
+              View Analytics
+            </Link>
+            <Link
+              to="/producer/banking"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Settings className="w-5 h-5 mr-2" />
+              Banking Settings
+            </Link>
+            <Link
+              to="/producer/sales"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <DollarSign className="w-5 h-5 mr-2" />
+              View All Sales
+            </Link>
+          </div>
+        </div>
+
+        {showProfileDialog && (
+          <ProducerProfile
+            onClose={() => setShowProfileDialog(false)}
+            onUpdate={() => fetchDashboardData()}
+          />
+        )}
+
+        {showEditModal && selectedTrack && (
+          <EditTrackModal
+            track={selectedTrack}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedTrack(null);
+            }}
+            onUpdate={(updatedTrack) => {
+              setTracks(tracks.map(t => t.id === updatedTrack.id ? updatedTrack : t));
+              setShowEditModal(false);
+              setSelectedTrack(null);
+            }}
+          />
+        )}
+
+        {showDeleteDialog && selectedTrack && (
+          <DeleteTrackDialog
+            track={selectedTrack}
+            onClose={() => {
+              setShowDeleteDialog(false);
+              setSelectedTrack(null);
+            }}
+            onConfirm={confirmDeleteTrack}
+          />
+        )}
+
+        {showTrackProposalsDialog && selectedTrack && (
+          <TrackProposalsDialog
+            track={selectedTrack}
+            onClose={() => {
+              setShowTrackProposalsDialog(false);
+              setSelectedTrack(null);
+            }}
+          />
+        )}
+
+        {showRevenueBreakdown && (
+          <RevenueBreakdownDialog
+            stats={stats}
+            onClose={() => setShowRevenueBreakdown(false)}
+          />
+        )}
+
+        {showNegotiationDialog && selectedProposal && (
+          <ProposalNegotiationDialog
+            proposal={selectedProposal}
+            onClose={() => {
+              setShowNegotiationDialog(false);
+              setSelectedProposal(null);
+            }}
+            onUpdate={(updatedProposal) => {
+              setProposals(proposals.map(p => p.id === updatedProposal.id ? updatedProposal : p));
+              setShowNegotiationDialog(false);
+              setSelectedProposal(null);
+            }}
+          />
+        )}
+
+        {showHistoryDialog && selectedProposal && (
+          <ProposalHistoryDialog
+            proposal={selectedProposal}
+            onClose={() => {
+              setShowHistoryDialog(false);
+              setSelectedProposal(null);
+            }}
+          />
+        )}
+
+        {showConfirmDialog && selectedProposal && (
+          <ProposalConfirmDialog
+            proposal={selectedProposal}
+            action={confirmAction}
+            onClose={() => {
+              setShowConfirmDialog(false);
+              setSelectedProposal(null);
+            }}
+            onConfirm={() => handleProposalStatusChange(confirmAction)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export { ProducerDashboard }
+
+export { ProducerDashboard }
