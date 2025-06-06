@@ -28,7 +28,7 @@ interface SyncProposal {
   };
 }
 
-export function TrackProposalsDialog({
+export default function TrackProposalsDialog({
   isOpen,
   onClose,
   trackId,
