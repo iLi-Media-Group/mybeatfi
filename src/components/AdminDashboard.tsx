@@ -76,13 +76,13 @@ export function AdminDashboard() {
       setError(null);
 
       // Check if user is admin
-      const { data: adminCheckData } = await supabase
+      const { data: adminCheckProfileData } = await supabase
         .from('profiles')
         .select('email')
         .eq('id', user?.id)
         .single();
 
-      if (!adminCheckData || !['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(adminCheckData.email)) {
+      if (!adminCheckProfileData || !['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(adminCheckProfileData.email)) {
         throw new Error('Unauthorized access');
       }
 
