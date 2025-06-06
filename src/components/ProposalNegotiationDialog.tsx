@@ -6,10 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProposalNegotiationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
-  currentOffer: number;
-  clientName: string;
-  trackTitle: string;
+  proposal: any;
+  onUpdate?: (updatedProposal: any) => void;
 }
 
 interface NegotiationMessage {
@@ -28,10 +26,8 @@ interface NegotiationMessage {
 export function ProposalNegotiationDialog({
   isOpen,
   onClose,
-  proposalId,
-  currentOffer,
-  clientName,
-  trackTitle
+  proposal,
+  onUpdate
 }: ProposalNegotiationDialogProps) {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
@@ -42,11 +38,17 @@ export function ProposalNegotiationDialog({
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const proposalId = proposal?.id;
+  const currentOffer = proposal?.sync_fee || 0;
+  const clientName = proposal?.client?.first_name && proposal?.client?.last_name 
+    ? `${proposal.client.first_name} ${proposal.client.last_name}`
+    : 'Client';
+  const trackTitle = proposal?.track?.title || 'Track';
   useEffect(() => {
     if (isOpen) {
       fetchNegotiationHistory();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposal]);
 
   const fetchNegotiationHistory = async () => {
     try {
@@ -167,6 +169,15 @@ export function ProposalNegotiationDialog({
         })
       });
 
+      // Update parent component if callback provided
+      if (onUpdate) {
+        const updatedProposal = {
+          ...proposal,
+          negotiation_status: 'negotiating'
+        };
+        onUpdate(updatedProposal);
+      }
+      
       // Reset form
       setMessage('');
       setCounterOffer('');

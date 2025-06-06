@@ -24,8 +24,7 @@ import {
   FileText,
   History,
   User,
-  Settings,
-  X
+  Settings
 } from 'lucide-react';
 import TrackUploadForm from './TrackUploadForm';
 import EditTrackModal from './EditTrackModal';
@@ -214,22 +213,6 @@ export default function ProducerDashboard() {
     setSelectedProposalForDetails(proposal);
   };
 
-  const handleProposalAction = (proposal: Proposal, action: 'accept' | 'reject' | 'negotiate' | 'history') => {
-    setSelectedProposal(proposal);
-    
-    if (action === 'negotiate') {
-      setShowNegotiationDialog(true);
-    } else if (action === 'history') {
-      setShowHistoryDialog(true);
-    } else if (action === 'accept') {
-      setConfirmAction('accept');
-      setShowConfirmDialog(true);
-    } else if (action === 'reject') {
-      setConfirmAction('reject');
-      setShowConfirmDialog(true);
-    }
-  };
-
   const handleTrackEdit = (track: Track) => {
     setSelectedTrack(track);
     setShowEditModal(true);
@@ -262,6 +245,19 @@ export default function ProducerDashboard() {
   const handleViewProposals = (track: Track) => {
     setSelectedTrack(track);
     setShowTrackProposalsDialog(true);
+  };
+
+  const handleProposalAction = (proposal: Proposal, action: 'accept' | 'reject' | 'negotiate' | 'history') => {
+    setSelectedProposal(proposal);
+    
+    if (action === 'negotiate') {
+      setShowNegotiationDialog(true);
+    } else if (action === 'history') {
+      setShowHistoryDialog(true);
+    } else {
+      setConfirmAction(action);
+      setShowConfirmDialog(true);
+    }
   };
 
   const handleProposalStatusChange = async (action: 'accept' | 'reject') => {
@@ -690,4 +686,8 @@ export default function ProducerDashboard() {
                           {proposal.duration} • {proposal.is_exclusive ? 'Exclusive' : 'Non-exclusive'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-green-400 font-semib
+                      <td className="px-6 py-4 text-sm text-green-400 font-semibold">
+                        ${proposal.sync_fee.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className
