@@ -40,10 +40,9 @@ export function ProposalNegotiationDialog({
 
   const proposalId = proposal?.id;
   const currentOffer = proposal?.sync_fee || 0;
-  const clientName = proposal?.client?.first_name && proposal?.client?.last_name 
-    ? `${proposal.client.first_name} ${proposal.client.last_name}`
-    : 'Client';
+  const clientName = proposal?.client?.full_name || 'Client';
   const trackTitle = proposal?.track?.title || 'Track';
+
   useEffect(() => {
     if (isOpen) {
       fetchNegotiationHistory();
