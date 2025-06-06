@@ -28,7 +28,7 @@ import DeleteTrackDialog from './DeleteTrackDialog';
 import TrackProposalsDialog from './TrackProposalsDialog';
 import ProducerProfile from './ProducerProfile';
 import RevenueBreakdownDialog from './RevenueBreakdownDialog';
-import ProposalNegotiationDialog from './ProposalNegotiationDialog';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 import { Link } from 'react-router-dom';
