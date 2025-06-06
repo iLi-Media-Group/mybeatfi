@@ -16,6 +16,24 @@ export default function ProposalConfirmDialog({
   action,
   proposal
 }: ProposalConfirmDialogProps) {
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  
+  // Handle click outside to close dialog
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
   if (!isOpen) return null;
 
   const trackTitle = proposal?.track?.title || 'this track';
@@ -25,7 +43,7 @@ export default function ProposalConfirmDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+      <div ref={dialogRef} className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <AlertTriangle className="w-6 h-6 text-yellow-500 mr-2" />

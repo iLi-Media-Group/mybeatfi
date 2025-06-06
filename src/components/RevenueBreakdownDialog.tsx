@@ -40,6 +40,7 @@ export function RevenueBreakdownDialog({
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [timeframe, setTimeframe] = useState<'month' | 'quarter' | 'year' | 'all'>('month');
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,6 +48,22 @@ export function RevenueBreakdownDialog({
     }
   }, [isOpen, producerId, timeframe]);
 
+  // Handle click outside to close dialog
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
   const fetchRevenueBreakdown = async () => {
     try {
       setLoading(true);
@@ -404,7 +421,7 @@ export function RevenueBreakdownDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div ref={dialogRef} className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <DollarSign className="w-6 h-6 text-green-500 mr-2" />

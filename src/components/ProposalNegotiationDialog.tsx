@@ -37,6 +37,7 @@ export function ProposalNegotiationDialog({
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const proposalId = proposal?.id;
   const currentOffer = proposal?.sync_fee || 0;
@@ -49,6 +50,22 @@ export function ProposalNegotiationDialog({
     }
   }, [isOpen, proposal]);
 
+  // Handle click outside to close dialog
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
   const fetchNegotiationHistory = async () => {
     try {
       const { data, error } = await supabase
@@ -197,7 +214,7 @@ export function ProposalNegotiationDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div ref={dialogRef} className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Negotiate Proposal</h2>
