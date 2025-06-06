@@ -144,12 +144,13 @@ export default function ProposalDetailDialog({
     
     // Close this dialog and open the history dialog via parent component
     if (proposal?.id) {
-      onClose();
       // Use the parent component's handler for history
       const proposalEvent = new CustomEvent('proposal-action', {
         detail: { action: 'history', proposal }
       });
       window.dispatchEvent(proposalEvent);
+      // Close the dialog after dispatching the event
+      setTimeout(() => onClose(), 100);
     }
   };
   
@@ -159,12 +160,13 @@ export default function ProposalDetailDialog({
     
     // Close this dialog and open the negotiation dialog via parent component
     if (proposal?.id) {
-      onClose();
       // Use the parent component's handler for negotiation
       const proposalEvent = new CustomEvent('proposal-action', {
         detail: { action: 'negotiate', proposal }
       });
       window.dispatchEvent(proposalEvent);
+      // Close the dialog after dispatching the event
+      setTimeout(() => onClose(), 100);
     }
   };
   
@@ -174,12 +176,13 @@ export default function ProposalDetailDialog({
     
     // Close this dialog and open the accept confirmation dialog via parent component
     if (proposal?.id) {
-      onClose();
       // Use the parent component's handler for accept
       const proposalEvent = new CustomEvent('proposal-action', {
         detail: { action: 'accept', proposal }
       });
       window.dispatchEvent(proposalEvent);
+      // Close the dialog after dispatching the event
+      setTimeout(() => onClose(), 100);
     }
     
     if (onAccept) {
@@ -193,12 +196,13 @@ export default function ProposalDetailDialog({
     
     // Close this dialog and open the reject confirmation dialog via parent component
     if (proposal?.id) {
-      onClose();
       // Use the parent component's handler for reject
       const proposalEvent = new CustomEvent('proposal-action', {
         detail: { action: 'reject', proposal }
       });
       window.dispatchEvent(proposalEvent);
+      // Close the dialog after dispatching the event
+      setTimeout(() => onClose(), 100);
     }
   };
 
