@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import ProposalNegotiationDialog from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 
