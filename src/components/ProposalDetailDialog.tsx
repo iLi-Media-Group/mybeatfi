@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, MessageSquare, FileText, History } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ProposalDetailDialogProps {
   isOpen: boolean;
@@ -32,8 +33,9 @@ export default function ProposalDetailDialog({
   const { user } = useAuth();
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
@@ -141,68 +143,91 @@ export default function ProposalDetailDialog({
   const handleHistoryClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Close this dialog and open the history dialog via parent component
+
     if (proposal?.id) {
-      // Use the parent component's handler for history
-      const proposalEvent = new CustomEvent('proposal-action', {
-        detail: { action: 'history', proposal }
-      });
-      window.dispatchEvent(proposalEvent);
-      // Close the dialog after dispatching the event
-      setTimeout(() => onClose(), 100);
+      try {
+        // Create and dispatch the custom event
+        const proposalEvent = new CustomEvent('proposal-action', {
+          detail: { action: 'history', proposal }
+        });
+        document.dispatchEvent(proposalEvent);
+        
+        // Close the dialog
+        onClose();
+      } catch (err) {
+        console.error('Error dispatching history event:', err);
+        setError('Failed to open history dialog');
+      }
     }
   };
   
   const handleNegotiateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Close this dialog and open the negotiation dialog via parent component
+
     if (proposal?.id) {
-      // Use the parent component's handler for negotiation
-      const proposalEvent = new CustomEvent('proposal-action', {
-        detail: { action: 'negotiate', proposal }
-      });
-      window.dispatchEvent(proposalEvent);
-      // Close the dialog after dispatching the event
-      setTimeout(() => onClose(), 100);
+      try {
+        // Create and dispatch the custom event
+        const proposalEvent = new CustomEvent('proposal-action', {
+          detail: { action: 'negotiate', proposal }
+        });
+        document.dispatchEvent(proposalEvent);
+        
+        // Close the dialog
+        onClose();
+      } catch (err) {
+        console.error('Error dispatching negotiate event:', err);
+        setError('Failed to open negotiation dialog');
+      }
     }
   };
   
   const handleAcceptClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Close this dialog and open the accept confirmation dialog via parent component
+
     if (proposal?.id) {
-      // Use the parent component's handler for accept
-      const proposalEvent = new CustomEvent('proposal-action', {
-        detail: { action: 'accept', proposal }
-      });
-      window.dispatchEvent(proposalEvent);
-      // Close the dialog after dispatching the event
-      setTimeout(() => onClose(), 100);
-    }
-    
-    if (onAccept) {
-      onAccept(proposal.id);
+      try {
+        // If this is a client accepting a producer-approved proposal
+        if (onAccept) {
+          onAccept(proposal.id);
+          onClose();
+          return;
+        }
+        
+        // Otherwise, this is a producer accepting a client proposal
+        const proposalEvent = new CustomEvent('proposal-action', {
+          detail: { action: 'accept', proposal }
+        });
+        document.dispatchEvent(proposalEvent);
+        
+        // Close the dialog
+        onClose();
+      } catch (err) {
+        console.error('Error dispatching accept event:', err);
+        setError('Failed to process acceptance');
+      }
     }
   };
   
   const handleDeclineClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Close this dialog and open the reject confirmation dialog via parent component
+
     if (proposal?.id) {
-      // Use the parent component's handler for reject
-      const proposalEvent = new CustomEvent('proposal-action', {
-        detail: { action: 'reject', proposal }
-      });
-      window.dispatchEvent(proposalEvent);
-      // Close the dialog after dispatching the event
-      setTimeout(() => onClose(), 100);
+      try {
+        // Create and dispatch the custom event
+        const proposalEvent = new CustomEvent('proposal-action', {
+          detail: { action: 'reject', proposal }
+        });
+        document.dispatchEvent(proposalEvent);
+        
+        // Close the dialog
+        onClose();
+      } catch (err) {
+        console.error('Error dispatching reject event:', err);
+        setError('Failed to process rejection');
+      }
     }
   };
 

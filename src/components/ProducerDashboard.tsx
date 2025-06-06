@@ -125,6 +125,7 @@ export default function ProducerDashboard() {
   // Add event listener for proposal actions from the ProposalDetailDialog
   useEffect(() => {
     const handleProposalAction = (event: CustomEvent) => {
+      console.log('Received proposal action event:', event.detail);
       const { action, proposal } = event.detail;
       if (proposal) {
         setSelectedProposal(proposal);
@@ -140,10 +141,10 @@ export default function ProducerDashboard() {
       }
     };
     
-    window.addEventListener('proposal-action', handleProposalAction as EventListener);
+    document.addEventListener('proposal-action', handleProposalAction as EventListener);
     
     return () => {
-      window.removeEventListener('proposal-action', handleProposalAction as EventListener);
+      document.removeEventListener('proposal-action', handleProposalAction as EventListener);
     };
   }, []);
 
