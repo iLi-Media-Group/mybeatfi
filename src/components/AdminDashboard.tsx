@@ -58,9 +58,8 @@ export function AdminDashboard() {
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
-  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<any>(null);
+  const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
