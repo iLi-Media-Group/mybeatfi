@@ -22,7 +22,7 @@ interface MonthlyRevenue {
   amount: number;
 }
 
-export function RevenueBreakdownDialog({
+export default function RevenueBreakdownDialog({
   isOpen,
   onClose,
   producerId
