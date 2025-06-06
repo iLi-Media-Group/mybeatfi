@@ -284,17 +284,9 @@ export function RevenueBreakdownDialog({
     try {
       setPdfGenerating(true);
       
-      // Create a new PDF document
-      const doc = new jsPDF();
-      
-      // Add title
-      doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
-      doc.text('Revenue Report', 105, 15, { align: 'center' });
-      
-      // Add producer info if available
+      // Fetch producer details if we have a producerId
+      let producerDetails = null;
       if (producerId) {
-        // Fetch detailed producer details
         const { data: producerData, error: producerError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, producer_number')
@@ -303,18 +295,35 @@ export function RevenueBreakdownDialog({
 
         if (producerError) {
           console.error('Error fetching producer details:', producerError);
+        } else {
+          producerDetails = producerData;
         }
-          
-        if (producerData) {
+      }
+      
+      // Create a new PDF document
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Revenue Report', 105, 15, { align: 'center' });
+      
+      // Add producer info if we have it
+      if (producerDetails) {
           doc.setFontSize(14);
           doc.setTextColor(60, 60, 60);
-          doc.text(`Producer: ${producerData.first_name || ''} ${producerData.last_name || ''}`.trim(), 14, 25);
-          doc.text(`Email: ${producerData.email || ''}`, 14, 32);
-          if (producerData.producer_number) {
-            doc.text(`ID: ${producerData.producer_number}`, 14, 39);
+          
+          // Format producer name, handling null values
+          const firstName = producerDetails.first_name || '';
+          const lastName = producerDetails.last_name || '';
+          const producerName = `${firstName} ${lastName}`.trim() || 'Unknown';
+          
+          doc.text(`Producer: ${producerName}`, 14, 25);
+          doc.text(`Email: ${producerDetails.email || 'N/A'}`, 14, 32);
+          if (producerDetails.producer_number) {
+            doc.text(`ID: ${producerDetails.producer_number}`, 14, 39);
           }
-          doc.text(`Producer ID: ${producerData.id}`, 14, 46);
-        }
+          doc.text(`Producer ID: ${producerDetails.id}`, 14, 46);
       }
       
       // Add date range
@@ -331,8 +340,9 @@ export function RevenueBreakdownDialog({
       } else {
         dateRangeText = 'All Time';
       }
-      
-      const yPos = producerId ? 53 : 25;
+
+      // Adjust vertical position based on whether we have producer details
+      const yPos = producerDetails ? 53 : 25;
       doc.text(`Time Period: ${dateRangeText}`, 105, yPos, { align: 'center' });
       doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 5, { align: 'center' });
       
