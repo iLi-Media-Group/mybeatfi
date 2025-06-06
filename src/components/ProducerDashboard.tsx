@@ -35,6 +35,7 @@ import ProposalNegotiationDialog from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 import ProposalDetailDialog from './ProposalDetailDialog';
+import { X } from 'lucide-react';
 
 
 
