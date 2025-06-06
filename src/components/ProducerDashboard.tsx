@@ -34,6 +34,8 @@ import RevenueBreakdownDialog from './RevenueBreakdownDialog';
 import ProposalNegotiationDialog from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
+import ProposalDetailDialog from './ProposalDetailDialog';
+
 
 
 interface Track {
