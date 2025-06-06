@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Trash2, Plus, UserCog, Loader2, FileText, BarChart3, Filter, Search, MessageSquare, Upload } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Trash2, Plus, UserCog, Loader2, FileText, BarChart3, Filter, Search, MessageSquare, Upload, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -717,108 +717,4 @@ export function ProducerDashboard() {
               to="/producer/banking"
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center"
             >
-              <DollarSign className="w-5 h-5 mr-2" />
-              View All Earnings
-            </Link>
-          </div>
-
-          {/* This would be populated with actual sales data */}
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-400">Sales data will appear here</p>
-          </div>
-        </div>
-      </div>
-
-      <ProducerProfile
-        isOpen={showProfileDialog}
-        onClose={() => setShowProfileDialog(false)}
-      />
-
-      {selectedTrack && showEditModal && (
-        <EditTrackModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedTrack(null);
-          }}
-          track={selectedTrack}
-          onUpdate={() => {
-            fetchDashboardData();
-            setShowEditModal(false);
-            setSelectedTrack(null);
-          }}
-        />
-      )}
-
-      {selectedTrack && showDeleteDialog && (
-        <DeleteTrackDialog
-          isOpen={showDeleteDialog}
-          onClose={() => {
-            setShowDeleteDialog(false);
-            setSelectedTrack(null);
-          }}
-          trackTitle={selectedTrack.title}
-          onConfirm={confirmDeleteTrack}
-        />
-      )}
-
-      {selectedTrack && showTrackProposalsDialog && (
-        <TrackProposalsDialog
-          isOpen={showTrackProposalsDialog}
-          onClose={() => {
-            setShowTrackProposalsDialog(false);
-            setSelectedTrack(null);
-          }}
-          trackId={selectedTrack.id}
-          trackTitle={selectedTrack.title}
-        />
-      )}
-
-      <RevenueBreakdownDialog
-        isOpen={showRevenueBreakdown}
-        onClose={() => setShowRevenueBreakdown(false)}
-        producerId={user?.id}
-      />
-
-      {selectedProposal && showNegotiationDialog && (
-        <ProposalNegotiationDialog
-          isOpen={showNegotiationDialog}
-          onClose={() => {
-            setShowNegotiationDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-          currentOffer={selectedProposal.sync_fee}
-          clientName={`${selectedProposal.client.first_name || ''} ${selectedProposal.client.last_name || ''}`.trim() || selectedProposal.client.email}
-          trackTitle={selectedProposal.track.title}
-        />
-      )}
-
-      {selectedProposal && showHistoryDialog && (
-        <ProposalHistoryDialog
-          isOpen={showHistoryDialog}
-          onClose={() => {
-            setShowHistoryDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-        />
-      )}
-
-      {selectedProposal && showConfirmDialog && (
-        <ProposalConfirmDialog
-          isOpen={showConfirmDialog}
-          onClose={() => {
-            setShowConfirmDialog(false);
-            setSelectedProposal(null);
-          }}
-          onConfirm={() => handleProposalStatusChange(confirmAction)}
-          action={confirmAction}
-          trackTitle={selectedProposal.track.title}
-          clientName={`${selectedProposal.client.first_name || ''} ${selectedProposal.client.last_name || ''}`.trim() || selectedProposal.client.email}
-        />
-      )}
-    </div>
-  );
-}
+              <D
