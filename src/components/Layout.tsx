@@ -14,7 +14,8 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const { user, accountType, signOut } = useAuth();
-  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isKnockriobeats = user?.email === 'knockriobeats@gmail.com';
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -156,13 +157,28 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
           ...adminItems
         ];
         
-        // If admin is also a producer, add producer dashboard
-        if (accountType === 'producer') {
+        // If admin is also a producer or is knockriobeats@gmail.com, add producer dashboard
+        if (accountType === 'producer' || isKnockriobeats) {
           menuItems.push({
             to: "/producer/dashboard",
             icon: <LayoutDashboard className="w-4 h-4 mr-2" />,
             label: "Producer Dashboard"
           });
+          
+          // Add producer upload option for knockriobeats@gmail.com
+          if (isKnockriobeats) {
+            menuItems.push({
+              to: "/producer/upload",
+              icon: <Upload className="w-4 h-4 mr-2" />,
+              label: "Upload Track"
+            });
+            
+            menuItems.push({
+              to: "/producer/banking",
+              icon: <DollarSign className="w-4 h-4 mr-2" />,
+              label: "Producer Earnings"
+            });
+          }
         }
       } else if (accountType === 'producer') {
         menuItems = [

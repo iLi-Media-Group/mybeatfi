@@ -29,7 +29,8 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  const isAdmin = user.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isAdmin = user.email && ['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isKnockriobeats = user.email === 'knockriobeats@gmail.com';
 
   // Admins can access all routes
   if (isAdmin) {
@@ -41,11 +42,12 @@ export function ProtectedRoute({
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiresProducer && accountType !== 'producer') {
+  // Allow knockriobeats@gmail.com to access producer routes
+  if (requiresProducer && accountType !== 'producer' && !isKnockriobeats) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiresClient && accountType !== 'client') {
+  if (requiresClient && accountType !== 'client' && !isAdmin) {
     return <Navigate to="/producer/dashboard" replace />;
   }
 

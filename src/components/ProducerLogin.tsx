@@ -21,9 +21,12 @@ export function ProducerLogin() {
       const loginEmail = email.toLowerCase().trim();
 
       // Check if user is an admin
-      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(loginEmail);
+      const isAdmin = ['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(loginEmail);
       
-      if (!isAdmin) {
+      // Special case for knockriobeats@gmail.com - allow both admin and producer access
+      const isKnockriobeats = loginEmail === 'knockriobeats@gmail.com';
+      
+      if (!isAdmin && !isKnockriobeats) {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('account_type')
@@ -51,7 +54,12 @@ export function ProducerLogin() {
       }
 
       // Redirect to producer dashboard
-      navigate('/producer/dashboard');
+      // For knockriobeats@gmail.com, redirect to admin dashboard by default
+      if (loginEmail === 'knockriobeats@gmail.com') {
+        navigate('/admin');
+      } else {
+        navigate('/producer/dashboard');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to sign in');
