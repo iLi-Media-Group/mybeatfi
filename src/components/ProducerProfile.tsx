@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, Camera, MapPin } from 'lucide-react';
+import { User, Mail, X, Camera, MapPin, Hash, Building2, Phone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfilePhotoUpload } from './ProfilePhotoUpload';
