@@ -957,3 +957,5 @@ export default function ProducerDashboard() {
     </div>
   );
 }
+
+export default ProducerDashboard
