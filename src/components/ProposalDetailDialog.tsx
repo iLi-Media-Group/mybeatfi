@@ -23,7 +23,7 @@ interface NegotiationMessage {
   created_at: string;
 }
 
-export function ProposalDetailDialog({
+export default function ProposalDetailDialog({
   isOpen,
   onClose,
   proposal,
