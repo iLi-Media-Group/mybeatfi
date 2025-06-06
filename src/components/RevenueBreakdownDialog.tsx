@@ -292,6 +292,26 @@ export function RevenueBreakdownDialog({
       doc.setTextColor(40, 40, 40);
       doc.text('Revenue Report', 105, 15, { align: 'center' });
       
+      // Add producer info if available
+      if (producerId) {
+        // Fetch producer details
+        const { data: producerData } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email, producer_number')
+          .eq('id', producerId)
+          .single();
+          
+        if (producerData) {
+          doc.setFontSize(14);
+          doc.setTextColor(60, 60, 60);
+          doc.text(`Producer: ${producerData.first_name} ${producerData.last_name}`, 14, 25);
+          doc.text(`Email: ${producerData.email}`, 14, 32);
+          if (producerData.producer_number) {
+            doc.text(`ID: ${producerData.producer_number}`, 14, 39);
+          }
+        }
+      }
+      
       // Add date range
       doc.setFontSize(12);
       doc.setTextColor(80, 80, 80);
@@ -307,17 +327,18 @@ export function RevenueBreakdownDialog({
         dateRangeText = 'All Time';
       }
       
-      doc.text(`Time Period: ${dateRangeText}`, 105, 25, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+      const yPos = producerId ? 46 : 25;
+      doc.text(`Time Period: ${dateRangeText}`, 105, yPos, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 5, { align: 'center' });
       
       // Add total revenue
       doc.setFontSize(16);
       doc.setTextColor(40, 40, 40);
-      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, 40, { align: 'center' });
+      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, yPos + 15, { align: 'center' });
       
       // Add revenue sources table
       doc.setFontSize(14);
-      doc.text('Revenue by Source', 14, 50);
+      doc.text('Revenue by Source', 14, yPos + 25);
       
       const sourceTableData = revenueSources.map(source => [
         source.source,
@@ -327,7 +348,7 @@ export function RevenueBreakdownDialog({
       ]);
       
       autoTable(doc, {
-        startY: 55,
+        startY: yPos + 30,
         head: [['Source', 'Amount', 'Count', 'Percentage']],
         body: sourceTableData,
         theme: 'grid',

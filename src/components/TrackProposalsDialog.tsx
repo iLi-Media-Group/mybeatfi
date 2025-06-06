@@ -94,21 +94,16 @@ export default function TrackProposalsDialog({
   const handleProposalAction = (proposal: SyncProposal, action: 'negotiate' | 'history' | 'accept' | 'reject') => {
     setSelectedProposal(proposal);
     
-    switch (action) {
-      case 'negotiate':
-        setShowNegotiationDialog(true);
-        break;
-      case 'history':
-        setShowHistoryDialog(true);
-        break;
-      case 'accept':
-        setConfirmAction('accept');
-        setShowConfirmDialog(true);
-        break;
-      case 'reject':
-        setConfirmAction('reject');
-        setShowConfirmDialog(true);
-        break;
+    if (action === 'negotiate') {
+      setShowNegotiationDialog(true);
+    } else if (action === 'history') {
+      setShowHistoryDialog(true);
+    } else if (action === 'accept') {
+      setConfirmAction('accept');
+      setShowConfirmDialog(true);
+    } else if (action === 'reject') {
+      setConfirmAction('reject');
+      setShowConfirmDialog(true);
     }
   };
 

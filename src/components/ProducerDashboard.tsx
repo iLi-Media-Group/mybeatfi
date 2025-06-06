@@ -946,9 +946,10 @@ export default function ProducerDashboard() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={() => {
-                        setSelectedProposal(selectedProposalForDetails);
-                        setShowHistoryDialog(true);
+                        const proposal = selectedProposalForDetails;
                         setSelectedProposalForDetails(null);
+                        setSelectedProposal(proposal);
+                        setShowHistoryDialog(true);
                       }}
                       className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
                     >
@@ -960,9 +961,10 @@ export default function ProducerDashboard() {
                       <>
                         <button
                           onClick={() => {
-                            setSelectedProposal(selectedProposalForDetails);
-                            setShowNegotiationDialog(true);
+                            const proposal = selectedProposalForDetails;
                             setSelectedProposalForDetails(null);
+                            setSelectedProposal(proposal);
+                            setShowNegotiationDialog(true);
                           }}
                           className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
                         >
@@ -971,10 +973,11 @@ export default function ProducerDashboard() {
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedProposal(selectedProposalForDetails);
+                            const proposal = selectedProposalForDetails;
+                            setSelectedProposalForDetails(null);
+                            setSelectedProposal(proposal);
                             setConfirmAction('accept');
                             setShowConfirmDialog(true);
-                            setSelectedProposalForDetails(null);
                           }}
                           className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
                         >
@@ -983,10 +986,11 @@ export default function ProducerDashboard() {
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedProposal(selectedProposalForDetails);
+                            const proposal = selectedProposalForDetails;
+                            setSelectedProposalForDetails(null);
+                            setSelectedProposal(proposal);
                             setConfirmAction('reject');
                             setShowConfirmDialog(true);
-                            setSelectedProposalForDetails(null);
                           }}
                           className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
                         >
