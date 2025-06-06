@@ -125,6 +125,7 @@ export default function ProducerDashboard() {
   // Add event listener for proposal actions from the ProposalDetailDialog
   useEffect(() => {
     const handleProposalAction = (event: CustomEvent) => {
+      console.log('Received proposal action event:', event.detail);
       // Extract action and proposal from the event
       const { action, proposal } = event.detail;
       if (proposal) {

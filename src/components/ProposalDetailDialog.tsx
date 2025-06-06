@@ -147,13 +147,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const event = new CustomEvent('proposal-action', {
+        const proposalEvent = new CustomEvent('proposal-action', {
           detail: {
             action: 'history',
             proposal
           }
         });
-        document.dispatchEvent(event);
+        document.dispatchEvent(proposalEvent);
         
         // Close the dialog
         onClose();
@@ -171,13 +171,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const event = new CustomEvent('proposal-action', {
+        const proposalEvent = new CustomEvent('proposal-action', {
           detail: {
             action: 'negotiate',
             proposal
           }
         });
-        document.dispatchEvent(event);
+        document.dispatchEvent(proposalEvent);
         
         // Close the dialog
         onClose();
@@ -203,13 +203,13 @@ export default function ProposalDetailDialog({
         
         // Otherwise, this is a producer accepting a client proposal
         // Create and dispatch the custom event
-        const event = new CustomEvent('proposal-action', {
+        const proposalEvent = new CustomEvent('proposal-action', {
           detail: {
             action: 'accept',
             proposal
           }
         });
-        document.dispatchEvent(event);
+        document.dispatchEvent(proposalEvent);
         
         // Close the dialog
         onClose();
@@ -227,13 +227,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const event = new CustomEvent('proposal-action', {
+        const proposalEvent = new CustomEvent('proposal-action', {
           detail: {
             action: 'reject',
             proposal
           }
         });
-        document.dispatchEvent(event);
+        document.dispatchEvent(proposalEvent);
         
         // Close the dialog
         onClose();
