@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send, DollarSign, Clock, Upload, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,8 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProposalNegotiationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposal: any;
-  onUpdate?: (updatedProposal: any) => void;
+  proposalId: string;
+  currentOffer: number;
+  clientName: string;
+  trackTitle: string;
 }
 
 interface NegotiationMessage {
@@ -23,11 +25,13 @@ interface NegotiationMessage {
   created_at: string;
 }
 
-export function ProposalNegotiationDialog({
+export default function ProposalNegotiationDialog({
   isOpen,
   onClose,
-  proposal,
-  onUpdate
+  proposalId,
+  currentOffer,
+  clientName,
+  trackTitle
 }: ProposalNegotiationDialogProps) {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
@@ -37,23 +41,13 @@ export function ProposalNegotiationDialog({
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  const proposalId = proposal?.id;
-  const currentOffer = proposal?.sync_fee;
-  const clientName = proposal?.client?.full_name;
-  const trackTitle = proposal?.track?.title;
 
   useEffect(() => {
     if (isOpen) {
       fetchNegotiationHistory();
     }
-  }, [isOpen, proposal]);
+  }, [isOpen, proposalId]);
 
-  // Handle click outside to close dialog
-  useEffect(() => {
-    // Keep dialog open even when clicking outside
-  }, [isOpen, onClose]);
   const fetchNegotiationHistory = async () => {
     try {
       const { data, error } = await supabase
@@ -173,22 +167,13 @@ export function ProposalNegotiationDialog({
         })
       });
 
-      // Update parent component if callback provided
-      if (onUpdate) {
-        const updatedProposal = {
-          ...proposal,
-          negotiation_status: 'negotiating'
-        };
-        onUpdate(updatedProposal);
-      }
-      
       // Reset form
       setMessage('');
       setCounterOffer('');
       setCounterTerms('');
       setSelectedFile(null);
 
-      // Refresh messages - fetch the updated list instead of manually adding
+      // Refresh messages
       await fetchNegotiationHistory();
     } catch (err) {
       console.error('Error submitting negotiation:', err);
@@ -202,7 +187,7 @@ export function ProposalNegotiationDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div ref={dialogRef} className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white/5 backdrop-blur-md p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Negotiate Proposal</h2>
@@ -358,5 +343,3 @@ export function ProposalNegotiationDialog({
     </div>
   );
 }
-
-export default ProposalNegotiationDialog
