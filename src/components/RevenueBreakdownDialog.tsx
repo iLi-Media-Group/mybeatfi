@@ -294,12 +294,16 @@ export function RevenueBreakdownDialog({
       
       // Add producer info if available
       if (producerId) {
-        // Fetch producer details
-        const { data: producerData } = await supabase
+        // Fetch detailed producer details
+        const { data: producerData, error: producerError } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email, producer_number')
+          .select('id, first_name, last_name, email, producer_number')
           .eq('id', producerId)
           .single();
+
+        if (producerError) {
+          console.error('Error fetching producer details:', producerError);
+        }
           
         if (producerData) {
           doc.setFontSize(14);
@@ -309,6 +313,7 @@ export function RevenueBreakdownDialog({
           if (producerData.producer_number) {
             doc.text(`ID: ${producerData.producer_number}`, 14, 39);
           }
+          doc.text(`Producer ID: ${producerData.id}`, 14, 46);
         }
       }
       
@@ -327,7 +332,7 @@ export function RevenueBreakdownDialog({
         dateRangeText = 'All Time';
       }
       
-      const yPos = producerId ? 46 : 25;
+      const yPos = producerId ? 53 : 25;
       doc.text(`Time Period: ${dateRangeText}`, 105, yPos, { align: 'center' });
       doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 5, { align: 'center' });
       
