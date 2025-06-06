@@ -5,6 +5,7 @@ import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
 import ProducerProfile from './ProducerProfile';
 import { ProposalAnalytics } from './ProposalAnalytics';
+import { User } from 'lucide-react';
 import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
 import RevenueBreakdownDialog from './RevenueBreakdownDialog';
@@ -59,6 +60,7 @@ export function AdminDashboard() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
