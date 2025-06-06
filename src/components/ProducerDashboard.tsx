@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
@@ -35,7 +36,7 @@ import ProposalNegotiationDialog from './ProposalNegotiationDialog';
 import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 import ProposalDetailDialog from './ProposalDetailDialog';
-import { X } from 'lucide-react';
+
 
 
 
