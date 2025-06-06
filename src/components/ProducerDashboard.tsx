@@ -37,7 +37,7 @@ interface Track {
   id: string;
   title: string;
   artist: string;
-  genres: string[];
+  genres: string[] | string;
   bpm: number;
   duration: string;
   audio_url: string;
@@ -284,36 +284,36 @@ export default function ProducerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
+          <p className="mt-4 text-gray-300">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Producer Dashboard</h1>
-              <p className="text-gray-600">Manage your tracks and sync proposals</p>
+              <h1 className="text-3xl font-bold text-white">Producer Dashboard</h1>
+              <p className="text-gray-300">Manage your tracks and sync proposals</p>
             </div>
             <div className="flex space-x-4">
               <button
                 onClick={() => setShowProfileDialog(true)}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
               >
                 <User className="w-5 h-5 mr-2" />
                 Profile
               </button>
               <button
                 onClick={() => setShowUploadForm(true)}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
               >
                 <Upload className="w-5 h-5 mr-2" />
                 Upload Track
@@ -323,97 +323,97 @@ export default function ProducerDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center">
-              <Music className="w-8 h-8 text-blue-600" />
+              <Music className="w-8 h-8 text-blue-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Tracks</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalTracks}</p>
+                <p className="text-sm font-medium text-gray-400">Total Tracks</p>
+                <p className="text-2xl font-bold text-white">{stats.totalTracks}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-green-600" />
+              <DollarSign className="w-8 h-8 text-green-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSales}</p>
+                <p className="text-sm font-medium text-gray-400">Total Sales</p>
+                <p className="text-2xl font-bold text-white">{stats.totalSales}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowRevenueBreakdown(true)}>
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-colors" onClick={() => setShowRevenueBreakdown(true)}>
             <div className="flex items-center">
-              <TrendingUp className="w-8 h-8 text-purple-600" />
+              <TrendingUp className="w-8 h-8 text-purple-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-sm font-medium text-gray-400">Total Revenue</p>
+                <p className="text-2xl font-bold text-white">${stats.totalRevenue.toFixed(2)}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-orange-600" />
+              <Calendar className="w-8 h-8 text-orange-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">${stats.monthlyRevenue.toFixed(2)}</p>
+                <p className="text-sm font-medium text-gray-400">This Month</p>
+                <p className="text-2xl font-bold text-white">${stats.monthlyRevenue.toFixed(2)}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <Clock className="w-8 h-8 text-yellow-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingProposals}</p>
+                <p className="text-sm font-medium text-gray-400">Pending</p>
+                <p className="text-2xl font-bold text-white">{stats.pendingProposals}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Accepted</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.acceptedProposals}</p>
+                <p className="text-sm font-medium text-gray-400">Accepted</p>
+                <p className="text-2xl font-bold text-white">{stats.acceptedProposals}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-blue-500/20 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium ${
                 activeTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('tracks')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium ${
                 activeTab === 'tracks'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
               My Tracks ({tracks.length})
             </button>
             <button
               onClick={() => setActiveTab('proposals')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium ${
                 activeTab === 'proposals'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
               Sync Proposals ({proposals.length})
@@ -425,66 +425,70 @@ export default function ProducerDashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
+              <div className="px-6 py-4 border-b border-blue-500/20">
+                <h3 className="text-lg font-medium text-white">Recent Activity</h3>
               </div>
               <div className="p-6">
                 {proposals.slice(0, 5).length > 0 ? (
                   <div className="space-y-4">
                     {proposals.slice(0, 5).map((proposal) => (
-                      <div key={proposal.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={proposal.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                         <div className="flex items-center space-x-4">
-                          <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(proposal.status)}`}>
-                            {getStatusIcon(proposal.status)}
-                            <span className="ml-1 capitalize">{proposal.status}</span>
+                          <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                            proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
+                            proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            <span className="capitalize">{proposal.status}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{proposal.track?.title}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium text-white">{proposal.track?.title}</p>
+                            <p className="text-sm text-gray-400">
                               {proposal.project_type} • ${proposal.sync_fee} • {proposal.client?.full_name}
                             </p>
                           </div>
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-400">
                           {new Date(proposal.created_at).toLocaleDateString()}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-8">No recent activity</p>
+                  <p className="text-gray-400 text-center py-8">No recent activity</p>
                 )}
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
+              <div className="px-6 py-4 border-b border-blue-500/20">
+                <h3 className="text-lg font-medium text-white">Quick Actions</h3>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
                     onClick={() => setShowUploadForm(true)}
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
                   >
-                    <Upload className="w-6 h-6 text-gray-400 mr-2" />
-                    <span className="text-gray-600">Upload New Track</span>
+                    <Upload className="w-6 h-6 text-blue-400 mr-2" />
+                    <span className="text-gray-300">Upload New Track</span>
                   </button>
                   <Link
                     to="/producer/analytics"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
                   >
-                    <BarChart3 className="w-6 h-6 text-gray-400 mr-2" />
-                    <span className="text-gray-600">View Analytics</span>
+                    <BarChart3 className="w-6 h-6 text-blue-400 mr-2" />
+                    <span className="text-gray-300">View Analytics</span>
                   </Link>
                   <Link
                     to="/producer/sales"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
                   >
-                    <DollarSign className="w-6 h-6 text-gray-400 mr-2" />
-                    <span className="text-gray-600">View Sales</span>
+                    <DollarSign className="w-6 h-6 text-blue-400 mr-2" />
+                    <span className="text-gray-300">View Sales</span>
                   </Link>
                 </div>
               </div>
@@ -493,13 +497,13 @@ export default function ProducerDashboard() {
         )}
 
         {activeTab === 'tracks' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
+            <div className="px-6 py-4 border-b border-blue-500/20">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">My Tracks</h3>
+                <h3 className="text-lg font-medium text-white">My Tracks</h3>
                 <button
                   onClick={() => setShowUploadForm(true)}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Track
@@ -508,26 +512,26 @@ export default function ProducerDashboard() {
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-black/20">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Track
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-blue-500/10">
                   {tracks.map((track) => (
-                    <tr key={track.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={track.id} className="hover:bg-white/5">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
                           <img
                             className="h-12 w-12 rounded-lg object-cover"
@@ -535,41 +539,45 @@ export default function ProducerDashboard() {
                             alt={track.title}
                           />
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{track.title}</div>
-                            <div className="text-sm text-gray-500">{track.artist}</div>
+                            <div className="text-sm font-medium text-white">{track.title}</div>
+                            <div className="text-sm text-gray-400">{track.artist}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {track.genres.join(', ')} • {track.bpm} BPM
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white">
+                          {Array.isArray(track.genres) 
+                            ? track.genres.join(', ') 
+                            : typeof track.genres === 'string' 
+                              ? track.genres.split(',').map(g => g.trim()).join(', ') 
+                              : ''} • {track.bpm} BPM
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-400">
                           {track.key} • {track.duration}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-400">
                         {new Date(track.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleViewProposals(track)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-400 hover:text-blue-300"
                             title="View Proposals"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleTrackEdit(track)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-purple-400 hover:text-purple-300"
                             title="Edit Track"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleTrackDelete(track)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-400 hover:text-red-300"
                             title="Delete Track"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -582,13 +590,13 @@ export default function ProducerDashboard() {
               </table>
               {tracks.length === 0 && (
                 <div className="text-center py-12">
-                  <Music className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No tracks</h3>
-                  <p className="mt-1 text-sm text-gray-500">Get started by uploading your first track.</p>
+                  <Music className="mx-auto h-12 w-12 text-gray-500" />
+                  <h3 className="mt-2 text-sm font-medium text-white">No tracks</h3>
+                  <p className="mt-1 text-sm text-gray-400">Get started by uploading your first track.</p>
                   <div className="mt-6">
                     <button
                       onClick={() => setShowUploadForm(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Upload Track
@@ -601,81 +609,85 @@ export default function ProducerDashboard() {
         )}
 
         {activeTab === 'proposals' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Sync Proposals</h3>
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
+            <div className="px-6 py-4 border-b border-blue-500/20">
+              <h3 className="text-lg font-medium text-white">Sync Proposals</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-blue-500/10">
+                <thead className="bg-black/20">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Track
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Client
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Project
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Fee
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-blue-500/10">
                   {proposals.map((proposal) => (
-                    <tr key={proposal.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{proposal.track?.title}</div>
-                        <div className="text-sm text-gray-500">{proposal.track?.artist}</div>
+                    <tr key={proposal.id} className="hover:bg-white/5">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-white">{proposal.track?.title}</div>
+                        <div className="text-sm text-gray-400">{proposal.track?.artist}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{proposal.client?.full_name}</div>
-                        <div className="text-sm text-gray-500">{proposal.client?.email}</div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white">{proposal.client?.full_name}</div>
+                        <div className="text-sm text-gray-400">{proposal.client?.email}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{proposal.project_type}</div>
-                        <div className="text-sm text-gray-500">
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white">{proposal.project_type}</div>
+                        <div className="text-sm text-gray-400">
                           {proposal.duration} • {proposal.is_exclusive ? 'Exclusive' : 'Non-exclusive'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${proposal.sync_fee}
+                      <td className="px-6 py-4 text-sm text-green-400 font-semibold">
+                        ${proposal.sync_fee.toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(proposal.status)}`}>
-                          {getStatusIcon(proposal.status)}
-                          <span className="ml-1 capitalize">{proposal.status}</span>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                          proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
+                          proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          <span className="capitalize">{proposal.status}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex space-x-2">
                           {proposal.status === 'pending' && (
                             <>
                               <button
                                 onClick={() => handleProposalAction(proposal, 'accept')}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-400 hover:text-green-300"
                                 title="Accept Proposal"
                               >
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleProposalAction(proposal, 'reject')}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-400 hover:text-red-300"
                                 title="Reject Proposal"
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleProposalAction(proposal, 'negotiate')}
-                                className="text-blue-600 hover:text-blue-900"
+                                className="text-blue-400 hover:text-blue-300"
                                 title="Negotiate"
                               >
                                 <MessageSquare className="w-4 h-4" />
@@ -684,7 +696,7 @@ export default function ProducerDashboard() {
                           )}
                           <button
                             onClick={() => handleProposalAction(proposal, 'history')}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="text-gray-400 hover:text-gray-300"
                             title="View History"
                           >
                             <History className="w-4 h-4" />
@@ -697,9 +709,9 @@ export default function ProducerDashboard() {
               </table>
               {proposals.length === 0 && (
                 <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No proposals</h3>
-                  <p className="mt-1 text-sm text-gray-500">Sync proposals will appear here when clients are interested in your tracks.</p>
+                  <FileText className="mx-auto h-12 w-12 text-gray-500" />
+                  <h3 className="mt-2 text-sm font-medium text-white">No proposals</h3>
+                  <p className="mt-1 text-sm text-gray-400">Sync proposals will appear here when clients are interested in your tracks.</p>
                 </div>
               )}
             </div>
@@ -708,14 +720,14 @@ export default function ProducerDashboard() {
 
         {/* Upload Form Modal */}
         {showUploadForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white/5 backdrop-blur-md rounded-xl border border-purple-500/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Upload New Track</h2>
+                  <h2 className="text-2xl font-bold text-white">Upload New Track</h2>
                   <button
                     onClick={() => setShowUploadForm(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-white"
                   >
                     <XCircle className="w-6 h-6" />
                   </button>
@@ -733,29 +745,29 @@ export default function ProducerDashboard() {
         )}
 
         {/* Quick Links */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Links</h3>
+        <div className="mt-8 bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
+          <h3 className="text-lg font-medium text-white mb-4">Quick Links</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to="/producer/analytics"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
             >
-              <BarChart3 className="w-5 h-5 mr-2" />
-              View Analytics
+              <BarChart3 className="w-5 h-5 mr-2 text-blue-400" />
+              <span className="text-gray-300">View Analytics</span>
             </Link>
             <Link
               to="/producer/banking"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
             >
-              <Settings className="w-5 h-5 mr-2" />
-              Banking Settings
+              <Settings className="w-5 h-5 mr-2 text-blue-400" />
+              <span className="text-gray-300">Banking Settings</span>
             </Link>
             <Link
               to="/producer/sales"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-blue-500/20 rounded-lg hover:bg-white/5 transition-colors"
             >
-              <DollarSign className="w-5 h-5 mr-2" />
-              View All Sales
+              <DollarSign className="w-5 h-5 mr-2 text-blue-400" />
+              <span className="text-gray-300">View All Sales</span>
             </Link>
           </div>
         </div>
