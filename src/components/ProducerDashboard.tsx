@@ -468,33 +468,89 @@ export default function ProducerDashboard() {
               <div className="p-6">
                 {proposals.slice(0, 5).length > 0 ? (
                   <div className="space-y-4">
-                    {proposals.slice(0, 5).map((proposal) => (
-                      <div 
-                        key={proposal.id} 
-                        className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                        onClick={() => handleViewProposalDetails(proposal)}
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                            proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
-                            proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                            'bg-gray-500/20 text-gray-400'
-                          }`}>
-                            <span className="capitalize">{proposal.status}</span>
+                    {proposals.slice(0, 5).map((proposal) => {
+                      const isExpired = new Date(proposal.expiration_date) < new Date();
+                      const isPending = proposal.status === 'pending';
+                      
+                      return (
+                        <div 
+                          key={proposal.id} 
+                          className="p-4 bg-white/5 rounded-lg border border-purple-500/10"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <p className="text-white font-medium">
+                                  {proposal.client?.full_name || 'Unknown Client'}
+                                </p>
+                                <div className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
+                                  proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                                  'bg-gray-500/20 text-gray-400'
+                                }`}>
+                                  <span className="capitalize">{proposal.status}</span>
+                                </div>
+                                {proposal.is_urgent && (
+                                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Urgent</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-400 mt-1">
+                                Track: {proposal.track?.title || 'Unknown Track'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-semibold text-green-400">${proposal.sync_fee?.toFixed(2) || '0.00'}</p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(proposal.created_at).toLocaleDateString()} 
+                                {isExpired ? ' (Expired)' : ''}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-white">{proposal.track?.title}</p>
-                            <p className="text-sm text-gray-400">
-                              {proposal.project_type} • ${proposal.sync_fee} • {proposal.client?.full_name}
-                            </p>
+                          
+                          <div className="bg-black/20 rounded-lg p-3 mb-3">
+                            <p className="text-gray-300 line-clamp-2">{proposal.project_type}</p>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => handleProposalAction(proposal, 'history')}
+                              className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
+                              type="button"
+                            >
+                              <History className="w-3 h-3 mr-1" />
+                              View History
+                            </button>
+                            
+                            {isPending && !isExpired && (
+                              <>
+                                <button
+                                  onClick={() => handleProposalAction(proposal, 'negotiate')}
+                                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors flex items-center"
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Negotiate
+                                </button>
+                                <button
+                                  onClick={() => handleProposalAction(proposal, 'accept')}
+                                  className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors flex items-center"
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() => handleProposalAction(proposal, 'reject')}
+                                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center"
+                                >
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Decline
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
-                        <div className="text-sm text-gray-400">
-                          {new Date(proposal.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-400 text-center py-8">No recent activity</p>
