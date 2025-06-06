@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart } from 'lucide-react';
+import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +53,7 @@ export function AdminDashboard() {
   const [selectedProducer, setSelectedProducer] = useState<UserDetails | null>(null);
   const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -227,18 +228,29 @@ export function AdminDashboard() {
           <div>
             <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
             {profile && (
-              <p className="text-xl text-gray-300 mt-2">
-                Welcome {profile.first_name || profile.email.split('@')[0]}
-              </p>
+              <div className="flex items-center mt-2">
+                <p className="text-xl text-gray-300">
+                  Welcome {profile.first_name || profile.email.split('@')[0]}
+                </p>
+              </div>
             )}
           </div>
-          <button
-            onClick={() => setShowLogoUpload(!showLogoUpload)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Change Logo
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center"
+            >
+              <User className="w-5 h-5 mr-2" />
+              Profile
+            </button>
+            <button
+              onClick={() => setShowLogoUpload(!showLogoUpload)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Change Logo
+            </button>
+          </div>
         </div>
 
         {showLogoUpload && <LogoUpload />}
@@ -275,17 +287,20 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+          <div 
+            className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 cursor-pointer hover:bg-white/10 transition-colors"
+            onClick={() => setShowRevenueBreakdown(true)}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400">Total Revenue (Current Month)</p>
                 <p className="text-3xl font-bold text-white">
                   ${stats.total_revenue.toFixed(2)}
                 </p>
+                <p className="text-xs text-blue-400 mt-1">Click for detailed breakdown</p>
               </div>
               <div 
-                className="relative cursor-pointer group" 
-                onClick={() => setShowRevenueBreakdown(true)}
+                className="relative group" 
                 title="View revenue breakdown"
               >
                 <DollarSign className="w-12 h-12 text-green-500" />
@@ -545,10 +560,20 @@ export function AdminDashboard() {
       )}
       
       {/* Revenue Breakdown Dialog */}
-      <RevenueBreakdownDialog
-        isOpen={showRevenueBreakdown}
-        onClose={() => setShowRevenueBreakdown(false)}
-      />
+      {showRevenueBreakdown && (
+        <RevenueBreakdownDialog
+          isOpen={showRevenueBreakdown}
+          onClose={() => setShowRevenueBreakdown(false)}
+          stats={stats}
+        />
+      )}
+      
+      {showProfileDialog && (
+        <ProducerProfile
+          onClose={() => setShowProfileDialog(false)}
+          onUpdate={() => fetchData()}
+        />
+      )}
     </div>
   );
 }
