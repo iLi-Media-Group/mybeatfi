@@ -3,7 +3,7 @@ import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, Mess
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
-import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 
 interface TrackProposalsDialogProps {
