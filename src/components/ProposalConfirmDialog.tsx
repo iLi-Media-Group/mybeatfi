@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, AlertTriangle, Check, XCircle, Loader2 } from 'lucide-react';
 
 interface ProposalConfirmDialogProps {
@@ -35,6 +35,7 @@ export default function ProposalConfirmDialog({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onClose]);
+  
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
