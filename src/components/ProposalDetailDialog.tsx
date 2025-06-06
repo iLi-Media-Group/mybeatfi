@@ -147,10 +147,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const proposalEvent = new CustomEvent('proposal-action', {
-          detail: { action: 'history', proposal }
+        const event = new CustomEvent('proposal-action', {
+          detail: {
+            action: 'history',
+            proposal
+          }
         });
-        document.dispatchEvent(proposalEvent);
+        document.dispatchEvent(event);
         
         // Close the dialog
         onClose();
@@ -168,10 +171,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const proposalEvent = new CustomEvent('proposal-action', {
-          detail: { action: 'negotiate', proposal }
+        const event = new CustomEvent('proposal-action', {
+          detail: {
+            action: 'negotiate',
+            proposal
+          }
         });
-        document.dispatchEvent(proposalEvent);
+        document.dispatchEvent(event);
         
         // Close the dialog
         onClose();
@@ -196,10 +202,14 @@ export default function ProposalDetailDialog({
         }
         
         // Otherwise, this is a producer accepting a client proposal
-        const proposalEvent = new CustomEvent('proposal-action', {
-          detail: { action: 'accept', proposal }
+        // Create and dispatch the custom event
+        const event = new CustomEvent('proposal-action', {
+          detail: {
+            action: 'accept',
+            proposal
+          }
         });
-        document.dispatchEvent(proposalEvent);
+        document.dispatchEvent(event);
         
         // Close the dialog
         onClose();
@@ -217,10 +227,13 @@ export default function ProposalDetailDialog({
     if (proposal?.id) {
       try {
         // Create and dispatch the custom event
-        const proposalEvent = new CustomEvent('proposal-action', {
-          detail: { action: 'reject', proposal }
+        const event = new CustomEvent('proposal-action', {
+          detail: {
+            action: 'reject',
+            proposal
+          }
         });
-        document.dispatchEvent(proposalEvent);
+        document.dispatchEvent(event);
         
         // Close the dialog
         onClose();

@@ -125,7 +125,7 @@ export default function ProducerDashboard() {
   // Add event listener for proposal actions from the ProposalDetailDialog
   useEffect(() => {
     const handleProposalAction = (event: CustomEvent) => {
-      console.log('Received proposal action event:', event.detail);
+      // Extract action and proposal from the event
       const { action, proposal } = event.detail;
       if (proposal) {
         setSelectedProposal(proposal);
@@ -730,21 +730,30 @@ export default function ProducerDashboard() {
                           {proposal.status === 'pending' && (
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => handleProposalAction(proposal, 'accept')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProposalAction(proposal, 'accept');
+                                }}
                                 className="text-green-400 hover:text-green-300"
                                 title="Accept Proposal"
                               >
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleProposalAction(proposal, 'reject')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProposalAction(proposal, 'reject');
+                                }}
                                 className="text-red-400 hover:text-red-300"
                                 title="Reject Proposal"
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleProposalAction(proposal, 'negotiate')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProposalAction(proposal, 'negotiate');
+                                }}
                                 className="text-blue-400 hover:text-blue-300"
                                 title="Negotiate"
                               >
@@ -753,7 +762,10 @@ export default function ProducerDashboard() {
                             </div>
                           )}
                           <button
-                            onClick={() => handleProposalAction(proposal, 'history')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'history');
+                            }}
                             className="text-gray-400 hover:text-gray-300"
                             title="View History"
                           >
