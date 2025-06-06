@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface ProposalHistoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
+  proposal: any;
 }
 
 interface HistoryEntry {
@@ -50,7 +50,7 @@ interface ProposalFile {
 export default function ProposalHistoryDialog({
   isOpen,
   onClose,
-  proposalId
+  proposal
 }: ProposalHistoryDialogProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [negotiations, setNegotiations] = useState<NegotiationMessage[]>([]);
@@ -60,11 +60,11 @@ export default function ProposalHistoryDialog({
 
   useEffect(() => {
     if (isOpen) {
-      fetchHistory();
+      fetchHistory(proposal.id);
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposal]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (proposalId: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -162,10 +162,13 @@ export default function ProposalHistoryDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-8 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Proposal History</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Proposal History</h2>
+            <p className="text-gray-400">Track: {proposal.track?.title}</p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"

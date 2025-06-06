@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AudioPlayer } from './AudioPlayer';
 import { 
   Upload, 
@@ -89,6 +90,7 @@ interface DashboardStats {
 
 export default function ProducerDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [tracks, setTracks] = useState<Track[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -112,7 +114,9 @@ export default function ProducerDashboard() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [selectedProposalForDetails, setSelectedProposalForDetails] = useState<Proposal | null>(null);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
+  const [profile, setProfile] = useState<{ first_name?: string, last_name?: string, email: string, avatar_path?: string | null } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -125,6 +129,18 @@ export default function ProducerDashboard() {
 
     try {
       setLoading(true);
+      
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, avatar_path')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      if (profileData) {
+        setProfile(profileData);
+      }
 
       // Fetch tracks
       const { data: tracksData, error: tracksError } = await supabase
@@ -187,6 +203,10 @@ export default function ProducerDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewProposalDetails = (proposal: Proposal) => {
+    setSelectedProposalForDetails(proposal);
   };
 
   const handleTrackEdit = (track: Track) => {
@@ -264,6 +284,10 @@ export default function ProducerDashboard() {
     }
   };
 
+  const handleViewTrack = (trackId: string) => {
+    navigate(`/track/${trackId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'text-yellow-600 bg-yellow-100';
@@ -304,6 +328,11 @@ export default function ProducerDashboard() {
             <div>
               <h1 className="text-3xl font-bold text-white">Producer Dashboard</h1>
               <p className="text-gray-300">Manage your tracks and sync proposals</p>
+              {profile && (
+                <p className="text-xl text-gray-300 mt-2">
+                  Welcome {profile.first_name || profile.email.split('@')[0]}
+                </p>
+              )}
             </div>
             <div className="flex space-x-4">
               <button
@@ -325,8 +354,8 @@ export default function ProducerDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
             <div className="flex items-center">
               <Music className="w-8 h-8 text-blue-500" />
               <div className="ml-4">
@@ -336,7 +365,7 @@ export default function ProducerDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
             <div className="flex items-center">
               <DollarSign className="w-8 h-8 text-green-500" />
               <div className="ml-4">
@@ -346,42 +375,16 @@ export default function ProducerDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-colors" onClick={() => setShowRevenueBreakdown(true)}>
+          <div 
+            className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" 
+            onClick={() => setShowRevenueBreakdown(true)}
+          >
             <div className="flex items-center">
               <TrendingUp className="w-8 h-8 text-purple-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">Total Revenue</p>
                 <p className="text-2xl font-bold text-white">${stats.totalRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-orange-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">This Month</p>
-                <p className="text-2xl font-bold text-white">${stats.monthlyRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Pending</p>
-                <p className="text-2xl font-bold text-white">{stats.pendingProposals}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Accepted</p>
-                <p className="text-2xl font-bold text-white">{stats.acceptedProposals}</p>
+                <p className="text-xs text-blue-400 mt-1">Click for detailed breakdown</p>
               </div>
             </div>
           </div>
@@ -435,7 +438,11 @@ export default function ProducerDashboard() {
                 {proposals.slice(0, 5).length > 0 ? (
                   <div className="space-y-4">
                     {proposals.slice(0, 5).map((proposal) => (
-                      <div key={proposal.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div 
+                        key={proposal.id} 
+                        className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                        onClick={() => handleViewProposalDetails(proposal)}
+                      >
                         <div className="flex items-center space-x-4">
                           <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -473,21 +480,21 @@ export default function ProducerDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
                     onClick={() => setShowUploadForm(true)}
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
                   >
                     <Upload className="w-6 h-6 text-blue-400 mr-2" />
                     <span className="text-gray-300">Upload New Track</span>
                   </button>
                   <Link
                     to="/producer/analytics"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
                   >
                     <BarChart3 className="w-6 h-6 text-blue-400 mr-2" />
                     <span className="text-gray-300">View Analytics</span>
                   </Link>
                   <Link
                     to="/producer/sales"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-colors"
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
                   >
                     <DollarSign className="w-6 h-6 text-blue-400 mr-2" />
                     <span className="text-gray-300">View Sales</span>
@@ -536,11 +543,13 @@ export default function ProducerDashboard() {
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <Link to={`/track/${track.id}`}>
-                            <img
-                              className="h-12 w-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                              src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'}
-                              alt={track.title}
-                            />
+                            <div className="h-12 w-12 rounded-lg overflow-hidden">
+                              <img
+                                className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'}
+                                alt={track.title}
+                              />
+                            </div>
                           </Link>
                           <div className="ml-4">
                             <Link to={`/track/${track.id}`} className="text-sm font-medium text-white hover:text-blue-400 transition-colors">{track.title}</Link>
@@ -569,37 +578,28 @@ export default function ProducerDashboard() {
                       <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewProposals(track);
-                            }}
+                            onClick={() => handleViewProposals(track)}
                             className="text-blue-400 hover:text-blue-300"
                             title="View Proposals"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTrackEdit(track);
-                            }}
+                            onClick={() => handleTrackEdit(track)}
                             className="text-purple-400 hover:text-purple-300"
                             title="Edit Track"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTrackDelete(track);
-                            }}
+                            onClick={() => handleTrackDelete(track)}
                             className="text-red-400 hover:text-red-300"
                             title="Delete Track"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                           <Link 
-                            to={`/track/${track.id}`}
+                            to={`/track/${track.id}`} 
                             className="text-green-400 hover:text-green-300"
                             title="View Track Page"
                           >
@@ -664,7 +664,12 @@ export default function ProducerDashboard() {
                   {proposals.map((proposal) => (
                     <tr key={proposal.id} className="hover:bg-white/5">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-white">{proposal.track?.title}</div>
+                        <div 
+                          className="text-sm font-medium text-white hover:text-blue-400 transition-colors cursor-pointer"
+                          onClick={() => handleViewTrack(proposal.track_id)}
+                        >
+                          {proposal.track?.title}
+                        </div>
                         <div className="text-sm text-gray-400">{proposal.track?.artist}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -693,7 +698,7 @@ export default function ProducerDashboard() {
                       <td className="px-6 py-4 text-sm font-medium">
                         <div className="flex space-x-2">
                           {proposal.status === 'pending' && (
-                            <>
+                            <div className="flex space-x-2">
                               <button
                                 onClick={() => handleProposalAction(proposal, 'accept')}
                                 className="text-green-400 hover:text-green-300"
@@ -715,7 +720,7 @@ export default function ProducerDashboard() {
                               >
                                 <MessageSquare className="w-4 h-4" />
                               </button>
-                            </>
+                            </div>
                           )}
                           <button
                             onClick={() => handleProposalAction(proposal, 'history')}
@@ -743,7 +748,7 @@ export default function ProducerDashboard() {
 
         {/* Upload Form Modal */}
         {showUploadForm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-gray-900 rounded-xl border border-purple-500/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -755,13 +760,7 @@ export default function ProducerDashboard() {
                     <XCircle className="w-6 h-6" />
                   </button>
                 </div>
-                <TrackUploadForm
-                  onSuccess={() => {
-                    setShowUploadForm(false);
-                    fetchDashboardData();
-                  }}
-                  onCancel={() => setShowUploadForm(false)}
-                />
+                <TrackUploadForm />
               </div>
             </div>
           </div>
@@ -840,8 +839,9 @@ export default function ProducerDashboard() {
 
         {showRevenueBreakdown && (
           <RevenueBreakdownDialog
-            stats={stats}
+            isOpen={showRevenueBreakdown}
             onClose={() => setShowRevenueBreakdown(false)}
+            stats={stats}
           />
         )}
 
@@ -880,6 +880,122 @@ export default function ProducerDashboard() {
             }}
             onConfirm={() => handleProposalStatusChange(confirmAction)}
           />
+        )}
+        
+        {/* Proposal Details Dialog */}
+        {selectedProposalForDetails && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Proposal Details</h2>
+                <button
+                  onClick={() => setSelectedProposalForDetails(null)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{selectedProposalForDetails.track?.title}</h3>
+                      <p className="text-gray-400">
+                        Client: {selectedProposalForDetails.client?.full_name}
+                      </p>
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      selectedProposalForDetails.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      selectedProposalForDetails.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
+                      selectedProposalForDetails.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                      'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      <span className="capitalize">{selectedProposalForDetails.status}</span>
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-gray-400 text-sm">Sync Fee</p>
+                      <p className="text-2xl font-bold text-green-400">${selectedProposalForDetails.sync_fee.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm">Payment Terms</p>
+                      <p className="text-white">{selectedProposalForDetails.payment_terms || 'Immediate'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm">Submitted</p>
+                      <p className="text-white">{new Date(selectedProposalForDetails.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm">Expires</p>
+                      <p className="text-white">{new Date(selectedProposalForDetails.expiration_date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">Project Description</h4>
+                    <p className="text-gray-300 whitespace-pre-wrap">{selectedProposalForDetails.project_type}</p>
+                  </div>
+                  
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedProposal(selectedProposalForDetails);
+                        setShowHistoryDialog(true);
+                        setSelectedProposalForDetails(null);
+                      }}
+                      className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
+                    >
+                      <History className="w-4 h-4 mr-1" />
+                      View History
+                    </button>
+                    
+                    {selectedProposalForDetails.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setSelectedProposal(selectedProposalForDetails);
+                            setShowNegotiationDialog(true);
+                            setSelectedProposalForDetails(null);
+                          }}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
+                        >
+                          <MessageSquare className="w-4 h-4 mr-1" />
+                          Negotiate
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedProposal(selectedProposalForDetails);
+                            setConfirmAction('accept');
+                            setShowConfirmDialog(true);
+                            setSelectedProposalForDetails(null);
+                          }}
+                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedProposal(selectedProposalForDetails);
+                            setConfirmAction('reject');
+                            setShowConfirmDialog(true);
+                            setSelectedProposalForDetails(null);
+                          }}
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Decline
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

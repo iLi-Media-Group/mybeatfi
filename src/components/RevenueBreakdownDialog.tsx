@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { X, DollarSign, Download, PieChart, Calendar, FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
-interface RevenueBreakdownDialogProps {
+export interface RevenueBreakdownDialogProps {
   isOpen: boolean;
   onClose: () => void;
   producerId?: string; // Optional - if provided, shows only this producer's revenue
+  stats?: {
+    totalRevenue: number;
+    totalSales: number;
+    monthlyRevenue: number;
+  };
 }
 
 interface RevenueSource {
@@ -22,10 +27,11 @@ interface MonthlyRevenue {
   amount: number;
 }
 
-export default function RevenueBreakdownDialog({
+export function RevenueBreakdownDialog({
   isOpen,
   onClose,
-  producerId
+  producerId,
+  stats
 }: RevenueBreakdownDialogProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,10 +195,13 @@ export default function RevenueBreakdownDialog({
       // Calculate total revenue
       const total = allSources.reduce((sum, source) => sum + source.amount, 0);
 
+      // If stats are provided, use those values instead
+      const finalTotal = stats?.totalRevenue || total;
+
       // Calculate percentages
       const sourcesWithPercentage = allSources.map(source => ({
         ...source,
-        percentage: total > 0 ? (source.amount / total) * 100 : 0
+        percentage: finalTotal > 0 ? (source.amount / finalTotal) * 100 : 0
       }));
 
       // Sort by amount descending
@@ -262,7 +271,7 @@ export default function RevenueBreakdownDialog({
 
       setRevenueSources(sortedSources);
       setMonthlyRevenue(monthlyData);
-      setTotalRevenue(total);
+      setTotalRevenue(finalTotal);
     } catch (err) {
       console.error('Error fetching revenue breakdown:', err);
       setError('Failed to load revenue data');
@@ -317,7 +326,7 @@ export default function RevenueBreakdownDialog({
         `${source.percentage.toFixed(1)}%`
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: 55,
         head: [['Source', 'Amount', 'Count', 'Percentage']],
         body: sourceTableData,
@@ -336,7 +345,7 @@ export default function RevenueBreakdownDialog({
         `$${item.amount.toFixed(2)}`
       ]);
       
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: tableEndY + 5,
         head: [['Month', 'Revenue']],
         body: monthlyTableData,
@@ -554,3 +563,5 @@ export default function RevenueBreakdownDialog({
     </div>
   );
 }
+
+export default RevenueBreakdownDialog;

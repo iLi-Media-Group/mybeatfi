@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, Phone, MapPin, Building2, Hash } from 'lucide-react';
+import { User, Mail, X, Camera, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
+import { ProfileBioSection } from './ProfileBioSection';
 
 interface ProducerProfileProps {
-  isOpen: boolean;
   onClose: () => void;
+  onUpdate: () => void;
 }
 
-function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
+function ProducerProfile({ onClose, onUpdate }: ProducerProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -21,16 +23,19 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [country, setCountry] = useState('');
+  const [bio, setBio] = useState('');
+  const [showLocation, setShowLocation] = useState(false);
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (isOpen && user) {
+    if (user) {
       fetchProfile();
     }
-  }, [isOpen, user]);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
@@ -55,6 +60,9 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         setState(data.state || '');
         setPostalCode(data.postal_code || '');
         setCountry(data.country || '');
+        setBio(data.bio || '');
+        setShowLocation(data.show_location || false);
+        setAvatarPath(data.avatar_path || null);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -62,6 +70,10 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePhotoUpdate = (url: string) => {
+    setAvatarPath(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +97,8 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
           state: state.trim() || null,
           postal_code: postalCode.trim() || null,
           country: country.trim() || null,
+          bio: bio.trim() || null,
+          show_location: showLocation,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -95,6 +109,9 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
+      
+      // Call the onUpdate callback to refresh parent component data
+      onUpdate();
     } catch (err) {
       console.error('Error updating profile:', err);
       setError('Failed to update profile');
@@ -103,11 +120,9 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Producer Profile</h2>
           <button
@@ -135,6 +150,15 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
                 <p className="text-green-400 text-center">Profile updated successfully!</p>
               </div>
             )}
+
+            <div className="flex justify-center mb-6">
+              <ProfilePhotoUpload
+                currentPhotoUrl={avatarPath}
+                onPhotoUpdate={handlePhotoUpdate}
+                size="lg"
+                userId={user?.id}
+              />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -304,6 +328,16 @@ function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
                 </div>
               </div>
             </div>
+
+            <ProfileBioSection
+              bio={bio}
+              showLocation={showLocation}
+              city={city}
+              state={state}
+              onBioChange={setBio}
+              onShowLocationChange={setShowLocation}
+              disabled={saving}
+            />
 
             <button
               type="submit"

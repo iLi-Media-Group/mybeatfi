@@ -20,7 +20,7 @@ export function ProfilePhotoUpload({ currentPhotoUrl, onPhotoUpdate, size = 'md'
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  
   // Check if this is the logged-in user's profile
   const isOwnProfile = user?.id === userId;
 
