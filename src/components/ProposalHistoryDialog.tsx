@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Clock, DollarSign, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProposalHistoryDialogProps {
   isOpen: boolean;
