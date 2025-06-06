@@ -124,29 +124,36 @@ export default function ProducerDashboard() {
 
   // Add event listener for proposal actions from the ProposalDetailDialog
   useEffect(() => {
-    const handleProposalAction = (event: CustomEvent) => {
-      console.log('Received proposal action event:', event.detail);
-      const { action, proposal } = event.detail;
-      if (proposal) {
-        setSelectedProposal(proposal);
-        
-        if (action === 'negotiate') {
+  const handleProposalAction = (event: CustomEvent) => {
+    const { action, proposal } = event.detail;
+    console.log('Received proposal action event:', event.detail);
+
+    if (proposal) {
+      setSelectedProposal(proposal);
+
+      switch (action) {
+        case 'negotiate':
           setShowNegotiationDialog(true);
-        } else if (action === 'history') {
+          break;
+        case 'history':
           setShowHistoryDialog(true);
-        } else if (action === 'accept' || action === 'reject') {
+          break;
+        case 'accept':
+        case 'reject':
           setConfirmAction(action);
           setShowConfirmDialog(true);
-        }
+          break;
+        default:
+          break;
       }
-    };
-    
-    document.addEventListener('proposal-action', handleProposalAction as EventListener);
-    
-    return () => {
-      document.removeEventListener('proposal-action', handleProposalAction as EventListener);
-    };
-  }, []);
+    }
+  };
+
+  document.addEventListener('proposal-action', handleProposalAction as EventListener);
+  return () => {
+    document.removeEventListener('proposal-action', handleProposalAction as EventListener);
+  };
+}, []);
 
   useEffect(() => {
     if (user) {
@@ -876,41 +883,42 @@ export default function ProducerDashboard() {
         )}
 
         {showNegotiationDialog && selectedProposal && (
-          <ProposalNegotiationDialog
-            proposal={selectedProposal}
-            onClose={() => {
-              setShowNegotiationDialog(false);
-              setSelectedProposal(null);
-            }}
-            onUpdate={(updatedProposal) => {
-              setProposals(proposals.map(p => p.id === updatedProposal.id ? updatedProposal : p));
-              setShowNegotiationDialog(false);
-              setSelectedProposal(null);
-            }}
-          />
-        )}
+  <ProposalNegotiationDialog
+    proposal={selectedProposal}
+    onClose={() => {
+      setShowNegotiationDialog(false);
+      setSelectedProposal(null);
+    }}
+    onUpdate={(updatedProposal) => {
+      setProposals(proposals.map(p => p.id === updatedProposal.id ? updatedProposal : p));
+      setShowNegotiationDialog(false);
+      setSelectedProposal(null);
+    }}
+  />
+)}
 
-        {showHistoryDialog && selectedProposal && (
-          <ProposalHistoryDialog
-            proposal={selectedProposal}
-            onClose={() => {
-              setShowHistoryDialog(false);
-              setSelectedProposal(null);
-            }}
-          />
-        )}
+{showHistoryDialog && selectedProposal && (
+  <ProposalHistoryDialog
+    proposal={selectedProposal}
+    onClose={() => {
+      setShowHistoryDialog(false);
+      setSelectedProposal(null);
+    }}
+  />
+)}
 
-        {showConfirmDialog && selectedProposal && (
-          <ProposalConfirmDialog
-            proposal={selectedProposal}
-            action={confirmAction}
-            onClose={() => {
-              setShowConfirmDialog(false);
-              setSelectedProposal(null);
-            }}
-            onConfirm={() => handleProposalStatusChange(confirmAction)}
-          />
-        )}
+{showConfirmDialog && selectedProposal && confirmAction && (
+  <ProposalConfirmDialog
+    proposal={selectedProposal}
+    action={confirmAction}
+    onClose={() => {
+      setShowConfirmDialog(false);
+      setSelectedProposal(null);
+      setConfirmAction(null); // ✅ Clear the action
+    }}
+    onConfirm={() => handleProposalStatusChange(confirmAction)}
+  />
+)}
         
         {/* Proposal Details Dialog */}
         {selectedProposalForDetails && (
