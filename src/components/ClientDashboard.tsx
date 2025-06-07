@@ -99,9 +99,12 @@ export function ClientDashboard() {
   useEffect(() => {
     if (user) {
       // Refresh membership info first to ensure we have the latest data
-      refreshMembership().then(() => {
-        fetchDashboardData();
-      });
+      refreshMembership()
+        .then(() => fetchDashboardData())
+        .catch(err => {
+          console.error('Error refreshing membership:', err);
+          fetchDashboardData();
+        });
     }
   }, [user, membershipPlan]);
 

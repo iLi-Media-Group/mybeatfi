@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react'; 
+import { X, Loader2, Calendar } from 'lucide-react'; 
 
 interface EditRequestDialogProps {
   isOpen: boolean;
@@ -8,11 +8,13 @@ interface EditRequestDialogProps {
     project_title: string;
     project_description: string;
     sync_fee: number;
+    end_date: string;
   };
   onSave: (updatedRequest: Partial<{
     project_title: string;
     project_description: string;
     sync_fee: number;
+    end_date: string;
   }>) => Promise<void>;
 }
 
@@ -20,6 +22,7 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
   const [title, setTitle] = useState(request.project_title);
   const [description, setDescription] = useState(request.project_description);
   const [syncFee, setSyncFee] = useState(request.sync_fee.toString());
+  const [endDate, setEndDate] = useState(request.end_date ? new Date(request.end_date).toISOString().split('T')[0] : '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,6 +38,7 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
         project_title: title,
         project_description: description,
         sync_fee: parseFloat(syncFee)
+        end_date: endDate ? new Date(endDate).toISOString() : request.end_date
       });
 
       onClose();
@@ -99,6 +103,21 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Due Date
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full pl-10"
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
           <div className="flex justify-end space-x-4 mt-6">
             <button
               type="button"

@@ -29,7 +29,11 @@ export function CheckoutSuccessPage() {
 
         // Refresh membership status
         if (user) {
-          await refreshMembership();
+          try {
+            await refreshMembership();
+          } catch (err) {
+            console.error('Error refreshing membership:', err);
+          }
         }
 
         // Get subscription details
