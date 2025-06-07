@@ -37,9 +37,6 @@ import ProposalHistoryDialog from './ProposalHistoryDialog';
 import ProposalConfirmDialog from './ProposalConfirmDialog';
 import ProposalDetailDialog from './ProposalDetailDialog';
 
-
-
-
 interface Track {
   id: string;
   title: string;
@@ -122,11 +119,9 @@ export default function ProducerDashboard() {
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
   const [profile, setProfile] = useState<{ first_name?: string, last_name?: string, email: string, avatar_path?: string | null } | null>(null);
 
-  // Add event listener for proposal actions from the ProposalDetailDialog
   useEffect(() => {
     const handleProposalAction = (event: CustomEvent) => {
       console.log('Received proposal action event:', event.detail);
-      // Extract action and proposal from the event
       const { action, proposal } = event.detail;
       if (proposal) {
         setSelectedProposal(proposal);
@@ -161,7 +156,6 @@ export default function ProducerDashboard() {
     try {
       setLoading(true);
       
-      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, last_name, email, avatar_path')
@@ -173,7 +167,6 @@ export default function ProducerDashboard() {
         setProfile(profileData);
       }
 
-      // Fetch tracks
       const { data: tracksData, error: tracksError } = await supabase
         .from('tracks')
         .select('*')
@@ -184,7 +177,6 @@ export default function ProducerDashboard() {
       if (tracksError) throw tracksError;
       setTracks(tracksData || []);
 
-      // Fetch proposals
       const { data: proposalsData, error: proposalsError } = await supabase
         .from('sync_proposals')
         .select(`
@@ -198,7 +190,6 @@ export default function ProducerDashboard() {
       if (proposalsError) throw proposalsError;
       setProposals(proposalsData || []);
 
-      // Fetch sales stats
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select('amount, created_at')
@@ -301,7 +292,6 @@ export default function ProducerDashboard() {
 
       if (error) throw error;
 
-      // Update local state
       setProposals(proposals.map(p => 
         p.id === selectedProposal.id 
           ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected', negotiation_status: action === 'accept' ? 'agreed' : 'declined' }
@@ -944,3 +934,5 @@ export default function ProducerDashboard() {
     </div>
   );
 }
+
+export default ProducerDashboard
