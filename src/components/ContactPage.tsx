@@ -31,21 +31,8 @@ export function ContactPage() {
       if (submitError) throw submitError;
 
       // Send an email notification to the company email
-      // Send email notification using edge function
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          subject,
-          message,
-          recipientEmail: 'mybeatfisync@gmail.com'
-        })
-      });
+      // This would typically be handled by a server-side function
+      // For now, we'll just show a success message
       
       setSuccess(true);
       setName('');

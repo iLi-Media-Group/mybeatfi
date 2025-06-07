@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, AlertTriangle } from 'lucide-react';
 
 interface DeleteLicenseDialogProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export function DeleteLicenseDialog({ isOpen, onClose, license, onConfirm }: Del
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
-        <h3 className="text-xl font-bold text-white mb-4">Delete License</h3> 
+        <h3 className="text-xl font-bold text-white mb-4">Delete License</h3>
         
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">

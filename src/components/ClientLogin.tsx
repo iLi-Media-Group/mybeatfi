@@ -25,14 +25,18 @@ export function ClientLogin() {
       setError('');
       setLoading(true);
 
+      // Handle test account
+      const loginEmail = email === 'client' ? 'client@mybeatfi.com' : email;
+      const loginPassword = password === 'client' ? 'client' : password;
+
       // Check if user is an admin
-      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(email);
+      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(loginEmail);
       
       if (!isAdmin) {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('account_type')
-          .eq('email', email)
+          .eq('email', loginEmail)
           .maybeSingle();
 
         if (profileError) throw profileError;
@@ -41,10 +45,17 @@ export function ClientLogin() {
         }
       }
 
-      const { error: signInError } = await signIn(email, password);
+      const { error: signInError } = await signIn(loginEmail, loginPassword);
       
       if (signInError) {
-        throw new Error('Invalid email or password. Please check your credentials and try again.');
+        if (signInError.message === 'Invalid login credentials') {
+          if (email === 'client' && password === 'client') {
+            throw new Error('Test account is not configured. Please use a valid account or contact support.');
+          } else {
+            throw new Error('Invalid email or password. Please check your credentials and try again.');
+          }
+        }
+        throw signInError;
       }
 
       // Handle redirect based on URL params

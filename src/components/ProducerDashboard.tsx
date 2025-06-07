@@ -1,148 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, BarChart3, Upload, MessageSquare, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
-import { 
-  Upload, 
-  Music, 
-  DollarSign, 
-  TrendingUp, 
-  Users, 
-  Calendar,
-  Edit,
-  Trash2,
-  Eye,
-  MessageSquare,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  BarChart3,
-  FileText,
-  History,
-  User,
-  Settings
-} from 'lucide-react';
-import TrackUploadForm from './TrackUploadForm';
-import EditTrackModal from './EditTrackModal';
-import DeleteTrackDialog from './DeleteTrackDialog';
-import TrackProposalsDialog from './TrackProposalsDialog';
-import ProducerProfile from './ProducerProfile';
-import RevenueBreakdownDialog from './RevenueBreakdownDialog';
-import ProposalNegotiationDialog from './ProposalNegotiationDialog';
-import ProposalHistoryDialog from './ProposalHistoryDialog';
-import ProposalConfirmDialog from './ProposalConfirmDialog';
-import ProposalDetailDialog from './ProposalDetailDialog';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
+import { ProducerProfile } from './ProducerProfile';
+import { EditTrackModal } from './EditTrackModal';
+import { DeleteTrackDialog } from './DeleteTrackDialog';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import { ProposalConfirmDialog } from './ProposalConfirmDialog';
+import { TrackProposalsDialog } from './TrackProposalsDialog';
 
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  genres: string[] | string;
-  bpm: number;
-  duration: string;
-  audio_url: string;
-  image_url: string;
-  created_at: string;
-  has_sting_ending: boolean;
-  is_one_stop: boolean;
-  key: string;
-  has_vocals: boolean;
-  vocals_usage_type: string;
+interface UserStats {
+  totalTracks: number;
+  totalSales: number;
+  totalRevenue: number;
+  pendingProposals: number;
 }
 
-interface Proposal {
+interface SyncProposal {
   id: string;
-  track_id: string;
-  client_id: string;
   project_type: string;
-  duration: string;
-  is_exclusive: boolean;
   sync_fee: number;
-  payment_terms: string;
   expiration_date: string;
   is_urgent: boolean;
   status: string;
   created_at: string;
-  negotiation_status: string;
-  client_status: string;
-  payment_status: string;
-  track: {
-    title: string;
-    artist: string;
-  };
   client: {
-    full_name: string;
+    first_name: string;
+    last_name: string;
     email: string;
   };
+  track: {
+    id: string;
+    title: string;
+  };
 }
 
-interface DashboardStats {
-  totalTracks: number;
-  totalSales: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  pendingProposals: number;
-  acceptedProposals: number;
-}
-
-export default function ProducerDashboard() {
+export function ProducerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [profile, setProfile] = useState<{ 
+    first_name?: string, 
+    email: string,
+    avatar_path?: string | null,
+    bio?: string | null,
+    producer_number?: string | null
+  } | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
+  const [pendingProposals, setPendingProposals] = useState<SyncProposal[]>([]);
+  const [recentSales, setRecentSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<UserStats>({
     totalTracks: 0,
     totalSales: 0,
     totalRevenue: 0,
-    monthlyRevenue: 0,
-    pendingProposals: 0,
-    acceptedProposals: 0
+    pendingProposals: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showTrackProposalsDialog, setShowTrackProposalsDialog] = useState(false);
-  const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
+  
+  // Proposal action states
+  const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
-  const [selectedProposalForDetails, setSelectedProposalForDetails] = useState<Proposal | null>(null);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
-  const [profile, setProfile] = useState<{ first_name?: string, last_name?: string, email: string, avatar_path?: string | null } | null>(null);
-
-  useEffect(() => {
-    const handleProposalAction = (event: CustomEvent) => {
-      console.log('Received proposal action event:', event.detail);
-      const { action, proposal } = event.detail;
-      if (proposal) {
-        setSelectedProposal(proposal);
-        
-        if (action === 'negotiate') {
-          setShowNegotiationDialog(true);
-        } else if (action === 'history') {
-          setShowHistoryDialog(true);
-        } else if (action === 'accept' || action === 'reject') {
-          setConfirmAction(action);
-          setShowConfirmDialog(true);
-        }
-      }
-    };
-    
-    document.addEventListener('proposal-action', handleProposalAction as EventListener);
-    
-    return () => {
-      document.removeEventListener('proposal-action', handleProposalAction as EventListener);
-    };
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -152,93 +82,171 @@ export default function ProducerDashboard() {
 
   const fetchDashboardData = async () => {
     if (!user) return;
-
+    
     try {
       setLoading(true);
-      
+      setError(null);
+
+      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email, avatar_path')
+        .select('first_name, email, avatar_path, bio, producer_number')
         .eq('id', user.id)
         .single();
-        
-      if (profileError) throw profileError;
-      if (profileData) {
-        setProfile(profileData);
-      }
 
+      if (profileError) throw profileError;
+      setProfile(profileData);
+
+      // Fetch tracks
       const { data: tracksData, error: tracksError } = await supabase
         .from('tracks')
-        .select('*')
+        .select(`
+          id,
+          title,
+          genres,
+          sub_genres,
+          moods,
+          bpm,
+          audio_url,
+          image_url,
+          has_sting_ending,
+          is_one_stop,
+          duration,
+          mp3_url,
+          trackouts_url,
+          has_vocals,
+          vocals_usage_type,
+          created_at
+        `)
         .eq('producer_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (tracksError) throw tracksError;
-      setTracks(tracksData || []);
 
+      if (tracksData) {
+        const formattedTracks = tracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          artist: profileData?.first_name || profileData?.email.split('@')[0] || 'Unknown Artist',
+          genres: track.genres.split(',').map((g: string) => g.trim()),
+          subGenres: track.sub_genres ? track.sub_genres.split(',').map((g: string) => g.trim()) : [],
+          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+          duration: track.duration || '3:30',
+          bpm: track.bpm,
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasStingEnding: track.has_sting_ending,
+          isOneStop: track.is_one_stop,
+          mp3Url: track.mp3_url,
+          trackoutsUrl: track.trackouts_url,
+          hasVocals: track.has_vocals,
+          vocalsUsageType: track.vocals_usage_type,
+          createdAt: track.created_at
+        }));
+        setTracks(formattedTracks);
+        setStats(prev => ({ ...prev, totalTracks: formattedTracks.length }));
+      }
+
+      // Fetch pending proposals
       const { data: proposalsData, error: proposalsError } = await supabase
         .from('sync_proposals')
         .select(`
-          *,
-          track:tracks(title, artist),
-          client:profiles!sync_proposals_client_id_fkey(full_name, email)
+          id,
+          project_type,
+          sync_fee,
+          expiration_date,
+          is_urgent,
+          status,
+          created_at,
+          client:profiles!client_id (
+            first_name,
+            last_name,
+            email
+          ),
+          track:tracks!track_id (
+            id,
+            title
+          )
         `)
+        .eq('status', 'pending')
         .in('track_id', tracksData?.map(t => t.id) || [])
         .order('created_at', { ascending: false });
 
       if (proposalsError) throw proposalsError;
-      setProposals(proposalsData || []);
+      
+      if (proposalsData) {
+        setPendingProposals(proposalsData);
+        setStats(prev => ({ ...prev, pendingProposals: proposalsData.length }));
+      }
 
+      // Fetch recent sales
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
-        .select('amount, created_at')
-        .eq('producer_id', user.id)
-        .is('deleted_at', null);
+        .select(`
+          id,
+          license_type,
+          amount,
+          created_at,
+          buyer:profiles!buyer_id (
+            first_name,
+            last_name,
+            email
+          ),
+          track:tracks!track_id (
+            title
+          )
+        `)
+        .in('track_id', tracksData?.map(t => t.id) || [])
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       if (salesError) throw salesError;
-
-      const totalSales = salesData?.length || 0;
-      const totalRevenue = salesData?.reduce((sum, sale) => sum + Number(sale.amount), 0) || 0;
       
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const monthlyRevenue = salesData?.filter(sale => {
-        const saleDate = new Date(sale.created_at);
-        return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
-      }).reduce((sum, sale) => sum + Number(sale.amount), 0) || 0;
+      if (salesData) {
+        setRecentSales(salesData);
+        
+        // Calculate total sales and revenue
+        const { data: totalSalesData, error: totalSalesError } = await supabase
+          .from('sales')
+          .select('amount')
+          .in('track_id', tracksData?.map(t => t.id) || []);
 
-      const pendingProposals = proposalsData?.filter(p => p.status === 'pending').length || 0;
-      const acceptedProposals = proposalsData?.filter(p => p.status === 'accepted').length || 0;
+        if (totalSalesError) throw totalSalesError;
+        
+        if (totalSalesData) {
+          const totalSales = totalSalesData.length;
+          const totalRevenue = totalSalesData.reduce((sum, sale) => sum + sale.amount, 0);
+          
+          setStats(prev => ({
+            ...prev,
+            totalSales,
+            totalRevenue
+          }));
+        }
+      }
 
-      setStats({
-        totalTracks: tracksData?.length || 0,
-        totalSales,
-        totalRevenue,
-        monthlyRevenue,
-        pendingProposals,
-        acceptedProposals
-      });
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewProposalDetails = (proposal: Proposal) => {
-    setSelectedProposalForDetails(proposal);
-  };
-
-  const handleTrackEdit = (track: Track) => {
+  const handleEditTrack = (track: Track) => {
     setSelectedTrack(track);
     setShowEditModal(true);
   };
 
-  const handleTrackDelete = (track: Track) => {
+  const handleDeleteTrack = (track: Track) => {
     setSelectedTrack(track);
     setShowDeleteDialog(true);
+  };
+
+  const handleTrackTitleClick = (track: Track) => {
+    setSelectedTrack(track);
+    setShowTrackProposalsDialog(true);
   };
 
   const confirmDeleteTrack = async () => {
@@ -252,90 +260,91 @@ export default function ProducerDashboard() {
 
       if (error) throw error;
 
+      // Remove track from state
       setTracks(tracks.filter(t => t.id !== selectedTrack.id));
-      setShowDeleteDialog(false);
-      setSelectedTrack(null);
-    } catch (error) {
-      console.error('Error deleting track:', error);
+      setStats(prev => ({ ...prev, totalTracks: prev.totalTracks - 1 }));
+    } catch (err) {
+      console.error('Error deleting track:', err);
+      throw err;
     }
   };
 
-  const handleViewProposals = (track: Track) => {
-    setSelectedTrack(track);
-    setShowTrackProposalsDialog(true);
-  };
-
-  const handleProposalAction = (proposal: Proposal, action: 'accept' | 'reject' | 'negotiate' | 'history') => {
+  const handleProposalAction = (proposal: SyncProposal, action: 'negotiate' | 'history' | 'accept' | 'reject') => {
     setSelectedProposal(proposal);
     
-    if (action === 'negotiate') {
-      setShowNegotiationDialog(true);
-    } else if (action === 'history') {
-      setShowHistoryDialog(true);
-    } else {
-      setConfirmAction(action);
-      setShowConfirmDialog(true);
+    switch (action) {
+      case 'negotiate':
+        setShowNegotiationDialog(true);
+        break;
+      case 'history':
+        setShowHistoryDialog(true);
+        break;
+      case 'accept':
+        setConfirmAction('accept');
+        setShowConfirmDialog(true);
+        break;
+      case 'reject':
+        setConfirmAction('reject');
+        setShowConfirmDialog(true);
+        break;
     }
   };
 
   const handleProposalStatusChange = async (action: 'accept' | 'reject') => {
-    if (!selectedProposal) return;
-
+    if (!selectedProposal || !user) return;
+    
     try {
+      // Update proposal status
       const { error } = await supabase
         .from('sync_proposals')
         .update({ 
           status: action === 'accept' ? 'accepted' : 'rejected',
-          negotiation_status: action === 'accept' ? 'agreed' : 'declined'
+          updated_at: new Date().toISOString()
         })
         .eq('id', selectedProposal.id);
 
       if (error) throw error;
 
-      setProposals(proposals.map(p => 
-        p.id === selectedProposal.id 
-          ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected', negotiation_status: action === 'accept' ? 'agreed' : 'declined' }
-          : p
-      ));
+      // Create history entry
+      const { error: historyError } = await supabase
+        .from('proposal_history')
+        .insert({
+          proposal_id: selectedProposal.id,
+          previous_status: 'pending',
+          new_status: action === 'accept' ? 'accepted' : 'rejected',
+          changed_by: user.id
+        });
 
-      setShowConfirmDialog(false);
-      setSelectedProposal(null);
-    } catch (error) {
-      console.error('Error updating proposal:', error);
-    }
-  };
+      if (historyError) throw historyError;
 
-  const handleViewTrack = (trackId: string) => {
-    navigate(`/track/${trackId}`);
-  };
+      // Send notification to client
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-proposal-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          proposalId: selectedProposal.id,
+          action,
+          trackTitle: selectedProposal.track.title,
+          clientEmail: selectedProposal.client.email
+        })
+      });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'accepted': return 'text-green-600 bg-green-100';
-      case 'rejected': return 'text-red-600 bg-red-100';
-      case 'expired': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending': return <Clock className="w-4 h-4" />;
-      case 'accepted': return <CheckCircle className="w-4 h-4" />;
-      case 'rejected': return <XCircle className="w-4 h-4" />;
-      case 'expired': return <AlertCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      // Update local state
+      setPendingProposals(pendingProposals.filter(p => p.id !== selectedProposal.id));
+      setStats(prev => ({ ...prev, pendingProposals: prev.pendingProposals - 1 }));
+    } catch (err) {
+      console.error(`Error ${action}ing proposal:`, err);
+      throw err;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-300">Loading dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
   }
@@ -343,595 +352,427 @@ export default function ProducerDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
+          <div className="flex items-center space-x-6 mb-4 md:mb-0">
+            <div className="flex-shrink-0">
+              <ProfilePhotoUpload
+                currentPhotoUrl={profile?.avatar_path || null}
+                onPhotoUpdate={(url) => {
+                  setProfile(prev => prev ? { ...prev, avatar_path: url } : null);
+                }}
+                userId={user?.id}
+              />
+            </div>
             <div>
               <h1 className="text-3xl font-bold text-white">Producer Dashboard</h1>
-              <p className="text-gray-300">Manage your tracks and sync proposals</p>
               {profile && (
-                <p className="text-xl text-gray-300 mt-2">
-                  Welcome {profile.first_name || profile.email.split('@')[0]}
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-xl text-gray-300">
+                    Welcome {profile.first_name || profile.email.split('@')[0]}
+                  </p>
+                  {profile.producer_number && (
+                    <p className="text-sm text-gray-400">Producer ID: {profile.producer_number}</p>
+                  )}
+                  {profile.bio && (
+                    <p className="text-gray-400 text-sm line-clamp-2">{profile.bio}</p>
+                  )}
+                </div>
               )}
             </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowProfileDialog(true)}
-                className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center"
+            >
+              <UserCog className="w-5 h-5 mr-2" />
+              Edit Profile
+            </button>
+            <Link
+              to="/producer/upload"
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              Upload New Track
+            </Link>
+            <Link
+              to="/producer/banking"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <DollarSign className="w-5 h-5 mr-2" />
+              Earnings & Payments
+            </Link>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-center">{error}</p>
+          </div>
+        )}
+
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Total Tracks</p>
+                <p className="text-3xl font-bold text-white">{stats.totalTracks}</p>
+              </div>
+              <Music className="w-12 h-12 text-purple-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Total Sales</p>
+                <p className="text-3xl font-bold text-white">{stats.totalSales}</p>
+              </div>
+              <BarChart3 className="w-12 h-12 text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Total Revenue</p>
+                <p className="text-3xl font-bold text-white">
+                  ${stats.totalRevenue.toFixed(2)}
+                </p>
+              </div>
+              <DollarSign className="w-12 h-12 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400">Pending Proposals</p>
+                <p className="text-3xl font-bold text-white">{stats.pendingProposals}</p>
+              </div>
+              <Clock className="w-12 h-12 text-yellow-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Your Tracks Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">Your Tracks</h2>
+              <Link
+                to="/producer/upload"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
               >
-                <User className="w-5 h-5 mr-2" />
-                Profile
-              </button>
-              <button
-                onClick={() => setShowUploadForm(true)}
-                className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              >
-                <Upload className="w-5 h-5 mr-2" />
-                Upload Track
-              </button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Track
+              </Link>
             </div>
-          </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
-            <div className="flex items-center">
-              <Music className="w-8 h-8 text-blue-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Tracks</p>
-                <p className="text-2xl font-bold text-white">{stats.totalTracks}</p>
+            {tracks.length === 0 ? (
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-8 text-center">
+                <Music className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-300 mb-4">You haven't uploaded any tracks yet</p>
+                <Link
+                  to="/producer/upload"
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors inline-flex items-center"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  Upload Your First Track
+                </Link>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
-            <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Sales</p>
-                <p className="text-2xl font-bold text-white">{stats.totalSales}</p>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10" 
-            onClick={() => setShowRevenueBreakdown(true)}
-          >
-            <div className="flex items-center">
-              <TrendingUp className="w-8 h-8 text-purple-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Revenue</p>
-                <p className="text-2xl font-bold text-white">${stats.totalRevenue.toFixed(2)}</p>
-                <p className="text-xs text-blue-400 mt-1">Click for detailed breakdown</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="border-b border-blue-500/20 mb-6">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`py-2 px-1 border-b-2 font-medium ${
-                activeTab === 'overview'
-                  ? 'border-blue-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('tracks')}
-              className={`py-2 px-1 border-b-2 font-medium ${
-                activeTab === 'tracks'
-                  ? 'border-blue-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
-              }`}
-            >
-              My Tracks ({tracks.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('proposals')}
-              className={`py-2 px-1 border-b-2 font-medium ${
-                activeTab === 'proposals'
-                  ? 'border-blue-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
-              }`}
-            >
-              Sync Proposals ({proposals.length})
-            </button>
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Recent Activity */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
-              <div className="px-6 py-4 border-b border-blue-500/20">
-                <h3 className="text-lg font-medium text-white">Recent Activity</h3>
-              </div>
-              <div className="p-6">
-                {proposals.slice(0, 5).length > 0 ? (
-                  <div className="space-y-4">
-                    {proposals.slice(0, 5).map((proposal) => {
-                      const isExpired = new Date(proposal.expiration_date) < new Date();
-                      const isPending = proposal.status === 'pending';
-                      
-                      return (
-                        <div 
-                          key={proposal.id} 
-                          className="p-4 bg-white/5 rounded-lg border border-purple-500/10"
-                        >
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <p className="text-white font-medium">
-                                  {proposal.client?.full_name || 'Unknown Client'}
-                                </p>
-                                <div className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                  proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400' :
-                                  proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                                  'bg-gray-500/20 text-gray-400'
-                                }`}>
-                                  <span className="capitalize">{proposal.status}</span>
-                                </div>
-                                {proposal.is_urgent && (
-                                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Urgent</span>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-400 mt-1">
-                                Track: {proposal.track?.title || 'Unknown Track'}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xl font-semibold text-green-400">${proposal.sync_fee?.toFixed(2) || '0.00'}</p>
-                              <p className="text-xs text-gray-400">
-                                {new Date(proposal.created_at).toLocaleDateString()} 
-                                {isExpired ? ' (Expired)' : ''}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-black/20 rounded-lg p-3 mb-3">
-                            <p className="text-gray-300 line-clamp-2">{proposal.project_type}</p>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
+            ) : (
+              <div className="space-y-4">
+                {tracks.map((track) => (
+                  <div
+                    key={track.id}
+                    className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={track.image}
+                        alt={track.title}
+                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => handleTrackTitleClick(track)}
+                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
+                          >
+                            {track.title}
+                          </button>
+                          <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => handleProposalAction(proposal, 'history')}
-                              className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
-                              type="button"
+                              onClick={() => handleEditTrack(track)}
+                              className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                              title="Edit Track"
                             >
-                              <History className="w-3 h-3 mr-1" />
-                              View History
+                              <Edit className="w-4 h-4" />
                             </button>
-                            
-                            {isPending && !isExpired && (
-                              <>
-                                <button
-                                  onClick={() => handleProposalAction(proposal, 'negotiate')}
-                                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors flex items-center"
-                                >
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Negotiate
-                                </button>
-                                <button
-                                  onClick={() => handleProposalAction(proposal, 'accept')}
-                                  className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors flex items-center"
-                                >
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Accept
-                                </button>
-                                <button
-                                  onClick={() => handleProposalAction(proposal, 'reject')}
-                                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center"
-                                >
-                                  <XCircle className="w-3 h-3 mr-1" />
-                                  Decline
-                                </button>
-                              </>
+                            <button
+                              onClick={() => handleDeleteTrack(track)}
+                              className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                              title="Delete Track"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>{track.genres.join(', ')} • {track.bpm} BPM</p>
+                          <div className="flex flex-wrap gap-2">
+                            {track.hasVocals && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400">
+                                <Mic className="w-3 h-3 mr-1" />
+                                {track.vocalsUsageType === 'sync_only' ? 'Sync Only' : 'Vocals'}
+                              </span>
+                            )}
+                            {track.hasStingEnding && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                                <Music className="w-3 h-3 mr-1" />
+                                Sting Ending
+                              </span>
+                            )}
+                            {track.isOneStop && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+                                <Check className="w-3 h-3 mr-1" />
+                                One Stop
+                              </span>
                             )}
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                      <AudioPlayer url={track.audioUrl} title={track.title} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-8">
+            {/* Pending Proposals Section */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Pending Proposals</h3>
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-4">
+                {pendingProposals.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-400">No pending proposals</p>
                   </div>
                 ) : (
-                  <p className="text-gray-400 text-center py-8">No recent activity</p>
+                  <div className="space-y-4">
+                    {pendingProposals.map((proposal) => (
+                      <div
+                        key={proposal.id}
+                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                        onClick={() => setSelectedProposal(proposal)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-white font-medium">
+                              {proposal.track.title}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              From: {proposal.client.first_name} {proposal.client.last_name}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-green-400 font-semibold">${proposal.sync_fee.toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">
+                              Expires: {new Date(proposal.expiration_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {proposal.is_urgent && (
+                          <div className="mt-2 flex items-center text-yellow-400 text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Urgent
+                          </div>
+                        )}
+                        
+                        <div className="mt-3 flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'negotiate');
+                            }}
+                            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <MessageSquare className="w-3 h-3 mr-1" />
+                            Negotiate
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'history');
+                            }}
+                            className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <Clock className="w-3 h-3 mr-1" />
+                            History
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'accept');
+                            }}
+                            className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Accept
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProposalAction(proposal, 'reject');
+                            }}
+                            className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center"
+                          >
+                            <XCircle className="w-3 h-3 mr-1" />
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
-              <div className="px-6 py-4 border-b border-blue-500/20">
-                <h3 className="text-lg font-medium text-white">Quick Actions</h3>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={() => setShowUploadForm(true)}
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
-                  >
-                    <Upload className="w-6 h-6 text-blue-400 mr-2" />
-                    <span className="text-gray-300">Upload New Track</span>
-                  </button>
-                  <Link
-                    to="/producer/analytics"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
-                  >
-                    <BarChart3 className="w-6 h-6 text-blue-400 mr-2" />
-                    <span className="text-gray-300">View Analytics</span>
-                  </Link>
-                  <Link
-                    to="/producer/sales"
-                    className="flex items-center justify-center p-4 border-2 border-dashed border-blue-500/20 rounded-lg hover:border-blue-500/40 hover:bg-blue-900/20 transition-all duration-300"
-                  >
-                    <DollarSign className="w-6 h-6 text-blue-400 mr-2" />
-                    <span className="text-gray-300">View Sales</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'tracks' && (
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
-            <div className="px-6 py-4 border-b border-blue-500/20">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-white">My Tracks</h3>
-                <button
-                  onClick={() => setShowUploadForm(true)}
-                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            {/* Recent Sales Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Recent Sales</h3>
+                <Link
+                  to="/producer/banking"
+                  className="text-green-400 hover:text-green-300 transition-colors flex items-center text-sm"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Track
-                </button>
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  View Earnings
+                </Link>
               </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-black/20">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Track
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Details
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-blue-500/10">
-                  {tracks.map((track) => (
-                    <tr key={track.id} className="hover:bg-white/5">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <Link to={`/track/${track.id}`}>
-                            <div className="h-12 w-12 rounded-lg overflow-hidden">
-                              <img
-                                className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                                src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'}
-                                alt={track.title}
-                              />
-                            </div>
-                          </Link>
-                          <div className="ml-4">
-                            <Link to={`/track/${track.id}`} className="text-sm font-medium text-white hover:text-blue-400 transition-colors">{track.title}</Link>
-                            <div className="text-sm text-gray-400">{track.artist}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-white">
-                          {Array.isArray(track.genres) 
-                            ? track.genres.join(', ') 
-                            : typeof track.genres === 'string' 
-                              ? track.genres.split(',').map(g => g.trim()).join(', ') 
-                              : ''} • {track.bpm} BPM
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {track.key} • {track.duration}
-                        </div>
-                        <div className="mt-2">
-                          <AudioPlayer url={track.audio_url} title={track.title} />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        {new Date(track.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewProposals(track)}
-                            className="text-blue-400 hover:text-blue-300"
-                            title="View Proposals"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleTrackEdit(track)}
-                            className="text-purple-400 hover:text-purple-300"
-                            title="Edit Track"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleTrackDelete(track)}
-                            className="text-red-400 hover:text-red-300"
-                            title="Delete Track"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <Link 
-                            to={`/track/${track.id}`} 
-                            className="text-green-400 hover:text-green-300"
-                            title="View Track Page"
-                          >
-                            <Music className="w-4 h-4" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {tracks.length === 0 && (
-                <div className="text-center py-12">
-                  <Music className="mx-auto h-12 w-12 text-gray-500" />
-                  <h3 className="mt-2 text-sm font-medium text-white">No tracks</h3>
-                  <p className="mt-1 text-sm text-gray-400">Get started by uploading your first track.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'proposals' && (
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20">
-            <div className="px-6 py-4 border-b border-blue-500/20">
-              <h3 className="text-lg font-medium text-white">Sync Proposals</h3>
-            </div>
-            <div className="p-6">
-              {proposals.length > 0 ? (
-                <div className="space-y-4">
-                  {proposals.map((proposal) => {
-                    const isExpired = new Date(proposal.expiration_date) < new Date();
-                    const isPending = proposal.status === 'pending';
-                    
-                    return (
-                      <div 
-                        key={proposal.id} 
-                        className="p-6 bg-white/5 rounded-lg border border-purple-500/10 hover:border-purple-500/20 transition-all duration-300"
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-4">
+                {recentSales.length === 0 ? (
+                  <div className="text-center py-6">
+                    <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-400">No sales yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentSales.map((sale) => (
+                      <div
+                        key={sale.id}
+                        className="p-3 bg-white/5 rounded-lg"
                       >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex justify-between items-start">
                           <div>
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="text-lg font-semibold text-white">
-                                {proposal.client?.full_name || 'Unknown Client'}
-                              </h4>
-                              <div className={`flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(proposal.status)}`}>
-                                {getStatusIcon(proposal.status)}
-                                <span className="ml-1 capitalize">{proposal.status}</span>
-                              </div>
-                              {proposal.is_urgent && (
-                                <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs font-medium">
-                                  Urgent
-                                </span>
-                              )}
-                              {proposal.is_exclusive && (
-                                <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
-                                  Exclusive
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-gray-400 text-sm mb-1">
-                              Track: <span className="text-white">{proposal.track?.title || 'Unknown Track'}</span>
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                              Email: <span className="text-white">{proposal.client?.email || 'Unknown'}</span>
+                            <p className="text-white font-medium">{sale.track.title}</p>
+                            <p className="text-sm text-gray-400">
+                              {sale.license_type} License
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-green-400">${proposal.sync_fee?.toFixed(2) || '0.00'}</p>
-                            <p className="text-sm text-gray-400">
-                              {new Date(proposal.created_at).toLocaleDateString()}
+                            <p className="text-green-400 font-semibold">${sale.amount.toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(sale.created_at).toLocaleDateString()}
                             </p>
-                            {isExpired && (
-                              <p className="text-xs text-red-400 mt-1">Expired</p>
-                            )}
                           </div>
-                        </div>
-                        
-                        <div className="bg-black/20 rounded-lg p-4 mb-4">
-                          <h5 className="text-white font-medium mb-2">Project Details</h5>
-                          <p className="text-gray-300 mb-2">{proposal.project_type}</p>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-400">Duration:</span>
-                              <span className="text-white ml-2">{proposal.duration}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400">Payment Terms:</span>
-                              <span className="text-white ml-2">{proposal.payment_terms || 'Not specified'}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => handleViewProposalDetails(proposal)}
-                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors flex items-center"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View Details
-                          </button>
-                          
-                          <button
-                            onClick={() => handleProposalAction(proposal, 'history')}
-                            className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors flex items-center"
-                          >
-                            <History className="w-4 h-4 mr-1" />
-                            View History
-                          </button>
-                          
-                          {isPending && !isExpired && (
-                            <>
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'negotiate')}
-                                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors flex items-center"
-                              >
-                                <MessageSquare className="w-4 h-4 mr-1" />
-                                Negotiate
-                              </button>
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'accept')}
-                                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Accept
-                              </button>
-                              <button
-                                onClick={() => handleProposalAction(proposal, 'reject')}
-                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Decline
-                              </button>
-                            </>
-                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <MessageSquare className="mx-auto h-12 w-12 text-gray-500" />
-                  <h3 className="mt-2 text-sm font-medium text-white">No proposals</h3>
-                  <p className="mt-1 text-sm text-gray-400">Sync proposals will appear here when clients are interested in your tracks.</p>
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Modals and Dialogs */}
-      {showUploadForm && (
-        <TrackUploadForm
-          onClose={() => setShowUploadForm(false)}
-          onSuccess={() => {
-            setShowUploadForm(false);
-            fetchDashboardData();
-          }}
-        />
-      )}
+      <ProducerProfile
+        isOpen={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      />
 
-      {showEditModal && selectedTrack && (
+      {selectedTrack && showEditModal && (
         <EditTrackModal
-          track={selectedTrack}
+          isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false);
             setSelectedTrack(null);
           }}
-          onSuccess={() => {
-            setShowEditModal(false);
-            setSelectedTrack(null);
-            fetchDashboardData();
-          }}
+          track={selectedTrack}
+          onUpdate={fetchDashboardData}
         />
       )}
 
-      {showDeleteDialog && selectedTrack && (
+      {selectedTrack && showDeleteDialog && (
         <DeleteTrackDialog
-          track={selectedTrack}
+          isOpen={showDeleteDialog}
           onClose={() => {
             setShowDeleteDialog(false);
             setSelectedTrack(null);
           }}
+          trackTitle={selectedTrack.title}
           onConfirm={confirmDeleteTrack}
         />
       )}
 
-      {showTrackProposalsDialog && selectedTrack && (
+      {selectedTrack && showTrackProposalsDialog && (
         <TrackProposalsDialog
-          track={selectedTrack}
+          isOpen={showTrackProposalsDialog}
           onClose={() => {
             setShowTrackProposalsDialog(false);
             setSelectedTrack(null);
           }}
+          trackId={selectedTrack.id}
+          trackTitle={selectedTrack.title}
         />
       )}
 
-      {showProfileDialog && (
-        <ProducerProfile
-          onClose={() => setShowProfileDialog(false)}
-        />
-      )}
-
-      {showRevenueBreakdown && (
-        <RevenueBreakdownDialog
-          onClose={() => setShowRevenueBreakdown(false)}
-        />
-      )}
-
-      {showNegotiationDialog && selectedProposal && (
+      {/* Proposal Action Dialogs */}
+      {selectedProposal && showNegotiationDialog && (
         <ProposalNegotiationDialog
-          proposal={selectedProposal}
+          isOpen={showNegotiationDialog}
           onClose={() => {
             setShowNegotiationDialog(false);
             setSelectedProposal(null);
           }}
-          onSuccess={() => {
-            setShowNegotiationDialog(false);
-            setSelectedProposal(null);
-            fetchDashboardData();
-          }}
+          proposalId={selectedProposal.id}
+          currentOffer={selectedProposal.sync_fee}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+          trackTitle={selectedProposal.track.title}
         />
       )}
 
-      {showHistoryDialog && selectedProposal && (
+      {selectedProposal && showHistoryDialog && (
         <ProposalHistoryDialog
-          proposal={selectedProposal}
+          isOpen={showHistoryDialog}
           onClose={() => {
             setShowHistoryDialog(false);
             setSelectedProposal(null);
           }}
+          proposalId={selectedProposal.id}
         />
       )}
 
-      {showConfirmDialog && selectedProposal && (
+      {selectedProposal && showConfirmDialog && (
         <ProposalConfirmDialog
-          proposal={selectedProposal}
-          action={confirmAction}
+          isOpen={showConfirmDialog}
           onClose={() => {
             setShowConfirmDialog(false);
             setSelectedProposal(null);
           }}
           onConfirm={() => handleProposalStatusChange(confirmAction)}
-        />
-      )}
-
-      {selectedProposalForDetails && (
-        <ProposalDetailDialog
-          proposal={selectedProposalForDetails}
-          onClose={() => setSelectedProposalForDetails(null)}
+          action={confirmAction}
+          trackTitle={selectedProposal.track.title}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
         />
       )}
     </div>
   );
 }
-

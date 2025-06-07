@@ -19,7 +19,7 @@ export function AdminLogin() {
       setLoading(true);
 
       // Check if the email is in the admin list
-      if (!['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(email)) {
+      if (!['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(email)) {
         throw new Error('Unauthorized access');
       }
 

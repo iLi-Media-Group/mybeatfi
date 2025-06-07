@@ -76,11 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
-      setLoading(true);
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('membership_plan, account_type')
+        .select('membership_plan')
         .eq('id', user.id)
         .single();
         
@@ -107,15 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setMembershipPlan(profileData.membership_plan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null);
       }
-      
-      // Also update account type if needed
-      if (profileData.account_type) {
-        setAccountType(profileData.account_type as 'client' | 'producer');
-      }
     } catch (error) {
       console.error('Error refreshing membership:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

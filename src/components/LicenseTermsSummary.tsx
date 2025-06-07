@@ -1,59 +1,12 @@
-import React, { useState } from 'react';
-import { Info, Check, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { createCheckoutSession } from '../lib/stripe';
-import { PRODUCTS } from '../stripe-config';
+import React from 'react';
+import { Info, Check } from 'lucide-react';
 
 interface LicenseTermsSummaryProps {
   licenseType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access';
   onAccept: () => void;
-  trackId?: string;
 }
 
-export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseTermsSummaryProps) {
-  const { membershipPlan } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleAccept = async () => {
-    // If user has a subscription plan, proceed with normal flow
-    if (membershipPlan && membershipPlan !== 'Single Track') {
-      onAccept();
-      return;
-    }
-
-    // For Single Track users, initiate Stripe checkout
-    if (trackId) {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Find the Single Track product
-        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
-        
-        if (!singleTrackProduct) {
-          throw new Error('Single Track product not found');
-        }
-        const checkoutUrl = await createCheckoutSession(
-          singleTrackProduct.priceId, 
-          singleTrackProduct.mode,
-          trackId
-        );
-        
-        // Redirect to checkout
-        window.location.href = checkoutUrl;
-      } catch (err) {
-        console.error('Error creating checkout session:', err);
-        setError(err instanceof Error ? err.message : 'Failed to create checkout session');
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // If no trackId is provided, just proceed with the normal flow
-      onAccept();
-    }
-  };
-
+export function LicenseTermsSummary({ licenseType, onAccept }: LicenseTermsSummaryProps) {
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-blue-500/20 p-6">
       <div className="flex items-start space-x-3 mb-6">
@@ -65,12 +18,6 @@ export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseT
           </p>
         </div>
       </div>
-      
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-center">{error}</p>
-        </div>
-      )}
 
       <div className="space-y-4 mb-6">
         <div className="flex items-start space-x-3">
@@ -154,18 +101,10 @@ export function LicenseTermsSummary({ licenseType, onAccept, trackId }: LicenseT
       </div>
 
       <button
-        onClick={handleAccept}
+        onClick={onAccept}
         className="mt-6 w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center space-x-2"
-        disabled={loading}
       >
-        {loading ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            <span>Processing...</span>
-          </>
-        ) : (
-          <span>Accept Terms & Continue</span>
-        )}
+        <span>Accept Terms & Continue</span>
       </button>
     </div>
   );

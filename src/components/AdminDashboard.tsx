@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart } from 'lucide-react';
+import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
-import ProducerProfile from './ProducerProfile';
 import { ProposalAnalytics } from './ProposalAnalytics';
-import { User } from 'lucide-react';
 import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
-import RevenueBreakdownDialog from './RevenueBreakdownDialog';
 import { ClientList } from './ClientList';
 import { AdminAnnouncementManager } from './AdminAnnouncementManager';
 import { CompensationSettings } from './CompensationSettings';
@@ -28,7 +25,6 @@ interface UserDetails {
   last_name: string | null;
   account_type: 'client' | 'producer';
   created_at: string;
-  producer_number?: string | null;
   total_tracks?: number;
   total_sales?: number;
   total_revenue?: number;
@@ -53,143 +49,103 @@ export function AdminDashboard() {
   const [producerSortField, setProducerSortField] = useState<keyof UserDetails>('total_revenue');
   const [producerSortOrder, setProducerSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProducer, setSelectedProducer] = useState<UserDetails | null>(null);
-  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
-  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<any>(null);
-  const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'analytics' | 'producers' | 'clients' | 'announcements' | 'compensation'>('analytics');
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
+    const fetchData = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
 
-  const fetchData = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Check if user is admin
-      const { data: adminCheckProfileData } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', user?.id)
-        .single();
-
-      if (!adminCheckProfileData || !['knockriobeats@gmail.com', 'knockriobeats2@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(adminCheckProfileData.email)) {
-        throw new Error('Unauthorized access');
-      }
-
-      // Fetch admin profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('first_name, email')
-        .eq('id', user.id)
-        .maybeSingle();
+        // Fetch admin profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('first_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
           
-      if (profileError) throw profileError;
-      if (profileData) {
-        setProfile(profileData);
-      }
+        if (profileError) throw profileError;
+        if (profileData) {
+          setProfile(profileData);
+        }
 
-      // Fetch all users with their details
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('*');
+        // Fetch all users with their details
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('*');
 
-      if (userError) throw userError;
+        if (userError) throw userError;
 
-      // Process user data
-      const clients = userData.filter(u => u.account_type === 'client');
-      const producerUsers = userData.filter(u => 
-        u.account_type === 'producer' || 
-        ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(u.email)
-      );
+        // Process user data
+        const clients = userData.filter(u => u.account_type === 'client');
+        const producerUsers = userData.filter(u => 
+          u.account_type === 'producer' || 
+          ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(u.email)
+        );
 
-      // Update stats with user counts
-      setStats(prev => ({
-        ...prev,
-        total_clients: clients.length,
-        total_producers: producerUsers.length
-      }));
-
-      // Fetch sales analytics
-      const { data: analyticsData, error: analyticsError } = await supabase
-        .from('sales_analytics')
-        .select('*')
-        .order('month', { ascending: false });
-
-      if (analyticsError) {
-        console.error('Analytics error:', analyticsError);
-      } else {
-        // Get the most recent analytics data or use default values
-        const latestAnalytics = analyticsData && analyticsData.length > 0 ? analyticsData[0] : {
-          monthly_sales_count: 0,
-          monthly_revenue: 0,
-          track_count: 0,
-          producer_sales_count: 0,
-          producer_revenue: 0
-        };
-
-        // Update stats with sales data
+        // Update stats with user counts
         setStats(prev => ({
           ...prev,
-          total_sales: latestAnalytics.monthly_sales_count || 0,
-          total_revenue: latestAnalytics.monthly_revenue || 0
+          total_clients: clients.length,
+          total_producers: producerUsers.length
         }));
 
-        // Transform producer data - create a map of producer analytics by producer_id
-        const producerAnalyticsMap = analyticsData.reduce((map, item) => {
-          if (item.producer_id) {
-            if (!map[item.producer_id]) {
-              map[item.producer_id] = {
-                producer_sales_count: item.producer_sales_count || 0,
-                producer_revenue: item.producer_revenue || 0,
-                track_count: item.track_count || 0
-              };
-            }
-          }
-          return map;
-        }, {});
+        // Fetch sales analytics
+        const { data: analyticsData, error: analyticsError } = await supabase
+          .from('sales_analytics')
+          .select('*')
+          .order('month', { ascending: false });
 
-        // Map producer users to include their analytics
-        const transformedProducers = producerUsers.map(producer => {
-          const analytics = producerAnalyticsMap[producer.id] || {
+        if (analyticsError) {
+          console.error('Analytics error:', analyticsError);
+        } else {
+          // Get the most recent analytics data or use default values
+          const latestAnalytics = analyticsData && analyticsData.length > 0 ? analyticsData[0] : {
+            monthly_sales_count: 0,
+            monthly_revenue: 0,
+            track_count: 0,
             producer_sales_count: 0,
-            producer_revenue: 0,
-            track_count: 0
+            producer_revenue: 0
           };
-          
-          return {
-            id: producer.id,
-            email: producer.email,
-            first_name: producer.first_name,
-            last_name: producer.last_name,
-            account_type: 'producer' as const,
-            created_at: producer.created_at,
-            producer_number: producer.producer_number,
-            total_tracks: analytics.track_count,
-            total_sales: analytics.producer_sales_count,
-            total_revenue: analytics.producer_revenue
-          };
-        });
 
-        setProducers(transformedProducers);
+          // Update stats with sales data
+          setStats(prev => ({
+            ...prev,
+            total_sales: latestAnalytics.monthly_sales_count || 0,
+            total_revenue: latestAnalytics.monthly_revenue || 0
+          }));
+
+          // Transform producer data
+          const transformedProducers = producerUsers.map(producer => {
+            const producerAnalytics = latestAnalytics;
+            return {
+              id: producer.id,
+              email: producer.email,
+              first_name: producer.first_name,
+              last_name: producer.last_name,
+              account_type: 'producer' as const,
+              created_at: producer.created_at,
+              total_tracks: producerAnalytics?.track_count || 0,
+              total_sales: producerAnalytics?.producer_sales_count || 0,
+              total_revenue: producerAnalytics?.producer_revenue || 0
+            };
+          });
+
+          setProducers(transformedProducers);
+        }
+
+      } catch (err) {
+        console.error('Error fetching admin data:', err);
+        setError('Failed to load dashboard data. Please try refreshing the page.');
+      } finally {
+        setLoading(false);
       }
+    };
 
-    } catch (err) {
-      console.error('Error fetching admin data:', err);
-      setError('Failed to load dashboard data. Please try refreshing the page.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, [user]);
 
   const handleProducerSort = (field: keyof UserDetails) => {
     if (producerSortField === field) {
@@ -207,8 +163,7 @@ export function AdminDashboard() {
       return (
         producer.email.toLowerCase().includes(searchLower) ||
         (producer.first_name?.toLowerCase() || '').includes(searchLower) ||
-        (producer.last_name?.toLowerCase() || '').includes(searchLower) ||
-        (producer.producer_number?.toLowerCase() || '').includes(searchLower)
+        (producer.last_name?.toLowerCase() || '').includes(searchLower)
       );
     })
     .sort((a, b) => {
@@ -251,22 +206,13 @@ export function AdminDashboard() {
               </p>
             )}
           </div>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setShowProfileDialog(true)}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center"
-            >
-              <User className="w-5 h-5 mr-2" />
-              Profile
-            </button>
-            <button
-              onClick={() => setShowLogoUpload(!showLogoUpload)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Change Logo
-            </button>
-          </div>
+          <button
+            onClick={() => setShowLogoUpload(!showLogoUpload)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Change Logo
+          </button>
         </div>
 
         {showLogoUpload && <LogoUpload />}
@@ -306,24 +252,12 @@ export function AdminDashboard() {
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400">Total Revenue (Current Month)</p>
+                <p className="text-gray-400">Total Revenue</p>
                 <p className="text-3xl font-bold text-white">
                   ${stats.total_revenue.toFixed(2)}
                 </p>
               </div>
-              <div 
-                className="relative cursor-pointer group" 
-                onClick={() => setShowRevenueBreakdown(true)}
-                title="View revenue breakdown"
-              >
-                <div className="relative p-2 rounded-full hover:bg-white/10 transition-colors">
-                  <DollarSign className="w-12 h-12 text-green-500" />
-                  <PieChart className="w-5 h-5 text-blue-400 absolute -bottom-1 -right-1" />
-                  <div className="absolute -bottom-6 right-0 text-xs text-blue-400 whitespace-nowrap">
-                    Click for details
-                  </div>
-                </div>
-              </div>
+              <DollarSign className="w-12 h-12 text-blue-500" />
             </div>
           </div>
         </div>
@@ -445,17 +379,6 @@ export function AdminDashboard() {
                     </th>
                     <th className="px-6 py-3 text-left">
                       <button
-                        onClick={() => handleProducerSort('producer_number')}
-                        className="flex items-center text-sm font-semibold text-gray-300 hover:text-white"
-                      >
-                        ID
-                        {producerSortField === 'producer_number' && (
-                          <span className="ml-1">{producerSortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left">
-                      <button
                         onClick={() => handleProducerSort('total_tracks')}
                         className="flex items-center text-sm font-semibold text-gray-300 hover:text-white"
                       >
@@ -521,9 +444,6 @@ export function AdminDashboard() {
                           <p className="text-sm text-gray-400">{producer.email}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-300">
-                        {producer.producer_number || 'N/A'}
-                      </td>
                       <td className="px-6 py-4 text-gray-300">{producer.total_tracks || 0}</td>
                       <td className="px-6 py-4 text-gray-300">{producer.total_sales || 0}</td>
                       <td className="px-6 py-4 text-gray-300">
@@ -571,19 +491,6 @@ export function AdminDashboard() {
               ? `${selectedProducer.first_name} ${selectedProducer.last_name}`
               : selectedProducer.email.split('@')[0]
           }
-        />
-      )}
-      
-      {/* Revenue Breakdown Dialog */}
-      <RevenueBreakdownDialog
-        isOpen={showRevenueBreakdown}
-        onClose={() => setShowRevenueBreakdown(false)}
-      />
-        
-      {showProfileDialog && (
-        <ProducerProfile
-          onClose={() => setShowProfileDialog(false)}
-          onUpdate={() => fetchDashboardData()}
         />
       )}
     </div>

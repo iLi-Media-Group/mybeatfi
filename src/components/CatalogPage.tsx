@@ -84,8 +84,8 @@ export function CatalogPage() {
             email
           )
         `)
-        // Remove the filter that was excluding sync_only tracks
-        .is('deleted_at', null);
+        // Exclude sync_only tracks
+        .or('vocals_usage_type.neq.sync_only,has_vocals.eq.false');
 
       // If a specific track ID is provided, fetch only that track
       if (filters?.trackId) {

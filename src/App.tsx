@@ -4,8 +4,8 @@ import { SearchBox } from './components/SearchBox';
 import { ProducerLogin } from './components/ProducerLogin';
 import { ClientLogin } from './components/ClientLogin';
 import { AdminLogin } from './components/AdminLogin';
-import ProducerDashboard from './components/ProducerDashboard';
-import TrackUploadForm from './components/TrackUploadForm';
+import { ProducerDashboard } from './components/ProducerDashboard';
+import { TrackUploadForm } from './components/TrackUploadForm';
 import { ClientSignupDialog } from './components/ClientSignupDialog';
 import { ClientDashboard } from './components/ClientDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -37,8 +37,6 @@ import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 import { WelcomePage } from './components/WelcomePage';
 import { TrackPage } from './components/TrackPage';
-import { ProducerAnalytics } from './components/ProducerAnalytics';
-import { ProducerSalesPage } from './components/ProducerSalesPage';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -241,22 +239,6 @@ function App() {
           <ProtectedRoute requiresProducer>
             <LayoutWrapper>
               <ProducerBankingPage />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/producer/analytics" element={
-          <ProtectedRoute requiresProducer>
-            <LayoutWrapper>
-              <ProducerAnalytics />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/producer/sales" element={
-          <ProtectedRoute requiresProducer>
-            <LayoutWrapper>
-              <ProducerSalesPage />
             </LayoutWrapper>
           </ProtectedRoute>
         } />

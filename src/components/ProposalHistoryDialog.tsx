@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Clock, DollarSign, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ProposalHistoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposal: any;
+  proposalId: string;
 }
 
 interface HistoryEntry {
@@ -47,42 +47,24 @@ interface ProposalFile {
   };
 }
 
-export default function ProposalHistoryDialog({
+export function ProposalHistoryDialog({
   isOpen,
   onClose,
-  proposal
+  proposalId
 }: ProposalHistoryDialogProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [negotiations, setNegotiations] = useState<NegotiationMessage[]>([]);
   const [files, setFiles] = useState<ProposalFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen && proposal?.id) {
-      fetchHistory(proposal.id);
-    }
-  }, [isOpen, proposal]);
-
-  // Handle click outside to close dialog
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      fetchHistory();
     }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
+  }, [isOpen, proposalId]);
 
-  const fetchHistory = async (proposalId: string) => {
+  const fetchHistory = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -180,13 +162,10 @@ export default function ProposalHistoryDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div ref={dialogRef} className="bg-gray-900 p-8 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-8 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Proposal History</h2>
-            <p className="text-gray-400">Track: {proposal.track?.title}</p>
-          </div>
+          <h2 className="text-2xl font-bold text-white">Proposal History</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -211,36 +190,32 @@ export default function ProposalHistoryDialog({
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Status Changes</h3>
               <div className="space-y-4">
-                {history.length > 0 ? (
-                  history.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-start space-x-4 p-4 bg-white/5 rounded-lg"
-                    >
-                      {getStatusIcon(entry.new_status)}
-                      <div className="flex-1">
-                        <p className="text-white">
-                          Status changed to{' '}
-                          <span className="font-semibold">{entry.new_status}</span>
-                          {entry.previous_status && (
-                            <> from {entry.previous_status}</>
-                          )}
-                        </p>
-                        <div className="flex items-center mt-1 text-sm text-gray-400">
-                          <span>
-                            by {entry.changed_by.first_name} {entry.changed_by.last_name}
-                          </span>
-                          <span className="mx-2">•</span>
-                          <span>
-                            {new Date(entry.changed_at).toLocaleString()}
-                          </span>
-                        </div>
+                {history.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-start space-x-4 p-4 bg-white/5 rounded-lg"
+                  >
+                    {getStatusIcon(entry.new_status)}
+                    <div className="flex-1">
+                      <p className="text-white">
+                        Status changed to{' '}
+                        <span className="font-semibold">{entry.new_status}</span>
+                        {entry.previous_status && (
+                          <> from {entry.previous_status}</>
+                        )}
+                      </p>
+                      <div className="flex items-center mt-1 text-sm text-gray-400">
+                        <span>
+                          by {entry.changed_by.first_name} {entry.changed_by.last_name}
+                        </span>
+                        <span className="mx-2">•</span>
+                        <span>
+                          {new Date(entry.changed_at).toLocaleString()}
+                        </span>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-gray-400 text-center py-4">No status changes recorded yet</p>
-                )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -248,37 +223,33 @@ export default function ProposalHistoryDialog({
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Negotiations</h3>
               <div className="space-y-4">
-                {negotiations.length > 0 ? (
-                  negotiations.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className="p-4 bg-white/5 rounded-lg"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-sm text-gray-400">
-                          {msg.sender.first_name} {msg.sender.last_name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(msg.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-white mb-2">{msg.message}</p>
-                      {msg.counter_offer && (
-                        <p className="text-green-400 font-semibold flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          Counter Offer: ${msg.counter_offer.toFixed(2)}
-                        </p>
-                      )}
-                      {msg.counter_terms && (
-                        <p className="text-blue-400">
-                          Proposed Terms: {msg.counter_terms}
-                        </p>
-                      )}
+                {negotiations.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className="p-4 bg-white/5 rounded-lg"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm text-gray-400">
+                        {msg.sender.first_name} {msg.sender.last_name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(msg.created_at).toLocaleString()}
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-gray-400 text-center py-4">No negotiations yet</p>
-                )}
+                    <p className="text-white mb-2">{msg.message}</p>
+                    {msg.counter_offer && (
+                      <p className="text-green-400 font-semibold flex items-center">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        Counter Offer: ${msg.counter_offer.toFixed(2)}
+                      </p>
+                    )}
+                    {msg.counter_terms && (
+                      <p className="text-blue-400">
+                        Proposed Terms: {msg.counter_terms}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 

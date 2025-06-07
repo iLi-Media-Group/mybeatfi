@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, MapPin, Building2, Phone } from 'lucide-react';
+import { User, Mail, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 
 interface ClientProfileProps {
   isOpen: boolean;
@@ -14,14 +13,6 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [streetAddress, setStreetAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [country, setCountry] = useState('');
-  const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +29,7 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email, company_name, phone_number, street_address, city, state, postal_code, country, avatar_path')
+        .select('first_name, last_name, email')
         .eq('id', user?.id)
         .single();
 
@@ -48,14 +39,6 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setEmail(data.email || '');
-        setCompanyName(data.company_name || '');
-        setPhoneNumber(data.phone_number || '');
-        setStreetAddress(data.street_address || '');
-        setCity(data.city || '');
-        setState(data.state || '');
-        setPostalCode(data.postal_code || '');
-        setCountry(data.country || '');
-        setAvatarPath(data.avatar_path || null);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -65,9 +48,6 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
     }
   };
 
-  const handlePhotoUpdate = (url: string) => {
-    setAvatarPath(url);
-  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -82,13 +62,6 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          company_name: companyName.trim() || null,
-          phone_number: phoneNumber.trim() || null,
-          street_address: streetAddress.trim() || null,
-          city: city.trim() || null,
-          state: state.trim() || null,
-          postal_code: postalCode.trim() || null,
-          country: country.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -111,7 +84,7 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Edit Profile</h2>
           <button
@@ -140,14 +113,6 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
               </div>
             )}
 
-            <div className="flex justify-center mb-6">
-              <ProfilePhotoUpload
-                currentPhotoUrl={avatarPath}
-                onPhotoUpdate={handlePhotoUpdate}
-                size="lg"
-                userId={user?.id}
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Email
@@ -166,140 +131,35 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  First Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Last Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full pl-10"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Company Name (Optional)
+                First Name
               </label>
               <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className="w-full pl-10"
-                  placeholder="Your company or organization"
+                  required
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Phone Number (Optional)
+                Last Name
               </label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="w-full pl-10"
-                  placeholder="International format"
+                  required
                 />
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium text-white">Address Information (Optional)</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Street Address
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={streetAddress}
-                    onChange={(e) => setStreetAddress(e.target.value)}
-                    className="w-full pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    State/Province/Region
-                  </label>
-                  <input
-                    type="text"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
               </div>
             </div>
 

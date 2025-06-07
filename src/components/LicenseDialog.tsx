@@ -130,47 +130,27 @@ export function LicenseDialog({
 
       const purchaseDate = new Date().toISOString();
 
-      // Check for duplicate licenses
-      const { data: existingLicenses, error: checkError } = await supabase
-        .from('sales')
-        .select('id')
-        .eq('track_id', track.id)
-        .eq('buyer_id', user.id)
-        .is('deleted_at', null);
-        
-      if (checkError) throw checkError;
-      
-      if (existingLicenses && existingLicenses.length > 0) {
-        throw new Error('You already have a license for this track');
-      }
-      // Create license record without explicit producer_id (it's handled by the database)
+      // Create license record
       const { data: license, error: licenseError } = await supabase
         .from('sales')
-        .insert([
-          {
-            track_id: track.id,
-            producer_id: track.producer_id, // Add explicit producer_id reference
-            buyer_id: user.id,
-            license_type: membershipType,
-            amount: 0,
-            payment_method: 'subscription',
-            created_at: purchaseDate,
-            licensee_info: {
-              name: `${profile.first_name} ${profile.last_name}`,
-              email: profile.email
-            }
+        .insert({
+          track_id: track.id,
+          buyer_id: user.id,
+          license_type: membershipType,
+          amount: 0,
+          payment_method: 'subscription',
+          created_at: purchaseDate,
+          licensee_info: {
+            name: `${profile.first_name} ${profile.last_name}`,
+            email: profile.email
           }
-        ])
-        .select('id')
+        })
+        .select()
         .single();
 
       if (licenseError) {
         console.error('License creation error:', licenseError);
         throw new Error('Failed to create license. Please try again.');
-      }
-
-      if (!license) {
-        throw new Error('No license data returned after creation');
       }
 
       setCreatedLicenseId(license.id);
@@ -244,7 +224,6 @@ export function LicenseDialog({
           {step === 'terms' && (
             <LicenseTermsSummary
               licenseType={membershipType}
-              trackId={track.id}
               onAccept={() => {
                 if (!profile?.first_name || !profile?.last_name || !profile?.email) {
                   setStep('profile');
@@ -265,7 +244,7 @@ export function LicenseDialog({
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full pl-4"
+                  className="w-full"
                   required
                 />
               </div>
@@ -278,7 +257,7 @@ export function LicenseDialog({
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full pl-4"
+                  className="w-full"
                   required
                 />
               </div>
@@ -291,7 +270,7 @@ export function LicenseDialog({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-4"
+                  className="w-full"
                   required
                 />
               </div>

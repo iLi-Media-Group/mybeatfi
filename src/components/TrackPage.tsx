@@ -22,6 +22,7 @@ export function TrackPage() {
   const navigate = useNavigate();
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
   const [showProposalDialog, setShowProposalDialog] = useState(false);
   const [showProducerProfile, setShowProducerProfile] = useState(false);
@@ -32,7 +33,6 @@ export function TrackPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!trackId) {
@@ -75,9 +75,9 @@ export function TrackPage() {
       
       if (trackData) {
         // Convert comma-separated strings to arrays
-        const genres = trackData.genres ? trackData.genres.split(',').map(g => g.trim()) : [];
-        const moods = trackData.moods ? trackData.moods.split(',').map(m => m.trim()) : [];
-        const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map(g => g.trim()) : [];
+        const genres = trackData.genres ? trackData.genres.split(',').map((g: string) => g.trim()) : [];
+        const moods = trackData.moods ? trackData.moods.split(',').map((m: string) => m.trim()) : [];
+        const subGenres = trackData.sub_genres ? trackData.sub_genres.split(',').map((g: string) => g.trim()) : [];
 
         // Map the database fields to the Track interface
         const mappedTrack: Track = {
@@ -96,9 +96,8 @@ export function TrackPage() {
           vocalsUsageType: trackData.vocals_usage_type || 'normal',
           isOneStop: trackData.is_one_stop || false,
           hasStingEnding: trackData.has_sting_ending || false,
-          mp3Url: trackData.mp3_url,
-          trackoutsUrl: trackData.trackouts_url,
-          producerId: trackData.producer_id, // Add producer_id to the mapped track
+          mp3Url: trackData.mp3_url || '',
+          trackoutsUrl: trackData.trackouts_url || '',
           producer: trackData.producer ? {
             id: trackData.producer.id,
             firstName: trackData.producer.first_name || '',
@@ -155,7 +154,6 @@ export function TrackPage() {
           remainingLicenses
         });
       }
-
     } catch (error) {
       console.error('Error fetching track data:', error);
       setError('Failed to load track details');
@@ -211,9 +209,35 @@ export function TrackPage() {
       return;
     }
     
-    // Show the license dialog for all users
-    // The LicenseTermsSummary component will handle the Stripe checkout if needed
-    setShowLicenseDialog(true);
+    // For regular tracks, handle based on membership
+    if (membershipPlan === 'Single Track') {
+      try {
+        setCheckoutLoading(true);
+        
+        // Find the Single Track product
+        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
+        
+        if (!singleTrackProduct) {
+          throw new Error('Single Track product not found');
+        }
+        
+        // Create checkout session
+        const checkoutUrl = await createCheckoutSession(
+          singleTrackProduct.priceId, 
+          singleTrackProduct.mode
+        );
+        
+        // Redirect to checkout
+        window.location.href = checkoutUrl;
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+      } finally {
+        setCheckoutLoading(false);
+      }
+    } else {
+      // For subscription users, show the license dialog
+      setShowLicenseDialog(true);
+    }
   };
 
   if (loading) {
@@ -360,32 +384,69 @@ export function TrackPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={handleActionClick}
-                  disabled={checkoutLoading}
-                  className={`py-3 px-6 rounded-lg text-white font-semibold transition-colors flex items-center ${
-                    isSyncOnly 
-                      ? 'bg-purple-600 hover:bg-purple-700' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } disabled:opacity-50`}
-                >
-                  {checkoutLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <DollarSign className="w-5 h-5 mr-2" />
-                      {isSyncOnly ? 'Submit Sync Proposal' : (
-                        membershipPlan === 'Single Track' 
-                          ? 'Purchase License ($9.99)' 
-                          : 'License This Track'
+              <div className="space-y-4">
+                {user ? (
+                  <button
+                    onClick={handleActionClick}
+                    disabled={checkoutLoading}
+                    className={`w-full py-3 px-6 rounded-lg text-white font-semibold transition-colors flex items-center justify-center ${
+                      isSyncOnly 
+                        ? 'bg-purple-600 hover:bg-purple-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } disabled:opacity-50`}
+                  >
+                    {checkoutLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <DollarSign className="w-5 h-5 mr-2" />
+                        {isSyncOnly ? 'Submit Sync Proposal' : (
+                          membershipPlan === 'Single Track' 
+                            ? 'Purchase License ($9.99)' 
+                            : 'License This Track'
+                        )}
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => navigate('/login')}
+                      className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Login to License This Track
+                    </button>
+                    <button
+                      onClick={() => navigate('/signup')}
+                      className="w-full py-3 px-6 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                    >
+                      Create Account
+                    </button>
+                  </div>
+                )}
+                
+                {track.mp3Url && (
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <h3 className="text-lg font-semibold text-white mb-2">Available Formats</h3>
+                    <div className="flex items-center space-x-4">
+                      {track.mp3Url && (
+                        <div className="flex items-center text-gray-300">
+                          <FileMusic className="w-4 h-4 mr-2 text-blue-400" />
+                          <span>MP3</span>
+                        </div>
                       )}
-                    </>
-                  )}
-                </button>
+                      {track.trackoutsUrl && (
+                        <div className="flex items-center text-gray-300">
+                          <Layers className="w-4 h-4 mr-2 text-green-400" />
+                          <span>Trackouts</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

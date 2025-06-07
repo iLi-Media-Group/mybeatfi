@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, DollarSign, Calendar, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import ProposalNegotiationDialog from './ProposalNegotiationDialog';
-import ProposalHistoryDialog from './ProposalHistoryDialog';
-import ProposalConfirmDialog from './ProposalConfirmDialog';
+import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
+import { ProposalHistoryDialog } from './ProposalHistoryDialog';
+import { ProposalConfirmDialog } from './ProposalConfirmDialog';
 
 interface TrackProposalsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  track: {
-    id: string;
-    title: string;
-  };
+  trackId: string;
+  trackTitle: string;
 }
 
 interface SyncProposal {
@@ -30,10 +28,11 @@ interface SyncProposal {
   };
 }
 
-export default function TrackProposalsDialog({
+export function TrackProposalsDialog({
   isOpen,
   onClose,
-  track
+  trackId,
+  trackTitle
 }: TrackProposalsDialogProps) {
   const { user } = useAuth();
   const [proposals, setProposals] = useState<SyncProposal[]>([]);
@@ -47,10 +46,10 @@ export default function TrackProposalsDialog({
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected' | 'expired'>('all');
 
   useEffect(() => {
-    if (isOpen && track?.id) {
+    if (isOpen && trackId) {
       fetchProposals();
     }
-  }, [isOpen, track?.id, filter]);
+  }, [isOpen, trackId, filter]);
 
   const fetchProposals = async () => {
     try {
@@ -73,7 +72,7 @@ export default function TrackProposalsDialog({
             email
           )
         `)
-        .eq('track_id', track.id)
+        .eq('track_id', trackId)
         .order('created_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -95,16 +94,21 @@ export default function TrackProposalsDialog({
   const handleProposalAction = (proposal: SyncProposal, action: 'negotiate' | 'history' | 'accept' | 'reject') => {
     setSelectedProposal(proposal);
     
-    if (action === 'negotiate') {
-      setShowNegotiationDialog(true);
-    } else if (action === 'history') {
-      setShowHistoryDialog(true);
-    } else if (action === 'accept') {
-      setConfirmAction('accept');
-      setShowConfirmDialog(true);
-    } else if (action === 'reject') {
-      setConfirmAction('reject');
-      setShowConfirmDialog(true);
+    switch (action) {
+      case 'negotiate':
+        setShowNegotiationDialog(true);
+        break;
+      case 'history':
+        setShowHistoryDialog(true);
+        break;
+      case 'accept':
+        setConfirmAction('accept');
+        setShowConfirmDialog(true);
+        break;
+      case 'reject':
+        setConfirmAction('reject');
+        setShowConfirmDialog(true);
+        break;
     }
   };
 
@@ -145,7 +149,7 @@ export default function TrackProposalsDialog({
         body: JSON.stringify({
           proposalId: selectedProposal.id,
           action,
-          trackTitle: track.title,
+          trackTitle,
           clientEmail: selectedProposal.client.email
         })
       });
@@ -185,10 +189,10 @@ export default function TrackProposalsDialog({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white">Proposals for "{track.title}"</h2>
+              <h2 className="text-2xl font-bold text-white">Proposals for "{trackTitle}"</h2>
               <p className="text-gray-400">View and manage all sync proposals for this track</p>
             </div>
             <button
@@ -310,7 +314,6 @@ export default function TrackProposalsDialog({
                         <button
                           onClick={() => handleProposalAction(proposal, 'history')}
                           className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors flex items-center"
-                          type="button"
                         >
                           <Clock className="w-3 h-3 mr-1" />
                           View History
@@ -360,14 +363,10 @@ export default function TrackProposalsDialog({
             setSelectedProposal(null);
             fetchProposals(); // Refresh proposals after negotiation
           }}
-          proposal={selectedProposal}
-          onUpdate={(updatedProposal) => {
-            setProposals(proposals.map(p => 
-              p.id === updatedProposal.id ? updatedProposal : p
-            ));
-            setShowNegotiationDialog(false);
-            setSelectedProposal(null);
-          }}
+          proposalId={selectedProposal.id}
+          currentOffer={selectedProposal.sync_fee}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
+          trackTitle={trackTitle}
         />
       )}
 
@@ -378,7 +377,7 @@ export default function TrackProposalsDialog({
             setShowHistoryDialog(false);
             setSelectedProposal(null);
           }}
-          proposal={selectedProposal}
+          proposalId={selectedProposal.id}
         />
       )}
 
@@ -391,7 +390,8 @@ export default function TrackProposalsDialog({
           }}
           onConfirm={() => handleProposalStatusChange(confirmAction)}
           action={confirmAction}
-          proposal={selectedProposal}
+          trackTitle={trackTitle}
+          clientName={`${selectedProposal.client.first_name} ${selectedProposal.client.last_name}`}
         />
       )}
     </>

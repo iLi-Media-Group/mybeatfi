@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Music, ListMusic } from 'lucide-react';
+import { Music } from 'lucide-react';
 
 export function Footer() {
   return (

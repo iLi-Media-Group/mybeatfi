@@ -1,62 +1,28 @@
-import React, { useState } from 'react';
-import { X, AlertTriangle, Check, XCircle, Loader2 } from 'lucide-react';
+import React from 'react';
+import { X, AlertTriangle, Check, XCircle } from 'lucide-react';
 
 interface ProposalConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   action: 'accept' | 'reject';
-  proposal: any;
+  trackTitle: string;
+  clientName: string;
 }
 
-export default function ProposalConfirmDialog({
+export function ProposalConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
   action,
-  proposal
+  trackTitle,
+  clientName
 }: ProposalConfirmDialogProps) {
-  const [loading, setLoading] = useState(false);
-  const dialogRef = React.useRef<HTMLDivElement>(null);
-  
-  // Handle click outside to close dialog
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-  
   if (!isOpen) return null;
-
-  const handleConfirm = async () => {
-    try {
-      setLoading(true);
-      await onConfirm();
-    } catch (error) {
-      console.error(`Error ${action}ing proposal:`, error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const trackTitle = proposal?.track?.title || 'this track';
-  const clientName = proposal?.client?.first_name || proposal?.client?.last_name
-  ? `${proposal?.client?.first_name ?? ''} ${proposal?.client?.last_name ?? ''}`.trim()
-  : 'the client';
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div ref={dialogRef} className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <AlertTriangle className="w-6 h-6 text-yellow-500 mr-2" />
@@ -87,17 +53,14 @@ export default function ProposalConfirmDialog({
             Cancel
           </button>
           <button
-            onClick={handleConfirm}
+            onClick={onConfirm}
             className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
               action === 'accept'
                 ? 'bg-green-600 hover:bg-green-700 text-white'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
-            disabled={loading}
           >
-            {loading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : action === 'accept' ? (
+            {action === 'accept' ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
                 Accept Proposal

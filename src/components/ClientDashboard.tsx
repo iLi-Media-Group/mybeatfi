@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2, FileText } from 'lucide-react';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
@@ -99,12 +99,9 @@ export function ClientDashboard() {
   useEffect(() => {
     if (user) {
       // Refresh membership info first to ensure we have the latest data
-      refreshMembership()
-        .then(() => fetchDashboardData())
-        .catch(err => {
-          console.error('Error refreshing membership:', err);
-          fetchDashboardData();
-        });
+      refreshMembership().then(() => {
+        fetchDashboardData();
+      });
     }
   }, [user, membershipPlan]);
 
@@ -143,9 +140,7 @@ export function ClientDashboard() {
             bpm,
             audio_url,
             image_url,
-            producer_id,
-            producer:profiles!tracks_producer_id_fkey (
-              id,
+            producer:profiles!producer_id (
               first_name,
               last_name,
               email
@@ -173,31 +168,7 @@ export function ClientDashboard() {
         .from('favorites')
         .select(`
           track_id,
-          tracks (
-            id,
-            title,
-            artist,
-            genres,
-            moods,
-            duration,
-            bpm,
-            audio_url,
-            image_url,
-            has_sting_ending,
-            is_one_stop,
-            mp3_url,
-            trackouts_url,
-            has_vocals,
-            vocals_usage_type,
-            sub_genres,
-            producer_id,
-            producer:profiles!tracks_producer_id_fkey (
-              id,
-              first_name,
-              last_name,
-              email
-            )
-          )
+          tracks (*)
         `)
         .eq('user_id', user.id);
 
@@ -218,14 +189,7 @@ export function ClientDashboard() {
           trackoutsUrl: f.tracks.trackouts_url,
           hasVocals: f.tracks.has_vocals,
           vocalsUsageType: f.tracks.vocals_usage_type,
-          subGenres: f.tracks.sub_genres || [],
-          producerId: f.tracks.producer_id,
-          producer: f.tracks.producer ? {
-            id: f.tracks.producer.id,
-            firstName: f.tracks.producer.first_name || '',
-            lastName: f.tracks.producer.last_name || '',
-            email: f.tracks.producer.email
-          } : undefined,
+          subGenres: [],
           fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
           pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
           leaseAgreementUrl: ''
@@ -244,8 +208,6 @@ export function ClientDashboard() {
           image_url,
           has_vocals,
           vocals_usage_type,
-          sub_genres,
-          producer_id,
           producer:profiles!producer_id (
             id,
             first_name,
@@ -268,17 +230,16 @@ export function ClientDashboard() {
           image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
           hasVocals: track.has_vocals,
           vocalsUsageType: track.vocals_usage_type,
-          subGenres: track.sub_genres || [],
-          producerId: track.producer_id,
+          subGenres: [],
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: '',
           producer: track.producer ? {
             id: track.producer.id,
             firstName: track.producer.first_name || '',
             lastName: track.producer.last_name || '',
             email: track.producer.email
-          } : undefined,
-          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
-          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
-          leaseAgreementUrl: ''
+          } : undefined
         }));
         setNewTracks(formattedNewTracks);
       }
@@ -294,7 +255,7 @@ export function ClientDashboard() {
       }
 
       // Calculate remaining licenses for Gold Access
-      if (membershipPlan === 'Gold Access') {
+      if (profileData.membership_plan === 'Gold Access') {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -422,10 +383,6 @@ export function ClientDashboard() {
     setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
   };
 
-  const handleViewLicenseAgreement = (licenseId: string) => {
-    navigate(`/license-agreement/${licenseId}`);
-  };
-
   const sortedAndFilteredLicenses = licenses
     .filter(license => !selectedGenre || license.track.genres.includes(selectedGenre))
     .sort((a, b) => {
@@ -498,8 +455,6 @@ export function ClientDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
               <p className="text-gray-300">
-                <span className="font-semibold text-white">Current Plan: {membershipPlan}</span>
-                <br />
                 {membershipPlan === 'Gold Access' ? (
                   <>
                     You have used {userStats.totalLicenses} of your 10 monthly licenses
@@ -698,23 +653,13 @@ export function ClientDashboard() {
                           >
                             {license.track.title}
                           </button>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleViewLicenseAgreement(license.id)}
-                              className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-400/10"
-                              title="View License Agreement"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setSelectedLicenseToDelete(license)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
-                              title="Delete License"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          
-                          </div>
+                          <button
+                            onClick={() => setSelectedLicenseToDelete(license)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                            title="Delete License"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                         <div className="text-sm text-gray-400 space-y-1">
                           <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
@@ -829,7 +774,10 @@ export function ClientDashboard() {
                             <AudioPlayer url={track.audioUrl} title={track.title} />
                             {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
                               <button
-                                onClick={() => navigate(`/track/${track.id}`)}
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
                                 className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                               >
                                 <DollarSign className="w-4 h-4" />
@@ -837,7 +785,7 @@ export function ClientDashboard() {
                               </button>
                             ) : (
                               <button
-                                onClick={() => navigate(`/track/${track.id}`)}
+                                onClick={() => handleLicenseClick(track)}
                                 className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                               >
                                 <DollarSign className="w-4 h-4" />
@@ -892,7 +840,10 @@ export function ClientDashboard() {
                             <AudioPlayer url={track.audioUrl} title={track.title} />
                             {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
                               <button
-                                onClick={() => navigate(`/track/${track.id}`)}
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
                                 className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                               >
                                 <DollarSign className="w-4 h-4" />
@@ -900,7 +851,7 @@ export function ClientDashboard() {
                               </button>
                             ) : (
                               <button
-                                onClick={() => navigate(`/track/${track.id}`)}
+                                onClick={() => handleLicenseClick(track)}
                                 className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
                               >
                                 <DollarSign className="w-4 h-4" />
@@ -975,8 +926,7 @@ export function ClientDashboard() {
                         bpm,
                         audio_url,
                         image_url,
-                        producer_id,
-                        producer:profiles!tracks_producer_id_fkey (
+                        producer:profiles!producer_id (
                           first_name,
                           last_name,
                           email

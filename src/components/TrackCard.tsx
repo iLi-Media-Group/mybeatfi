@@ -209,23 +209,23 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigate(`/track/${track.id}`);
-              }}
-              className={`py-1.5 px-3 rounded text-xs font-medium transition-all duration-300 ${
-                isSyncOnly 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {isSyncOnly ? 'Submit Proposal' : 'License Track'}
-            </button>
-          </div>
+          {/* Action Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect(track);
+            }}
+            className={`w-full py-2 px-4 rounded text-sm font-medium transition-all duration-300 flex items-center justify-center ${
+              isSyncOnly 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            <span className="transform transition-transform group-hover:translate-x-1">
+              {isSyncOnly ? 'Submit Proposal →' : 'License Track →'}
+            </span>
+          </button>
         </div>
       </div>
 
