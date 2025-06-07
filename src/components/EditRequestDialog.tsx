@@ -37,7 +37,7 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
       await onSave({
         project_title: title,
         project_description: description,
-        sync_fee: parseFloat(syncFee)
+        sync_fee: parseFloat(syncFee),
         end_date: endDate ? new Date(endDate).toISOString() : request.end_date
       });
 
