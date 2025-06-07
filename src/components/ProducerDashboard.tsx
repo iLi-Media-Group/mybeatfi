@@ -935,4 +935,3 @@ export default function ProducerDashboard() {
   );
 }
 
-export default ProducerDashboard
