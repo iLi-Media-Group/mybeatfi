@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { FileText, Trash2, Tag, Hash, Layers, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import { FileText, Trash2, Tag, Hash, Layers, Calendar, Clock, AlertTriangle, User } from 'lucide-react';
 import { AudioPlayer } from './AudioPlayer';
 import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 
