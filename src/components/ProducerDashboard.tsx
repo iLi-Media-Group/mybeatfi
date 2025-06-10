@@ -131,34 +131,35 @@ export function ProducerDashboard() {
 
       // Fetch proposal counts for each track
       const trackIds = tracksData?.map(track => track.id) || [];
-      const { data: proposalCounts, error: proposalCountError } = await supabase
+      
+      // Get proposal counts by fetching all proposals and counting them
+      const { data: proposalsData, error: proposalCountError } = await supabase
         .from('sync_proposals')
-        .select('track_id, count')
-        .in('track_id', trackIds)
-        .group('track_id');
+        .select('track_id')
+        .in('track_id', trackIds);
 
       if (proposalCountError) throw proposalCountError;
 
-      // Fetch sale counts for each track
-      const { data: saleCounts, error: saleCountError } = await supabase
+      // Count proposals per track
+      const proposalCountMap = proposalsData?.reduce((acc, proposal) => {
+        acc[proposal.track_id] = (acc[proposal.track_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      // Get sale counts by fetching all sales and counting them
+      const { data: salesCountData, error: saleCountError } = await supabase
         .from('sales')
-        .select('track_id, count')
+        .select('track_id')
         .in('track_id', trackIds)
-        .is('deleted_at', null)
-        .group('track_id');
+        .is('deleted_at', null);
 
       if (saleCountError) throw saleCountError;
 
-      // Create a map of track_id to proposal_count and sale_count
-      const proposalCountMap = proposalCounts?.reduce((acc, item) => {
-        acc[item.track_id] = item.count;
+      // Count sales per track
+      const saleCountMap = salesCountData?.reduce((acc, sale) => {
+        acc[sale.track_id] = (acc[sale.track_id] || 0) + 1;
         return acc;
-      }, {}) || {};
-
-      const saleCountMap = saleCounts?.reduce((acc, item) => {
-        acc[item.track_id] = item.count;
-        return acc;
-      }, {}) || {};
+      }, {} as Record<string, number>) || {};
 
       // Add proposal_count and sale_count to each track
       const tracksWithCounts = tracksData?.map(track => ({
@@ -721,121 +722,4 @@ export function ProducerDashboard() {
                     <span className="text-gray-300">Pending Balance</span>
                     <span className="text-yellow-400 font-semibold">${stats.pendingBalance.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Total Revenue</span>
-                    <span className="text-white font-semibold">${stats.totalRevenue.toFixed(2)}</span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-purple-500/20">
-                  <Link
-                    to="/producer/banking"
-                    className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center"
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Manage Earnings
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Dialogs */}
-      {selectedTrack && showDeleteDialog && (
-        <DeleteTrackDialog
-          isOpen={showDeleteDialog}
-          onClose={() => {
-            setShowDeleteDialog(false);
-            setSelectedTrack(null);
-          }}
-          trackTitle={selectedTrack.title}
-          onConfirm={confirmDeleteTrack}
-        />
-      )}
-
-      {selectedTrack && showTrackProposalsDialog && (
-        <TrackProposalsDialog
-          isOpen={showTrackProposalsDialog}
-          onClose={() => {
-            setShowTrackProposalsDialog(false);
-            setSelectedTrack(null);
-          }}
-          trackId={selectedTrack.id}
-          trackTitle={selectedTrack.title}
-        />
-      )}
-
-      {showRevenueBreakdown && (
-        <RevenueBreakdownDialog
-          isOpen={showRevenueBreakdown}
-          onClose={() => setShowRevenueBreakdown(false)}
-          producerId={user?.id}
-        />
-      )}
-
-      {selectedProposal && showNegotiationDialog && (
-        <ProposalNegotiationDialog
-          isOpen={showNegotiationDialog}
-          onClose={() => {
-            setShowNegotiationDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-          currentOffer={selectedProposal.sync_fee}
-          clientName={selectedProposal.client_name}
-          trackTitle={selectedProposal.track_title}
-        />
-      )}
-
-      {selectedProposal && showHistoryDialog && (
-        <ProposalHistoryDialog
-          isOpen={showHistoryDialog}
-          onClose={() => {
-            setShowHistoryDialog(false);
-            setSelectedProposal(null);
-          }}
-          proposalId={selectedProposal.id}
-        />
-      )}
-
-      {selectedProposal && showConfirmDialog && (
-        <ProposalConfirmDialog
-          isOpen={showConfirmDialog}
-          onClose={() => {
-            setShowConfirmDialog(false);
-            setSelectedProposal(null);
-          }}
-          onConfirm={handleProposalStatusChange}
-          action={confirmAction}
-          trackTitle={selectedProposal.track_title}
-          clientName={selectedProposal.client_name}
-        />
-      )}
-
-      <ProducerProfile
-        isOpen={showProfileDialog}
-        onClose={() => setShowProfileDialog(false)}
-      />
-
-      {selectedTrack && showEditTrackModal && (
-        <EditTrackModal
-          isOpen={showEditTrackModal}
-          onClose={() => {
-            setShowEditTrackModal(false);
-            setSelectedTrack(null);
-          }}
-          track={{
-            id: selectedTrack.id,
-            title: selectedTrack.title,
-            genres: selectedTrack.genres,
-            moods: [],
-            hasVocals: selectedTrack.has_vocals,
-            vocalsUsageType: selectedTrack.vocals_usage_type as 'normal' | 'sync_only'
-          }}
-          onUpdate={handleTrackUpdate}
-        />
-      )}
-    </div>
-  );
-}
+                
