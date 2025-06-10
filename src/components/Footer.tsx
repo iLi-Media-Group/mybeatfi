@@ -35,6 +35,11 @@ export function Footer() {
                   Pricing Plans
                 </Link>
               </li>
+              <li>
+                <Link to="/white-label" className="text-gray-400 hover:text-white transition-colors">
+                  White Label Solutions
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -68,6 +73,11 @@ export function Footer() {
               <li>
                 <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/white-label" className="text-gray-400 hover:text-white transition-colors">
+                  White Label
                 </Link>
               </li>
             </ul>

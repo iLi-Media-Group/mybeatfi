@@ -38,6 +38,7 @@ import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
 import { ProducerPayoutsPage } from './components/ProducerPayoutsPage';
 import { TrackPage } from './components/TrackPage';
 import { WelcomePage } from './components/WelcomePage';
+import { WhiteLabelPage } from './components/WhiteLabelPage';
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -161,6 +162,7 @@ function App() {
         <Route path="/checkout/success" element={<LayoutWrapper><CheckoutSuccessPage /></LayoutWrapper>} />
         <Route path="/welcome" element={<LayoutWrapper><WelcomePage /></LayoutWrapper>} />
         <Route path="/track/:trackId" element={<LayoutWrapper><TrackPage /></LayoutWrapper>} />
+        <Route path="/white-label" element={<LayoutWrapper><WhiteLabelPage /></LayoutWrapper>} />
 
         <Route path="/chat" element={
           <ProtectedRoute>
