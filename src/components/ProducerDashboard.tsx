@@ -569,7 +569,7 @@ export function ProducerDashboard() {
                         </div>
                       </div>
                     </div>
-                    <AudioPlayer url={track.audio_url} title={track.title} />
+                    <AudioPlayer src={track.audio_url} title={track.title} />
                   </div>
                 </div>
               ))

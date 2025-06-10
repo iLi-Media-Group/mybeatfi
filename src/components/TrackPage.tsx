@@ -290,7 +290,7 @@ export function TrackPage() {
               )}
 
               <div className="mb-6">
-                <AudioPlayer url={track.audioUrl} title={track.title} />
+                <AudioPlayer src={track.audioUrl} title={track.title} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

@@ -2,16 +2,36 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
 interface AudioPlayerProps {
-  url: string;
+  src: string;
   title: string;
+  isPlaying?: boolean;
+  onPlay?: () => void;
+  onPause?: () => void;
+  className?: string;
 }
 
-export function AudioPlayer({ url, title }: AudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
+export function AudioPlayer({ src, title, isPlaying = false, onPlay, onPause, className = '' }: AudioPlayerProps) {
+  const [internalIsPlaying, setInternalIsPlaying] = useState(isPlaying);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Sync internal state with external control
+  useEffect(() => {
+    setInternalIsPlaying(isPlaying);
+    
+    if (isPlaying && audioRef.current && audioRef.current.paused) {
+      audioRef.current.play().catch(err => {
+        console.error('Error playing audio:', err);
+        setError('Failed to play audio');
+        setInternalIsPlaying(false);
+        if (onPause) onPause();
+      });
+    } else if (!isPlaying && audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -28,30 +48,39 @@ export function AudioPlayer({ url, title }: AudioPlayerProps) {
     };
 
     audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('ended', () => setIsPlaying(false));
+    audio.addEventListener('ended', () => {
+      setInternalIsPlaying(false);
+      if (onPause) onPause();
+    });
     audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', updateProgress);
-      audio.removeEventListener('ended', () => setIsPlaying(false));
+      audio.removeEventListener('ended', () => {
+        setInternalIsPlaying(false);
+        if (onPause) onPause();
+      });
       audio.removeEventListener('error', handleError);
     };
   }, []);
 
   const togglePlay = () => {
     if (audioRef.current) {
-      if (isPlaying) {
+      if (internalIsPlaying) {
         audioRef.current.pause();
+        setInternalIsPlaying(false);
+        if (onPause) onPause();
       } else {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error('Playback error:', error);
+          playPromise.catch(err => {
+            console.error('Playback error:', err);
             setError('Failed to play audio');
           });
+          setInternalIsPlaying(true);
+          if (onPlay) onPlay();
         }
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -75,12 +104,12 @@ export function AudioPlayer({ url, title }: AudioPlayerProps) {
   };
 
   return (
-    <div className="flex items-center space-x-4 bg-white/5 backdrop-blur-sm rounded-lg p-3">
+    <div className={`flex items-center space-x-4 bg-white/5 backdrop-blur-sm rounded-lg p-3 ${className}`}>
       <button
         onClick={togglePlay}
         className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
       >
-        {isPlaying ? (
+        {internalIsPlaying ? (
           <Pause className="w-5 h-5 text-white" />
         ) : (
           <Play className="w-5 h-5 text-white" />
@@ -112,7 +141,7 @@ export function AudioPlayer({ url, title }: AudioPlayerProps) {
           <Volume2 className="w-5 h-5" />
         )}
       </button>
-      <audio ref={audioRef} src={url} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="metadata" />
     </div>
   );
 }
