@@ -8,6 +8,7 @@ import { CustomSyncAnalytics } from './CustomSyncAnalytics';
 import { ProducerAnalyticsModal } from './ProducerAnalyticsModal';
 import { RevenueBreakdownDialog } from './RevenueBreakdownDialog';
 import { ClientList } from './ClientList';
+import { ProducerPayoutsPage } from './ProducerPayoutsPage';
 import { AdminAnnouncementManager } from './AdminAnnouncementManager';
 import { CompensationSettings } from './CompensationSettings';
 import { Link } from 'react-router-dom';
@@ -300,58 +301,27 @@ export function AdminDashboard() {
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap border-b border-blue-500/20 mb-8">
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 'analytics' 
-                ? 'text-white border-b-2 border-blue-500' 
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Analytics
-          </button>
-          <button
-            onClick={() => setActiveTab('producers')}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 'producers' 
-                ? 'text-white border-b-2 border-blue-500' 
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Producers
-          </button>
-          <button
-            onClick={() => setActiveTab('clients')}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 'clients' 
-                ? 'text-white border-b-2 border-blue-500' 
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Clients
-          </button>
-          <button
-            onClick={() => setActiveTab('announcements')}
-            className={`px-6 py-3 font-medium transition-colors flex items-center ${
-              activeTab === 'announcements' 
-                ? 'text-white border-b-2 border-blue-500' 
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            Announcements
-          </button>
-          <button
-            onClick={() => setActiveTab('compensation')}
-            className={`px-6 py-3 font-medium transition-colors flex items-center ${
-              activeTab === 'compensation' 
-                ? 'text-white border-b-2 border-blue-500' 
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Percent className="w-4 h-4 mr-2" />
-            Compensation
-          </button>
+          {[
+            { id: 'analytics', label: 'Analytics', icon: null },
+            { id: 'producers', label: 'Producers', icon: null },
+            { id: 'clients', label: 'Clients', icon: null },
+            { id: 'payouts', label: 'USDC Payouts', icon: <Wallet className="w-4 h-4 mr-2" /> },
+            { id: 'announcements', label: 'Announcements', icon: <Bell className="w-4 h-4 mr-2" /> },
+            { id: 'compensation', label: 'Compensation', icon: <Percent className="w-4 h-4 mr-2" /> }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-6 py-3 font-medium transition-colors ${tab.icon ? 'flex items-center' : ''} ${
+                activeTab === tab.id 
+                  ? 'text-white border-b-2 border-blue-500' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Analytics Sections */}
@@ -514,6 +484,13 @@ export function AdminDashboard() {
         {activeTab === 'clients' && (
           <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
             <ClientList />
+          </div>
+        )}
+
+        {/* USDC Payouts */}
+        {activeTab === 'payouts' && (
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+            <ProducerPayoutsPage />
           </div>
         )}
 
