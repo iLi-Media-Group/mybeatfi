@@ -714,7 +714,6 @@ export function ClientDashboard() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <button
                               onClick={() => navigate(`/track/${license.track.id}`)}
                               className="text-lg font-semibold text-white hover:text-blue-400 transition-colors text-left"
                             >
@@ -773,11 +772,38 @@ export function ClientDashboard() {
                                 onToggle={() => {
                                   if (currentlyPlaying === license.track.id) {
                                     setCurrentlyPlaying(null);
-                                  } else {
-                                    setCurrentlyPlaying(license.track.id);
-                                  }
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
                                 }}
-                              />
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                            {track.hasVocals && track.vocalsUsageType === 'sync_only' ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedTrackToLicense(track);
+                                  setShowProposalDialog(true);
+                                }}
+                                className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>Submit Proposal</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleLicenseClick(track)}
+                                className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                                <span>License Track</span>
+                              </button>
                             )}
                           </div>
                         </div>
