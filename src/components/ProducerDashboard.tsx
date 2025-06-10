@@ -737,4 +737,62 @@ export function ProducerDashboard() {
       {selectedProposal && showNegotiationDialog && (
         <ProposalNegotiationDialog
           isOpen={showNegotiationDialog}
-          
+          onClose={() => {
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+          }}
+          proposal={selectedProposal}
+          onNegotiationSent={() => {
+            setShowNegotiationDialog(false);
+            setSelectedProposal(null);
+            fetchDashboardData();
+          }}
+        />
+      )}
+
+      {selectedProposal && showHistoryDialog && (
+        <ProposalHistoryDialog
+          isOpen={showHistoryDialog}
+          onClose={() => {
+            setShowHistoryDialog(false);
+            setSelectedProposal(null);
+          }}
+          proposalId={selectedProposal.id}
+        />
+      )}
+
+      {selectedProposal && showConfirmDialog && (
+        <ProposalConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setSelectedProposal(null);
+          }}
+          action={confirmAction}
+          proposal={selectedProposal}
+          onConfirm={handleProposalStatusChange}
+        />
+      )}
+
+      {showProfileDialog && (
+        <ProducerProfile
+          isOpen={showProfileDialog}
+          onClose={() => setShowProfileDialog(false)}
+          onProfileUpdated={fetchDashboardData}
+        />
+      )}
+
+      {selectedTrack && showEditTrackModal && (
+        <EditTrackModal
+          isOpen={showEditTrackModal}
+          onClose={() => {
+            setShowEditTrackModal(false);
+            setSelectedTrack(null);
+          }}
+          track={selectedTrack}
+          onTrackUpdated={fetchDashboardData}
+        />
+      )}
+    </div>
+  );
+}
