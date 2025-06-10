@@ -32,7 +32,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
   const [selectedMoods, setSelectedMoods] = useState<string[]>(track.moods || []);
   const [hasVocals, setHasVocals] = useState(track.hasVocals || false);
-  const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(track.vocalsUsageType || 'normal');
+  const [isSyncOnly, setIsSyncOnly] = useState(track.vocalsUsageType === 'sync_only');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
           genres: formattedGenres,
           moods: validMoods,
           has_vocals: hasVocals,
-          vocals_usage_type: hasVocals ? vocalsUsageType : null,
+          vocals_usage_type: hasVocals && isSyncOnly ? 'sync_only' : 'normal',
           updated_at: new Date().toISOString()
         })
         .eq('id', track.id);
@@ -164,32 +164,34 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
 
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={hasVocals}
-                onChange={(e) => setHasVocals(e.target.checked)}
-                className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                disabled={loading}
-              />
-              <label className="text-gray-300">
-                Full Track With Vocals
-              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={hasVocals}
+                  onChange={(e) => setHasVocals(e.target.checked)}
+                  className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                  disabled={loading}
+                />
+                <label className="text-gray-300">
+                  Full Track With Vocals
+                </label>
+              </div>
             </div>
 
             {hasVocals && (
               <div className="pl-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Vocals Usage Type
-                </label>
-                <select
-                  value={vocalsUsageType}
-                  onChange={(e) => setVocalsUsageType(e.target.value as 'normal' | 'sync_only')}
-                  className="block w-full"
-                  disabled={loading}
-                >
-                  <option value="normal">Allow use in normal memberships</option>
-                  <option value="sync_only">Only allow for sync briefs</option>
-                </select>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={isSyncOnly}
+                    onChange={(e) => setIsSyncOnly(e.target.checked)}
+                    className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                    disabled={loading}
+                  />
+                  <label className="text-gray-300">
+                    Sync Only (Only allow for sync briefs)
+                  </label>
+                </div>
               </div>
             )}
           </div>
