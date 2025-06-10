@@ -17,8 +17,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
-  // Add knockriobeats2@gmail.com to admin list
-  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(user.email);
+
 
   useEffect(() => {
     const fetchLogo = async () => {
