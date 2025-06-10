@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart } from 'lucide-react';
+import { Users, DollarSign, BarChart3, Upload, X, Mail, Calendar, ArrowUpDown, Music, Plus, Percent, Trash2, Search, Bell, Download, PieChart, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LogoUpload } from './LogoUpload';
 import { useAuth } from '../contexts/AuthContext';
