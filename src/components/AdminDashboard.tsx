@@ -76,11 +76,33 @@ export function AdminDashboard() {
         .maybeSingle();
           
       if (profileError) {
-        console.error('Error fetching admin profile:', profileError);
-        // Continue even if profile fetch fails
-      }
-      
-      if (profileData) {
+        // If profile doesn't exist yet, create it
+        if (profileError.code === 'PGRST116') {
+          // Create a profile for the admin user
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email,
+              account_type: 'admin',
+              first_name: user.email?.split('@')[0] || 'Admin'
+            });
+            
+          if (insertError) {
+            console.error('Error creating admin profile:', insertError);
+            throw insertError;
+          }
+          
+          // Set profile data manually since we just created it
+          setProfile({
+            email: user.email || '',
+            first_name: user.email?.split('@')[0] || 'Admin'
+          });
+        } else {
+          console.error('Error fetching admin profile:', profileError);
+          throw profileError;
+        }
+      } else if (profileData) {
         setProfile(profileData);
       }
 

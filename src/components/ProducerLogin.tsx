@@ -30,9 +30,15 @@ export function ProducerLogin() {
           .eq('email', loginEmail)
           .maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Profile lookup error:', profileError);
-          throw new Error('Failed to verify account type');
+        if (profileError) {
+          if (profileError.code !== 'PGRST116') {
+            console.error('Profile lookup error:', profileError);
+            throw new Error('Failed to verify account type');
+          }
+          // If no profile found, continue with login for admin emails
+          if (!isAdmin) {
+            throw new Error('Please use the client login page');
+          }
         }
 
         // If no profile found or account type is not producer

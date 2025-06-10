@@ -35,9 +35,16 @@ export function ClientLogin() {
           .eq('email', email)
           .maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Profile lookup error:', profileError);
-          // Continue with login even if profile lookup fails
+        if (profileError) {
+          if (profileError.code !== 'PGRST116') {
+            console.error('Profile lookup error:', profileError);
+            // Continue with login even if profile lookup fails
+          }
+          // If no profile found, continue with login for admin emails
+          if (!isAdmin) {
+            // For non-admin emails without a profile, we'll create one after successful login
+            console.log('No profile found, will create after login');
+          }
         }
         
         if (profileData && profileData.account_type === 'producer' && !isAdmin) {
