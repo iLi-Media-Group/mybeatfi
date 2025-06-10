@@ -133,7 +133,7 @@ export function ProducerDashboard() {
       const trackIds = tracksData?.map(track => track.id) || [];
       
       // Get proposal counts by fetching all proposals and counting them
-      const { data: proposalsData, error: proposalCountError } = await supabase
+      const { data: allProposalsData, error: proposalCountError } = await supabase
         .from('sync_proposals')
         .select('track_id')
         .in('track_id', trackIds);
@@ -141,7 +141,7 @@ export function ProducerDashboard() {
       if (proposalCountError) throw proposalCountError;
 
       // Count proposals per track
-      const proposalCountMap = proposalsData?.reduce((acc, proposal) => {
+      const proposalCountMap = allProposalsData?.reduce((acc, proposal) => {
         acc[proposal.track_id] = (acc[proposal.track_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
@@ -721,5 +721,4 @@ export function ProducerDashboard() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Pending Balance</span>
                     <span className="text-yellow-400 font-semibold">${stats.pendingBalance.toFixed(2)}</span>
-                  </div>
-                
+                  
