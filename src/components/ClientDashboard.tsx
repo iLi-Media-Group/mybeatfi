@@ -102,9 +102,21 @@ export function ClientDashboard() {
       // Ensure genres, sub_genres, and moods are arrays
       const processedData = (data || []).map(track => ({
         ...track,
-        genres: Array.isArray(track.genres) ? track.genres : (track.genres ? track.genres.split(',').map((g: string) => g.trim()) : []),
-        sub_genres: Array.isArray(track.sub_genres) ? track.sub_genres : (track.sub_genres ? track.sub_genres.split(',').map((g: string) => g.trim()) : []),
-        moods: Array.isArray(track.moods) ? track.moods : (track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [])
+        genres: Array.isArray(track.genres) 
+          ? track.genres 
+          : (track.genres && typeof track.genres === 'string' 
+              ? track.genres.split(',').map((g: string) => g.trim()).filter(Boolean)
+              : []),
+        sub_genres: Array.isArray(track.sub_genres) 
+          ? track.sub_genres 
+          : (track.sub_genres && typeof track.sub_genres === 'string'
+              ? track.sub_genres.split(',').map((g: string) => g.trim()).filter(Boolean)
+              : []),
+        moods: Array.isArray(track.moods) 
+          ? track.moods 
+          : (track.moods && typeof track.moods === 'string'
+              ? track.moods.split(',').map((m: string) => m.trim()).filter(Boolean)
+              : [])
       }));
       
       setTracks(processedData);
