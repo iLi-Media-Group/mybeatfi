@@ -50,8 +50,9 @@ export function TrackUploadForm() {
   const [selectedMoods, setSelectedMoods] = useState<string[]>(savedData?.selectedMoods || []);
   const [mp3Url, setMp3Url] = useState(savedData?.mp3Url || '');
   const [trackoutsUrl, setTrackoutsUrl] = useState(savedData?.trackoutsUrl || '');
-  const [hasVocals, setHasVocals] = useState(savedData?.hasVocals || false);
+  const [hasVocals, setHasVocals] = useState(savedData?.hasVocals || false); 
   const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(savedData?.vocalsUsageType || 'normal');
+  const [isSyncOnly, setIsSyncOnly] = useState(savedData?.isSyncOnly || false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -68,7 +69,8 @@ export function TrackUploadForm() {
       mp3Url,
       trackoutsUrl,
       hasVocals,
-      vocalsUsageType
+      vocalsUsageType,
+      isSyncOnly
     };
     localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
   }, [
@@ -83,7 +85,8 @@ export function TrackUploadForm() {
     mp3Url,
     trackoutsUrl,
     hasVocals,
-    vocalsUsageType
+    vocalsUsageType,
+    isSyncOnly
   ]);
 
   const clearSavedFormData = () => {
@@ -179,7 +182,7 @@ export function TrackUploadForm() {
           mp3_url: mp3Url || null,
           trackouts_url: trackoutsUrl || null,
           has_vocals: hasVocals,
-          vocals_usage_type: hasVocals ? vocalsUsageType : null,
+          vocals_usage_type: hasVocals ? (isSyncOnly ? 'sync_only' : vocalsUsageType) : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -402,6 +405,16 @@ export function TrackUploadForm() {
                 />
                 <span>One Stop Production</span>
               </label>
+            </div>
+            
+            <div className="flex items-center space-x-2 text-gray-300">
+              <input
+                type="checkbox"
+                checked={isSyncOnly}
+                onChange={(e) => setIsSyncOnly(e.target.checked)}
+                className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Sync Only (Will appear in both Music Catalog and Tracks with Full Vocals)</span>
             </div>
 
             <div className="flex items-center space-x-2 text-gray-300">

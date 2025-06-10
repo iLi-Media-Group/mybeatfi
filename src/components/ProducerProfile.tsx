@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, Phone, MapPin, Building2, Hash } from 'lucide-react';
+import { User, Mail, X, Phone, MapPin, Building2, Hash, Music, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,6 +21,8 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [country, setCountry] = useState('');
+  const [ipiNumber, setIpiNumber] = useState('');
+  const [performingRightsOrg, setPerformingRightsOrg] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +39,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, ipi_number, performing_rights_org')
         .eq('id', user?.id)
         .single();
 
@@ -55,6 +57,8 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         setState(data.state || '');
         setPostalCode(data.postal_code || '');
         setCountry(data.country || '');
+        setIpiNumber(data.ipi_number || '');
+        setPerformingRightsOrg(data.performing_rights_org || '');
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -85,6 +89,8 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
           state: state.trim() || null,
           postal_code: postalCode.trim() || null,
           country: country.trim() || null,
+          ipi_number: ipiNumber.trim() || null,
+          performing_rights_org: performingRightsOrg.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -231,6 +237,62 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
                   className="w-full pl-10"
                   placeholder="International format"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium text-white">Music Rights Information</h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  IPI Number <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Music className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={ipiNumber}
+                    onChange={(e) => setIpiNumber(e.target.value)}
+                    className={`w-full pl-10 ${!ipiNumber.trim() ? 'border-red-500' : ''}`}
+                    required
+                  />
+                </div>
+                {!ipiNumber.trim() && (
+                  <p className="mt-1 text-sm text-red-400">IPI Number is required</p>
+                )}
+                <p className="mt-1 text-xs text-gray-400">
+                  Your Interested Parties Information number from your PRO
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Performing Rights Organization <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Info className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={performingRightsOrg}
+                    onChange={(e) => setPerformingRightsOrg(e.target.value)}
+                    className={`w-full pl-10 ${!performingRightsOrg ? 'border-red-500' : ''}`}
+                    required
+                  >
+                    <option value="">Select your PRO</option>
+                    <option value="ASCAP">ASCAP</option>
+                    <option value="BMI">BMI</option>
+                    <option value="SESAC">SESAC</option>
+                    <option value="GMR">Global Music Rights</option>
+                    <option value="PRS">PRS for Music (UK)</option>
+                    <option value="SOCAN">SOCAN (Canada)</option>
+                    <option value="APRA">APRA AMCOS (Australia/NZ)</option>
+                    <option value="SACEM">SACEM (France)</option>
+                    <option value="GEMA">GEMA (Germany)</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                {!performingRightsOrg && (
+                  <p className="mt-1 text-sm text-red-400">PRO is required</p>
+                )}
               </div>
             </div>
 

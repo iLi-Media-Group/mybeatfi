@@ -128,6 +128,21 @@ export function LicenseDialog({
       setLoading(true);
       setError('');
 
+      // Prevent duplicate licenses
+      const { data: existingLicense, error: checkError } = await supabase
+        .from('sales')
+        .select('id')
+        .eq('track_id', track.id)
+        .eq('buyer_id', user.id)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing license:', checkError);
+      } else if (existingLicense) {
+        throw new Error('You already have a license for this track');
+      }
+
       const purchaseDate = new Date().toISOString();
 
       // Create license record without explicit producer_id (it's handled by the database)

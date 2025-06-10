@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
+      console.log("Refreshing membership info");
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -91,9 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (subscription?.subscription_id && subscription?.status === 'active') {
         // Get membership plan from subscription
         const newMembershipPlan = getMembershipPlanFromPriceId(subscription.price_id);
+        console.log("Current subscription plan:", newMembershipPlan);
         
         // Update if different from current plan
         if (newMembershipPlan !== profileData.membership_plan) {
+          console.log("Updating membership plan from", profileData.membership_plan, "to", newMembershipPlan);
           await supabase
             .from('profiles')
             .update({ membership_plan: newMembershipPlan })

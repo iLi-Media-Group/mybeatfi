@@ -18,22 +18,26 @@ export function ContactPage() {
     setSuccess(false);
 
     try {
-      // Insert the message into the contact_messages table
-      const { error: submitError } = await supabase
-        .from('contact_messages')
-        .insert({
+      // Send the message to the edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/handle-contact-form`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           name,
           email,
           subject,
           message
-        });
+        })
+      });
 
-      if (submitError) throw submitError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
+      }
 
-      // Send an email notification to the company email
-      // This would typically be handled by a server-side function
-      // For now, we'll just show a success message
-      
       setSuccess(true);
       setName('');
       setEmail('');

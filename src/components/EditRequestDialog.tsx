@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react'; 
+import { X, Loader2, Calendar } from 'lucide-react'; 
 
 interface EditRequestDialogProps {
   isOpen: boolean;
@@ -8,11 +8,17 @@ interface EditRequestDialogProps {
     project_title: string;
     project_description: string;
     sync_fee: number;
+    end_date: string;
+    genre: string;
+    sub_genres: string[];
   };
   onSave: (updatedRequest: Partial<{
     project_title: string;
     project_description: string;
     sync_fee: number;
+    end_date: string;
+    genre: string;
+    sub_genres: string[];
   }>) => Promise<void>;
 }
 
@@ -20,6 +26,9 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
   const [title, setTitle] = useState(request.project_title);
   const [description, setDescription] = useState(request.project_description);
   const [syncFee, setSyncFee] = useState(request.sync_fee.toString());
+  const [endDate, setEndDate] = useState(request.end_date.split('T')[0]);
+  const [genre, setGenre] = useState(request.genre);
+  const [subGenres, setSubGenres] = useState<string[]>(request.sub_genres || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,7 +43,10 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
       await onSave({
         project_title: title,
         project_description: description,
-        sync_fee: parseFloat(syncFee)
+        sync_fee: parseFloat(syncFee),
+        end_date: new Date(endDate).toISOString(),
+        genre: genre,
+        sub_genres: subGenres
       });
 
       onClose();
@@ -81,6 +93,48 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
               rows={4}
               className="w-full"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Due Date
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full pl-10"
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Genre
+            </label>
+            <input
+              type="text"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              className="w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Sub-Genres (comma separated)
+            </label>
+            <input
+              type="text"
+              value={subGenres.join(', ')}
+              onChange={(e) => setSubGenres(e.target.value.split(',').map(g => g.trim()).filter(Boolean))}
+              className="w-full"
             />
           </div>
 
