@@ -21,8 +21,11 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
   // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
   
-  const initialGenres = (track.genres || []).map(genre => {
-    // Find the matching genre from GENRES list
+  // Initialize with only valid genres from the GENRES list
+  const initialGenres = (track.genres || []).filter(genre => 
+    GENRES.some(g => normalizeGenre(g) === normalizeGenre(genre))
+  ).map(genre => {
+    // Find the matching genre from GENRES list to ensure consistent formatting
     return GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre)) || genre;
   });
 
@@ -45,21 +48,9 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
         throw new Error('At least one genre is required');
       }
 
-      // Format and validate genres
-      const formattedGenres = selectedGenres
-        .map(genre => {
-          // Find the exact genre from GENRES list
-          const matchingGenre = GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre));
-          return matchingGenre || genre;
-        })
-        .filter(genre => 
-          // Validate that the genre exists in GENRES list
-          GENRES.some(g => normalizeGenre(g) === normalizeGenre(genre))
-        );
-
-      if (formattedGenres.length === 0) {
-        throw new Error('At least one valid genre from the provided list is required');
-      }
+      // Since selectedGenres already contains valid genres from the GENRES list,
+      // we don't need to filter them again - just use them directly
+      const formattedGenres = selectedGenres;
 
       // Only filter moods to ensure they're valid, but don't transform them
       const validMoods = selectedMoods.filter(mood => MOODS.includes(mood));
