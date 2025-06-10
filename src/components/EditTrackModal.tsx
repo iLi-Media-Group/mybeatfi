@@ -21,13 +21,13 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
   // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
   
-  const initialGenres = track.genres.map(genre => {
+  const initialGenres = (track.genres || []).map(genre => {
     // Find the matching genre from GENRES list
     return GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre)) || genre;
   });
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>(track.moods);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>(track.moods || []);
   const [hasVocals, setHasVocals] = useState(track.hasVocals || false);
   const [vocalsUsageType, setVocalsUsageType] = useState<'normal' | 'sync_only'>(track.vocalsUsageType || 'normal');
   const [loading, setLoading] = useState(false);
