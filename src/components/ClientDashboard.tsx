@@ -76,7 +76,11 @@ export function ClientDashboard() {
           id: license.tracks.id,
           title: license.tracks.title,
           artist: license.tracks.artist,
-          genres: license.tracks.genres || [],
+          genres: Array.isArray(license.tracks.genres) 
+            ? license.tracks.genres 
+            : (typeof license.tracks.genres === 'string' && license.tracks.genres.length > 0)
+              ? license.tracks.genres.split(',').map(g => g.trim())
+              : [],
           bpm: license.tracks.bpm,
           audio_url: license.tracks.audio_url,
           image_url: license.tracks.image_url
