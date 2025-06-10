@@ -7,10 +7,21 @@ interface AudioPlayerProps {
   isPlaying?: boolean;
   onPlay?: () => void;
   onPause?: () => void;
+  onToggle?: () => void;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function AudioPlayer({ src, title, isPlaying = false, onPlay, onPause, className = '' }: AudioPlayerProps) {
+export function AudioPlayer({ 
+  src, 
+  title, 
+  isPlaying = false, 
+  onPlay, 
+  onPause, 
+  onToggle,
+  className = '',
+  size = 'md'
+}: AudioPlayerProps) {
   const [internalIsPlaying, setInternalIsPlaying] = useState(isPlaying);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -47,24 +58,28 @@ export function AudioPlayer({ src, title, isPlaying = false, onPlay, onPause, cl
       setInternalIsPlaying(false);
     };
 
-    audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('ended', () => {
+    const handleEnded = () => {
       setInternalIsPlaying(false);
       if (onPause) onPause();
-    });
+    };
+
+    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', updateProgress);
-      audio.removeEventListener('ended', () => {
-        setInternalIsPlaying(false);
-        if (onPause) onPause();
-      });
+      audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
   }, []);
 
   const togglePlay = () => {
+    if (onToggle) {
+      onToggle();
+      return;
+    }
+
     if (audioRef.current) {
       if (internalIsPlaying) {
         audioRef.current.pause();
@@ -102,6 +117,24 @@ export function AudioPlayer({ src, title, isPlaying = false, onPlay, onPause, cl
     
     audio.currentTime = audio.duration * percentage;
   };
+
+  // Render different sizes
+  if (size === 'sm') {
+    return (
+      <button
+        onClick={togglePlay}
+        className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
+        title={internalIsPlaying ? "Pause" : "Play"}
+      >
+        {internalIsPlaying ? (
+          <Pause className="w-4 h-4 text-white" />
+        ) : (
+          <Play className="w-4 h-4 text-white" />
+        )}
+        <audio ref={audioRef} src={src} preload="metadata" />
+      </button>
+    );
+  }
 
   return (
     <div className={`flex items-center space-x-4 bg-white/5 backdrop-blur-sm rounded-lg p-3 ${className}`}>
