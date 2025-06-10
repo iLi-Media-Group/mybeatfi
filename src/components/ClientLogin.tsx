@@ -26,7 +26,7 @@ export function ClientLogin() {
       setLoading(true);
 
       // Check if user is an admin
-      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(email);
+      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(email);
       
       if (!isAdmin) {
         const { data: profileData, error: profileError } = await supabase
@@ -35,8 +35,12 @@ export function ClientLogin() {
           .eq('email', email)
           .maybeSingle();
 
-        if (profileError) throw profileError;
-        if (profileData && profileData.account_type === 'producer') {
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Profile lookup error:', profileError);
+          // Continue with login even if profile lookup fails
+        }
+        
+        if (profileData && profileData.account_type === 'producer' && !isAdmin) {
           throw new Error('Please use the producer login page');
         }
       }

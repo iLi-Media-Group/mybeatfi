@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchAccountType = async (userId: string, email: string) => {
     try {
       // Check if user is an admin
-      if (['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(email)) {
+      if (['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(email)) {
         setAccountType('admin');
         return;
       }
@@ -36,7 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching account type:', error);
+        // Default to client if there's an error
+        setAccountType('client');
+        return;
+      }
+      
       if (data) {
         setAccountType(data.account_type as 'client' | 'producer');
         setMembershipPlan(data.membership_plan as 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null);
@@ -147,10 +153,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      console.error('Sign in error:', error);
       return { error };
     }
     if (data.user) {
-      await fetchAccountType(data.user.id, data.user.email || '');
+      try {
+        await fetchAccountType(data.user.id, data.user.email || '');
+      } catch (err) {
+        console.error('Error fetching account type after sign in:', err);
+        // Default to client if there's an error
+        setAccountType('client');
+      }
     }
     return { error: null };
   };

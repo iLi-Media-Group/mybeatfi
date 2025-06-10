@@ -75,7 +75,11 @@ export function AdminDashboard() {
         .eq('id', user.id)
         .maybeSingle();
           
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error fetching admin profile:', profileError);
+        // Continue even if profile fetch fails
+      }
+      
       if (profileData) {
         setProfile(profileData);
       }

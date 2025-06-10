@@ -29,7 +29,7 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  const isAdmin = user.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isAdmin = user.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(user.email);
 
   // Admins can access all routes
   if (isAdmin) {

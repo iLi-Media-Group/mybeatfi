@@ -200,7 +200,7 @@ export function AdminBankingPage() {
         .eq('id', user?.id)
         .single();
 
-      if (!profileData || !['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(profileData.email)) {
+      if (!profileData || !['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(profileData.email)) {
         throw new Error('Unauthorized access');
       }
 

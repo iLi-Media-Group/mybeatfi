@@ -20,8 +20,8 @@ export function ProducerLogin() {
 
       const loginEmail = email.toLowerCase().trim();
 
-      // Check if user is an admin
-      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(loginEmail);
+      // Check if user is an admin (include knockriobeats2@gmail.com)
+      const isAdmin = ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(loginEmail);
       
       if (!isAdmin) {
         const { data: profileData, error: profileError } = await supabase
@@ -30,12 +30,13 @@ export function ProducerLogin() {
           .eq('email', loginEmail)
           .maybeSingle();
 
-        if (profileError) {
+        if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile lookup error:', profileError);
           throw new Error('Failed to verify account type');
         }
 
-        if (!profileData || profileData.account_type !== 'producer') {
+        // If no profile found or account type is not producer
+        if ((!profileData || profileData.account_type !== 'producer') && !isAdmin) {
           throw new Error('Please use the client login page');
         }
       }
