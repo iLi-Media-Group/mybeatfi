@@ -1,584 +1,948 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { Music, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, X, Calendar, ArrowUpDown, AlertCircle, DollarSign, Edit, Check, Trash2, Plus, UserCog, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Music, Calendar, DollarSign, Clock, Plus, Search, Filter, Eye, MessageSquare, FileText, Star, StarOff } from 'lucide-react';
-import { SyncProposalDialog } from './SyncProposalDialog';
-import { ProposalDetailDialog } from './ProposalDetailDialog';
-import { ProposalNegotiationDialog } from './ProposalNegotiationDialog';
-import { ProposalHistoryDialog } from './ProposalHistoryDialog';
-import { SyncProposalAcceptDialog } from './SyncProposalAcceptDialog';
-import { CustomSyncRequest } from './CustomSyncRequest';
+import { useAuth } from '../contexts/AuthContext';
+import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
+import { calculateTimeRemaining } from '../utils/dateUtils';
+import { ClientProfile } from './ClientProfile';
+import { DeleteLicenseDialog } from './DeleteLicenseDialog';
+import { EditRequestDialog } from './EditRequestDialog';
+import { LicenseDialog } from './LicenseDialog';
+import { SyncProposalDialog } from './SyncProposalDialog';
 
-interface Track {
+interface License {
   id: string;
-  title: string;
-  artist: string;
-  genres: string[];
-  sub_genres: string[];
-  moods: string[];
-  bpm: number;
-  duration: string;
-  audio_url: string;
-  image_url: string;
-  key: string;
-  has_vocals: boolean;
-  vocals_usage_type: string;
-  producer_id: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-}
-
-interface SyncProposal {
-  id: string;
-  track_id: string;
-  client_id: string;
-  project_type: string;
-  duration: string;
-  is_exclusive: boolean;
-  sync_fee: number;
-  payment_terms: string;
-  expiration_date: string;
-  is_urgent: boolean;
-  status: string;
-  negotiation_status: string;
-  client_status: string;
-  payment_status: string;
+  track: Track;
+  license_type: string;
   created_at: string;
-  tracks: Track;
+  expiry_date: string;
 }
+
+interface UserStats {
+  totalLicenses: number;
+  remainingLicenses: number;
+  membershipType: 'Single Track' | 'Gold Access' | 'Platinum Access' | 'Ultimate Access' | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  daysUntilReset: number | null;
+}
+
+interface CustomSyncRequest {
+  id: string;
+  project_title: string;
+  project_description: string;
+  sync_fee: number;
+  end_date: string;
+  genre: string;
+  sub_genres: string[];
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  created_at: string;
+}
+
+const calculateExpiryDate = (purchaseDate: string, membershipType: string): string => {
+  const date = new Date(purchaseDate);
+  switch (membershipType) {
+    case 'Ultimate Access':
+      date.setFullYear(date.getFullYear() + 100);
+      break;
+    case 'Platinum Access':
+      date.setFullYear(date.getFullYear() + 3);
+      break;
+    default:
+      date.setFullYear(date.getFullYear() + 1);
+  }
+  return date.toISOString();
+};
+
+const getExpiryStatus = (expiryDate: string): 'expired' | 'expiring-soon' | 'active' => {
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry <= 0) return 'expired';
+  if (daysUntilExpiry <= 30) return 'expiring-soon';
+  return 'active';
+};
 
 export function ClientDashboard() {
-  const { user } = useAuth();
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [proposals, setProposals] = useState<SyncProposal[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const { user, membershipPlan, refreshMembership } = useAuth();
+  const navigate = useNavigate();
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [favorites, setFavorites] = useState<Track[]>([]);
+  const [newTracks, setNewTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
+  const [sortField, setSortField] = useState<'renewal' | 'title' | 'genre' | 'bpm'>('renewal');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [selectedMood, setSelectedMood] = useState('');
-  const [showSyncDialog, setShowSyncDialog] = useState(false);
-  const [showProposalDetail, setShowProposalDetail] = useState(false);
-  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [showProposalAccept, setShowProposalAccept] = useState(false);
-  const [showCustomRequest, setShowCustomRequest] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-  const [selectedProposal, setSelectedProposal] = useState<SyncProposal | null>(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
-
-  const genres = ['Hip Hop', 'R&B', 'Pop', 'Rock', 'Electronic', 'Jazz', 'Country', 'Classical'];
-  const moods = ['Energetic', 'Chill', 'Dark', 'Happy', 'Sad', 'Aggressive', 'Romantic', 'Mysterious'];
+  const [profile, setProfile] = useState<{ first_name?: string, email: string } | null>(null);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalLicenses: 0,
+    remainingLicenses: 0,
+    membershipType: null,
+    currentPeriodStart: null,
+    currentPeriodEnd: null,
+    daysUntilReset: null
+  });
+  const [removingFavorite, setRemovingFavorite] = useState<string | null>(null);
+  const [syncRequests, setSyncRequests] = useState<CustomSyncRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<CustomSyncRequest | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedLicenseToDelete, setSelectedLicenseToDelete] = useState<License | null>(null);
+  const [showLicenseDialog, setShowLicenseDialog] = useState(false);
+  const [selectedTrackToLicense, setSelectedTrackToLicense] = useState<Track | null>(null);
+  const [showProposalDialog, setShowProposalDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetchTracks();
-      fetchProposals();
-      fetchFavorites();
+      // Refresh membership info first to ensure we have the latest data
+      refreshMembership().then(() => {
+        fetchDashboardData();
+      });
     }
-  }, [user]);
+  }, [user, membershipPlan]);
 
-  const fetchTracks = async () => {
+  const fetchDashboardData = async () => {
+    if (!user) return;
+    
     try {
-      const { data, error } = await supabase
-        .from('tracks')
-        .select(`
-          *,
-          profiles:producer_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+      setLoading(true);
+      setError('');
 
-      if (error) throw error;
-      
-      // Ensure genres, sub_genres, and moods are arrays
-      const processedData = (data || []).map(track => ({
-        ...track,
-        genres: Array.isArray(track.genres) 
-          ? track.genres 
-          : (track.genres && typeof track.genres === 'string' 
-              ? track.genres.split(',').map((g: string) => g.trim()).filter(Boolean)
-              : []),
-        sub_genres: Array.isArray(track.sub_genres) 
-          ? track.sub_genres 
-          : (track.sub_genres && typeof track.sub_genres === 'string'
-              ? track.sub_genres.split(',').map((g: string) => g.trim()).filter(Boolean)
-              : []),
-        moods: Array.isArray(track.moods) 
-          ? track.moods 
-          : (track.moods && typeof track.moods === 'string'
-              ? track.moods.split(',').map((m: string) => m.trim()).filter(Boolean)
-              : [])
-      }));
-      
-      setTracks(processedData);
-    } catch (error) {
-      console.error('Error fetching tracks:', error);
-    }
-  };
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, email, membership_plan')
+        .eq('id', user.id)
+        .single();
 
-  const fetchProposals = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sync_proposals')
+      if (profileData) {
+        setProfile(profileData);
+        setUserStats(prev => ({
+          ...prev,
+          membershipType: profileData.membership_plan as UserStats['membershipType']
+        }));
+      }
+
+      const { data: licensesData } = await supabase
+        .from('sales')
         .select(`
-          *,
-          tracks (
+          id,
+          license_type,
+          created_at,
+          expiry_date,
+          track:tracks (
             id,
             title,
-            artist,
+            genres,
+            bpm,
             audio_url,
             image_url,
-            profiles:producer_id (
+            producer_id,
+            producer:profiles!tracks_producer_id_fkey (
               first_name,
               last_name,
               email
             )
           )
         `)
-        .eq('client_id', user?.id)
+        .eq('buyer_id', user.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProposals(data || []);
-    } catch (error) {
-      console.error('Error fetching proposals:', error);
+      if (licensesData) {
+        const formattedLicenses = licensesData.map(license => ({
+          ...license,
+          expiry_date: license.expiry_date || calculateExpiryDate(license.created_at, profileData.membership_plan),
+          track: {
+            ...license.track,
+            genres: license.track.genres.split(',').map((g: string) => g.trim()),
+            image: license.track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop'
+          }
+        }));
+        setLicenses(formattedLicenses);
+      }
+
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select(`
+          track_id,
+          tracks (
+            id,
+            title,
+            artist,
+            genres,
+            moods,
+            duration,
+            bpm,
+            audio_url,
+            image_url,
+            has_sting_ending,
+            is_one_stop,
+            mp3_url,
+            trackouts_url,
+            has_vocals,
+            vocals_usage_type,
+            sub_genres,
+            producer_id,
+            producer:profiles!tracks_producer_id_fkey (
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (favoritesData) {
+        const formattedFavorites = favoritesData.map(f => ({
+          id: f.tracks.id,
+          title: f.tracks.title,
+          artist: f.tracks.producer ? `${f.tracks.producer.first_name} ${f.tracks.producer.last_name}`.trim() : 'Unknown Artist',
+          genres: f.tracks.genres.split(',').map((g: string) => g.trim()),
+          moods: f.tracks.moods ? f.tracks.moods.split(',').map((m: string) => m.trim()) : [],
+          duration: f.tracks.duration || '3:30',
+          bpm: f.tracks.bpm,
+          audioUrl: f.tracks.audio_url,
+          image: f.tracks.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasStingEnding: f.tracks.has_sting_ending,
+          isOneStop: f.tracks.is_one_stop,
+          mp3Url: f.tracks.mp3_url,
+          trackoutsUrl: f.tracks.trackouts_url,
+          hasVocals: f.tracks.has_vocals,
+          vocalsUsageType: f.tracks.vocals_usage_type,
+          subGenres: f.tracks.sub_genres || [],
+          producerId: f.tracks.producer_id,
+          producer: f.tracks.producer ? {
+            id: f.tracks.producer.id,
+            firstName: f.tracks.producer.first_name || '',
+            lastName: f.tracks.producer.last_name || '',
+            email: f.tracks.producer.email
+          } : undefined,
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
+        }));
+        setFavorites(formattedFavorites);
+      }
+
+      const { data: newTracksData } = await supabase
+        .from('tracks')
+        .select(`
+          id,
+          title,
+          genres,
+          bpm,
+          audio_url,
+          image_url,
+          has_vocals,
+          vocals_usage_type,
+          sub_genres,
+          producer_id,
+          producer:profiles!producer_id (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (newTracksData) {
+        const formattedNewTracks = newTracksData.map(track => ({
+          id: track.id,
+          title: track.title,
+          artist: track.producer?.first_name 
+            ? `${track.producer.first_name} ${track.producer.last_name || ''}`.trim()
+            : track.artist || 'Unknown Artist',
+          genres: track.genres.split(',').map((g: string) => g.trim()),
+          moods: track.moods ? track.moods.split(',').map((m: string) => m.trim()) : [],
+          bpm: track.bpm,
+          audioUrl: track.audio_url,
+          image: track.image_url || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop',
+          hasVocals: track.has_vocals,
+          vocalsUsageType: track.vocals_usage_type,
+          subGenres: track.sub_genres || [],
+          producerId: track.producer_id,
+          producer: track.producer ? {
+            id: track.producer.id,
+            firstName: track.producer.first_name || '',
+            lastName: track.producer.last_name || '',
+            email: track.producer.email
+          } : undefined,
+          fileFormats: { stereoMp3: { format: [], url: '' }, stems: { format: [], url: '' }, stemsWithVocals: { format: [], url: '' } },
+          pricing: { stereoMp3: 0, stems: 0, stemsWithVocals: 0 },
+          leaseAgreementUrl: ''
+        }));
+        setNewTracks(formattedNewTracks);
+      }
+
+      const { data: syncRequestsData } = await supabase
+        .from('custom_sync_requests')
+        .select('*')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (syncRequestsData) {
+        setSyncRequests(syncRequestsData);
+      }
+
+      // Calculate remaining licenses for Gold Access
+      if (membershipPlan === 'Gold Access') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count } = await supabase
+          .from('sales')
+          .select('id', { count: 'exact' })
+          .eq('buyer_id', user.id)
+          .gte('created_at', startOfMonth.toISOString());
+
+        const totalLicenses = count || 0;
+        const remainingLicenses = 10 - totalLicenses;
+
+        setUserStats(prev => ({
+          ...prev,
+          totalLicenses,
+          remainingLicenses,
+          currentPeriodStart: startOfMonth,
+          currentPeriodEnd: new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0),
+          daysUntilReset: Math.ceil((new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        }));
+      }
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFavorites = async () => {
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleRemoveFavorite = async (trackId: string) => {
+    if (!user) return;
+
     try {
-      const { data, error } = await supabase
+      setRemovingFavorite(trackId);
+      
+      const { error } = await supabase
         .from('favorites')
-        .select('track_id')
-        .eq('user_id', user?.id);
+        .delete()
+        .eq('user_id', user.id)
+        .eq('track_id', trackId);
 
       if (error) throw error;
-      setFavorites(data?.map(f => f.track_id) || []);
+
+      setFavorites(favorites.filter(track => track.id !== trackId));
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      console.error('Error removing favorite:', error);
+    } finally {
+      setRemovingFavorite(null);
     }
   };
 
-  const toggleFavorite = async (trackId: string) => {
-    try {
-      const isFavorited = favorites.includes(trackId);
-      
-      if (isFavorited) {
-        const { error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user?.id)
-          .eq('track_id', trackId);
-        
-        if (error) throw error;
-        setFavorites(favorites.filter(id => id !== trackId));
-      } else {
-        const { error } = await supabase
-          .from('favorites')
-          .insert({
-            user_id: user?.id,
-            track_id: trackId
-          });
-        
-        if (error) throw error;
-        setFavorites([...favorites, trackId]);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
+  const handleLicenseClick = (track: Track) => {
+    // For sync-only tracks, show the proposal dialog
+    if (track.hasVocals && track.vocalsUsageType === 'sync_only') {
+      setSelectedTrackToLicense(track);
+      setShowProposalDialog(true);
+      return;
     }
-  };
-
-  const filteredTracks = tracks.filter(track => {
-    const matchesSearch = track.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         track.artist.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGenre = !selectedGenre || track.genres.includes(selectedGenre);
-    const matchesMood = !selectedMood || track.moods.includes(selectedMood);
     
-    return matchesSearch && matchesGenre && matchesMood;
-  });
-
-  const handleCreateProposal = (track: Track) => {
-    setSelectedTrack(track);
-    setShowSyncDialog(true);
+    // For regular tracks, show the license dialog
+    setSelectedTrackToLicense(track);
+    setShowLicenseDialog(true);
   };
 
-  const handleViewProposal = (proposal: SyncProposal) => {
-    setSelectedProposal(proposal);
-    setShowProposalDetail(true);
-  };
+  const handleUpdateRequest = async (requestId: string, updates: Partial<CustomSyncRequest>) => {
+    try {
+      const { error } = await supabase
+        .from('custom_sync_requests')
+        .update(updates)
+        .eq('id', requestId);
 
-  const handleNegotiate = (proposal: SyncProposal) => {
-    setSelectedProposal(proposal);
-    setShowNegotiationDialog(true);
-  };
+      if (error) throw error;
 
-  const handleViewHistory = (proposal: SyncProposal) => {
-    setSelectedProposal(proposal);
-    setShowHistoryDialog(true);
-  };
-
-  const handleAcceptProposal = (proposal: SyncProposal) => {
-    setSelectedProposal(proposal);
-    setShowProposalAccept(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'accepted': return 'text-green-600 bg-green-100';
-      case 'rejected': return 'text-red-600 bg-red-100';
-      case 'expired': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      setSyncRequests(requests =>
+        requests.map(req =>
+          req.id === requestId ? { ...req, ...updates } : req
+        )
+      );
+    } catch (err) {
+      console.error('Error updating request:', err);
+      throw err;
     }
   };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!confirm('Are you sure you want to delete this request?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('custom_sync_requests')
+        .delete()
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      setSyncRequests(requests => requests.filter(req => req.id !== requestId));
+    } catch (err) {
+      console.error('Error deleting request:', err);
+    }
+  };
+
+  const handleDeleteLicense = async () => {
+    if (!selectedLicenseToDelete) return;
+
+    const { error } = await supabase
+      .from('sales')
+      .update({
+        deleted_at: new Date().toISOString()
+      })
+      .eq('id', selectedLicenseToDelete.id);
+
+    if (error) throw error;
+
+    setLicenses(licenses.filter(l => l.id !== selectedLicenseToDelete.id));
+  };
+
+  const handleViewLicenseAgreement = (licenseId: string) => {
+    navigate(`/license-agreement/${licenseId}`);
+  };
+
+  const sortedAndFilteredLicenses = licenses
+    .filter(license => !selectedGenre || license.track.genres.includes(selectedGenre))
+    .sort((a, b) => {
+      const modifier = sortOrder === 'asc' ? 1 : -1;
+      switch (sortField) {
+        case 'renewal':
+          return (new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()) * modifier;
+        case 'title':
+          return a.track.title.localeCompare(b.track.title) * modifier;
+        default:
+          return 0;
+      }
+    });
+
+  const sortedAndFilteredFavorites = favorites
+    .filter(track => !selectedGenre || track.genres.includes(selectedGenre))
+    .sort((a, b) => {
+      const modifier = sortOrder === 'asc' ? 1 : -1;
+      switch (sortField) {
+        case 'title':
+          return a.title.localeCompare(b.title) * modifier;
+        case 'genre':
+          return a.genres[0].localeCompare(b.genres[0]) * modifier;
+        case 'bpm':
+          return (a.bpm - b.bpm) * modifier;
+        default:
+          return 0;
+      }
+    });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Dashboard</h1>
-        <p className="text-gray-600">Discover tracks and manage your sync proposals</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Music className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Tracks</p>
-              <p className="text-2xl font-bold text-gray-900">{tracks.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <FileText className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">My Proposals</p>
-              <p className="text-2xl font-bold text-gray-900">{proposals.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Star className="h-8 w-8 text-yellow-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Favorites</p>
-              <p className="text-2xl font-bold text-gray-900">{favorites.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Calendar className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Proposals</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {proposals.filter(p => p.status === 'pending' || p.status === 'accepted').length}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Your Client Dashboard</h1>
+            {profile && (
+              <p className="text-xl text-gray-300 mt-2">
+                Welcome {profile.first_name || profile.email.split('@')[0]}
               </p>
-            </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+            >
+              <UserCog className="w-5 h-5 mr-2" />
+              Edit Profile
+            </button>
+            <Link
+              to="/pricing"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Upgrade Membership
+            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button
-          onClick={() => setShowCustomRequest(true)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Create Custom Request
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button className="border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
-              Browse Tracks
-            </button>
-            <button className="border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-              My Proposals
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search tracks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          <select
-            value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="">All Genres</option>
-            {genres.map(genre => (
-              <option key={genre} value={genre}>{genre}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedMood}
-            onChange={(e) => setSelectedMood(e.target.value)}
-            className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="">All Moods</option>
-            {moods.map(mood => (
-              <option key={mood} value={mood}>{mood}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Tracks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTracks.map((track) => (
-          <div key={track.id} className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="relative">
-              <img
-                src={track.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400'}
-                alt={track.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-2 right-2 flex gap-2">
-                <button
-                  onClick={() => toggleFavorite(track.id)}
-                  className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
-                >
-                  {favorites.includes(track.id) ? (
-                    <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  ) : (
-                    <StarOff className="h-5 w-5 text-gray-600" />
+        <div className="mb-8 p-6 glass-card rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">License Usage</h2>
+              <p className="text-gray-300">
+                <span className="font-semibold text-white">Current Plan: {membershipPlan}</span>
+                <br />
+                {membershipPlan === 'Gold Access' ? (
+                  <>
+                    You have used {userStats.totalLicenses} of your 10 monthly licenses
+                    ({userStats.remainingLicenses} remaining)
+                  </>
+                ) : membershipPlan === 'Platinum Access' || membershipPlan === 'Ultimate Access' ? (
+                  'You have unlimited licenses available'
+                ) : (
+                  'Single track license'
+                )}
+              </p>
+              {userStats.currentPeriodStart && userStats.currentPeriodEnd && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Current period: {userStats.currentPeriodStart.toLocaleDateString()} - {userStats.currentPeriodEnd.toLocaleDateString()}
+                  {userStats.daysUntilReset !== null && (
+                    <span className="ml-2">
+                      ({userStats.daysUntilReset} days until reset)
+                    </span>
                   )}
-                </button>
-                <AddToPlaylistButton trackId={track.id} />
-              </div>
-            </div>
-
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{track.title}</h3>
-              <p className="text-gray-600 mb-2">by {track.artist}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {track.genres.slice(0, 2).map((genre) => (
-                  <span key={genre} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {genre}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>{track.bpm} BPM</span>
-                <span>{track.key}</span>
-                <span>{track.duration}</span>
-              </div>
-
-              {track.audio_url && (
-                <div className="mb-4">
-                  <AudioPlayer
-                    src={track.audio_url}
-                    title={track.title}
-                    artist={track.artist}
-                    isPlaying={currentlyPlaying === track.id}
-                    onPlay={() => setCurrentlyPlaying(track.id)}
-                    onPause={() => setCurrentlyPlaying(null)}
-                  />
-                </div>
+                </p>
               )}
+            </div>
+            {membershipPlan === 'Gold Access' && userStats.remainingLicenses < 3 && (
+              <div className="flex items-center text-yellow-400">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span>Running low on licenses</span>
+              </div>
+            )}
+          </div>
+          {membershipPlan === 'Gold Access' && (
+            <div className="mt-4 w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-purple-600 rounded-full h-2 transition-all duration-300"
+                style={{ width: `${(userStats.totalLicenses / 10) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleCreateProposal(track)}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+        <div className="mb-8 bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Your Sync Requests</h2>
+            <Link
+              to="/custom-sync-request"
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Request
+            </Link>
+          </div>
+
+          {syncRequests.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-400">No sync requests yet</p>
+              <Link
+                to="/custom-sync-request"
+                className="inline-block mt-4 text-purple-400 hover:text-purple-300"
+              >
+                Create your first sync request
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {syncRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
                 >
-                  Create Proposal
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white mb-1">
+                        {request.project_title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-2">
+                        {request.project_description}
+                      </p>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <span className="text-purple-400">${request.sync_fee.toFixed(2)}</span>
+                        <span className="text-gray-400">{request.genre}</span>
+                        <span className="text-gray-400">
+                          Due: {new Date(request.end_date).toLocaleDateString()}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          request.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                          request.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                          request.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                          'bg-purple-500/20 text-purple-400'
+                        }`}>
+                          {request.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setShowEditDialog(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-white transition-colors"
+                        title="Edit request"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      {request.status !== 'completed' && (
+                        <button
+                          onClick={() => handleUpdateRequest(request.id, { status: 'completed' })}
+                          className="p-2 text-gray-400 hover:text-green-400 transition-colors"
+                          title="Mark as completed"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteRequest(request.id)}
+                        className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                        title="Delete request"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Your Licensed Tracks</h2>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => handleSort('renewal')}
+                  className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <ArrowUpDown className="w-4 h-4" />
                 </button>
+                <button
+                  onClick={() => handleSort('title')}
+                  className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20"
+                >
+                  <span>A-Z</span>
+                  <ArrowUpDown className="w-4 h-4" />
+                </button>
+                <select
+                  value={selectedGenre}
+                  onChange={(e) => setSelectedGenre(e.target.value)}
+                  className="bg-white/10 border border-purple-500/20 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">All Genres</option>
+                  {Array.from(new Set(licenses.flatMap(l => l.track.genres))).map(genre => (
+                    <option key={genre} value={genre}>{genre}</option>
+                  ))}
+                </select>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Proposals Section */}
-      {proposals.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">My Proposals</h2>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Track
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Project Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sync Fee
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {proposals.map((proposal) => (
-                    <tr key={proposal.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <img
-                            src={proposal.tracks.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100'}
-                            alt={proposal.tracks.title}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {proposal.tracks.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {proposal.tracks.artist}
-                            </div>
+            {sortedAndFilteredLicenses.length === 0 ? (
+              <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No licensed tracks found</p>
+                <Link
+                  to="/catalog"
+                  className="inline-block mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+                >
+                  Browse Catalog
+                </Link>
+              </div>
+            ) : (
+              sortedAndFilteredLicenses.map((license) => {
+                const expiryStatus = getExpiryStatus(license.expiry_date);
+                
+                return (
+                  <div
+                    key={license.id}
+                    className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border ${
+                      expiryStatus === 'expired' ? 'border-red-500/20' :
+                      expiryStatus === 'expiring-soon' ? 'border-yellow-500/20' :
+                      'border-purple-500/20'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={license.track.image}
+                        alt={license.track.title}
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer"
+                        onClick={() => navigate(`/track/${license.track.id}`)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => navigate(`/track/${license.track.id}`)}
+                            className="text-lg font-semibold text-white mb-1 hover:text-blue-400 transition-colors text-left"
+                          >
+                            {license.track.title}
+                          </button>
+                          <button
+                            onClick={() => setSelectedLicenseToDelete(license)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                            title="Delete License"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>{license.track.genres.join(', ')} • {license.track.bpm} BPM</p>
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1 text-purple-400" />
+                              Licensed: {new Date(license.created_at).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className={`w-4 h-4 mr-1 ${
+                                expiryStatus === 'expired' ? 'text-red-400' :
+                                expiryStatus === 'expiring-soon' ? 'text-yellow-400' :
+                                'text-purple-400'
+                              }`} />
+                              Expires: {new Date(license.expiry_date).toLocaleDateString()}
+                            </span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {proposal.project_type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${proposal.sync_fee.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(proposal.status)}`}>
-                          {proposal.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewProposal(proposal)}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleNegotiate(proposal)}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleViewHistory(proposal)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            <Clock className="h-4 w-4" />
-                          </button>
-                          {proposal.status === 'accepted' && proposal.client_status === 'pending' && (
-                            <button
-                              onClick={() => handleAcceptProposal(proposal)}
-                              className="text-purple-600 hover:text-purple-900"
+                      </div>
+                      <AudioPlayer url={license.track.audio_url} title={license.track.title} />
+                    </div>
+
+                    {expiryStatus === 'expired' && (
+                      <div className="mt-2 flex items-center text-red-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        License expired
+                      </div>
+                    )}
+                    {expiryStatus === 'expiring-soon' && (
+                      <div className="mt-2 flex items-center text-yellow-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        License expires soon
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white flex items-center">
+                  <Star className="w-5 h-5 mr-2 text-yellow-400" />
+                  Favorite Tracks
+                </h3>
+                <div className="flex space-x-2">
+                  <select
+                    value={selectedGenre}
+                    onChange={(e) => setSelectedGenre(e.target.value)}
+                    className="bg-white/5 border border-purple-500/20 rounded-lg px-2 py-1 text-sm text-white"
+                  >
+                    <option value="">All Genres</option>
+                    {Array.from(new Set(favorites.flatMap(t => t.genres))).map(genre => (
+                      <option key={genre} value={genre}>{genre}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => handleSort('bpm')}
+                    className="px-2 py-1 bg-white/5 border border-purple-500/20 rounded-lg text-sm text-white hover:bg-white/10"
+                  >
+                    BPM {sortField === 'bpm' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {sortedAndFilteredFavorites.length === 0 ? (
+                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                    <p className="text-gray-400">No favorite tracks yet</p>
+                    <Link
+                      to="/catalog"
+                      className="inline-block mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+                    >
+                      Browse Catalog
+                    </Link>
+                  </div>
+                ) : (
+                  sortedAndFilteredFavorites.map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <button 
+                              onClick={() => navigate(`/track/${track.id}`)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
                             >
-                              Accept
+                              {track.title}
                             </button>
-                          )}
+                            <button
+                              onClick={() => handleRemoveFavorite(track.id)}
+                              disabled={removingFavorite === track.id}
+                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                              aria-label="Remove from favorites"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <AudioPlayer url={track.audioUrl} title={track.title} />
+                            <button
+                              onClick={() => handleLicenseClick(track)}
+                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                              <span>License Track</span>
+                            </button>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                <Music className="w-5 h-5 mr-2 text-purple-500" />
+                New Releases
+              </h3>
+              <div className="space-y-4">
+                {newTracks.length === 0 ? (
+                  <div className="text-center py-6 bg-white/5 backdrop-blur-sm rounded-lg border border-purple-500/20">
+                    <p className="text-gray-400">No new tracks available</p>
+                  </div>
+                ) : (
+                  newTracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <button
+                              onClick={() => navigate(`/track/${track.id}`)}
+                              className="text-white font-medium hover:text-blue-400 transition-colors truncate text-left"
+                            >
+                              {track.title}
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {track.genres.join(', ')} • {track.bpm} BPM
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <AudioPlayer url={track.audioUrl} title={track.title} />
+                            <button
+                              onClick={() => handleLicenseClick(track)}
+                              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                              <span>License Track</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {selectedRequest && showEditDialog && (
+        <EditRequestDialog
+          isOpen={showEditDialog}
+          onClose={() => {
+            setShowEditDialog(false);
+            setSelectedRequest(null);
+          }}
+          request={selectedRequest}
+          onSave={(updates) => handleUpdateRequest(selectedRequest.id, updates)}
+        />
       )}
 
-      {/* Dialogs */}
-      <SyncProposalDialog
-        isOpen={showSyncDialog}
-        onClose={() => setShowSyncDialog(false)}
-        track={selectedTrack}
-        onSuccess={() => {
-          setShowSyncDialog(false);
-          fetchProposals();
-        }}
+      {selectedLicenseToDelete && (
+        <DeleteLicenseDialog
+          isOpen={true}
+          onClose={() => setSelectedLicenseToDelete(null)}
+          license={selectedLicenseToDelete}
+          onConfirm={handleDeleteLicense}
+        />
+      )}
+
+      <ClientProfile
+        isOpen={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
       />
 
-      <ProposalDetailDialog
-        isOpen={showProposalDetail}
-        onClose={() => setShowProposalDetail(false)}
-        proposal={selectedProposal}
-        onAccept={handleAcceptProposal}
-      />
+      {selectedTrackToLicense && showLicenseDialog && (
+        <LicenseDialog
+          isOpen={showLicenseDialog}
+          onClose={() => {
+            setShowLicenseDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          track={selectedTrackToLicense}
+          membershipType={membershipPlan || 'Single Track'}
+          remainingLicenses={userStats.remainingLicenses}
+          onLicenseCreated={() => {
+            // Refresh the dashboard data after a new license is created
+            if (user) {
+              setLoading(true);
+              fetchDashboardData();
+            }
+          }}
+        />
+      )}
 
-      <ProposalNegotiationDialog
-        isOpen={showNegotiationDialog}
-        onClose={() => setShowNegotiationDialog(false)}
-        proposal={selectedProposal}
-      />
-
-      <ProposalHistoryDialog
-        isOpen={showHistoryDialog}
-        onClose={() => setShowHistoryDialog(false)}
-        proposalId={selectedProposal?.id}
-      />
-
-      <SyncProposalAcceptDialog
-        isOpen={showProposalAccept}
-        onClose={() => setShowProposalAccept(false)}
-        proposal={selectedProposal}
-        onComplete={() => {
-          setShowProposalAccept(false);
-          fetchProposals();
-        }}
-      />
-
-      <CustomSyncRequest
-        isOpen={showCustomRequest}
-        onClose={() => setShowCustomRequest(false)}
-        onSuccess={() => {
-          setShowCustomRequest(false);
-        }}
-      />
+      {selectedTrackToLicense && showProposalDialog && (
+        <SyncProposalDialog
+          isOpen={showProposalDialog}
+          onClose={() => {
+            setShowProposalDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          track={selectedTrackToLicense}
+        />
+      )}
     </div>
   );
 }
