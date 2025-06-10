@@ -35,6 +35,7 @@ import { ChatSystem } from './components/ChatSystem';
 import { ProducerBankingPage } from './components/ProducerBankingPage';
 import { AdminBankingPage } from './components/AdminBankingPage';
 import { CheckoutSuccessPage } from './components/CheckoutSuccessPage';
+import { ProducerPayoutsPage } from './components/ProducerPayoutsPage';
 import { TrackPage } from './components/TrackPage';
 import { WelcomePage } from './components/WelcomePage';
 
@@ -239,6 +240,14 @@ function App() {
           <ProtectedRoute requiresProducer>
             <LayoutWrapper>
               <ProducerBankingPage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/producer/payouts" element={
+          <ProtectedRoute requiresProducer>
+            <LayoutWrapper>
+              <ProducerPayoutsPage />
             </LayoutWrapper>
           </ProtectedRoute>
         } />

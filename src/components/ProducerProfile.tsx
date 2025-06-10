@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, Phone, MapPin, Building2, Hash, Music, Info } from 'lucide-react';
+import { User, Mail, X, Phone, MapPin, Building2, Hash, Music, Info, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,6 +23,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const [country, setCountry] = useState('');
   const [ipiNumber, setIpiNumber] = useState('');
   const [performingRightsOrg, setPerformingRightsOrg] = useState('');
+  const [usdcAddress, setUsdcAddress] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +40,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, ipi_number, performing_rights_org')
+        .select('*, ipi_number, performing_rights_org, usdc_address')
         .eq('id', user?.id)
         .single();
 
@@ -59,6 +60,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         setCountry(data.country || '');
         setIpiNumber(data.ipi_number || '');
         setPerformingRightsOrg(data.performing_rights_org || '');
+        setUsdcAddress(data.usdc_address || '');
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -91,6 +93,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
           country: country.trim() || null,
           ipi_number: ipiNumber.trim() || null,
           performing_rights_org: performingRightsOrg.trim() || null,
+          usdc_address: usdcAddress.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -294,6 +297,25 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
                   <p className="mt-1 text-sm text-red-400">PRO is required</p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                USDC Wallet Address
+              </label>
+              <div className="relative">
+                <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={usdcAddress}
+                  onChange={(e) => setUsdcAddress(e.target.value)}
+                  className="w-full pl-10"
+                  placeholder="Enter your USDC wallet address (Solana or Polygon)"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                This address will be used for USDC payouts. We support both Solana and Polygon networks.
+              </p>
             </div>
 
             <div className="space-y-6">
