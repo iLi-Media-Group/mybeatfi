@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, X, MapPin, Upload, Loader2 } from 'lucide-react';
+import { User, Mail, X, MapPin, Upload, Loader2, Building2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ClientProfileProps {
-  isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
 }
 
-export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps) {
+export function ClientProfile({ onClose, onUpdate }: ClientProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -28,17 +28,17 @@ export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps)
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (isOpen && user) {
+    if (user) {
       fetchProfile();
     }
-  }, [isOpen, user]);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name, email, street_address, city, state, postal_code, country, avatar_path')
+        .select('first_name, last_name, email, company_name, street_address, city, state, postal_code, country, avatar_path')
         .eq('id', user?.id)
         .single();
 
@@ -48,6 +48,7 @@ export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps)
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setEmail(data.email || '');
+        setCompanyName(data.company_name || '');
         setStreetAddress(data.street_address || '');
         setCity(data.city || '');
         setState(data.state || '');
@@ -122,6 +123,7 @@ export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps)
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          company_name: companyName.trim() || null,
           street_address: streetAddress.trim() || null,
           city: city.trim() || null,
           state: state.trim() || null,
@@ -148,8 +150,6 @@ export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps)
       setSaving(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -256,6 +256,22 @@ export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps)
                   onChange={(e) => setLastName(e.target.value)}
                   className="w-full pl-10"
                   required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Company Name (Optional)
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full pl-10"
+                  placeholder="Your company or organization name"
                 />
               </div>
             </div>
