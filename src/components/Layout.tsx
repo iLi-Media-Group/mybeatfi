@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign, ListMusic } from 'lucide-react';
+import { Menu, X, Music, Upload, LayoutDashboard, LogIn, LogOut, UserPlus, Library, CreditCard, Shield, UserCog, Mic, FileText, Briefcase, Mail, Info, Bell, MessageSquare, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Footer } from './Footer';
@@ -103,6 +103,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
           </div>
           
           <div className="flex items-center justify-end w-1/3">
+            {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-300 hover:text-white transition-colors p-2"
@@ -117,183 +118,107 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 rounded-lg bg-blue-900/90 backdrop-blur-sm border border-blue-500/20 shadow-xl z-[100] top-full">
                 <div className="py-1">
-                  <Link
-                    to="/catalog"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Library className="w-4 h-4 mr-2" />
-                    Browse Catalog
+                  {/* Common menu items for all users */}
+                  <Link to="/catalog" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Library className="w-4 h-4 mr-2" />Browse Catalog
                   </Link>
-
-                  <Link
-                    to="/vocals"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    Full Tracks with Vocals
+                  
+                  <Link to="/vocals" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Mic className="w-4 h-4 mr-2" />Full Tracks with Vocals
                   </Link>
-
-                  <Link
-                    to="/playlists"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <ListMusic className="w-4 h-4 mr-2" />
-                    <span>Playlists</span>
-                  </Link>
-
-                  <Link
-                    to="/open-sync-briefs"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    Open Sync Briefs
-                  </Link>
-
-                  <Link
-                    to={user ? "/custom-sync-request" : "/pricing"}
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Custom Sync Request
-                  </Link>
-
-                  <Link
-                    to="/pricing"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Pricing Plans
-                  </Link>
-
-                  <div className="border-t border-blue-500/20 my-1"></div>
-
-                  <Link
-                    to="/about"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Info className="w-4 h-4 mr-2" />
-                    About Us
-                  </Link>
-
-                  <Link
-                    to="/contact"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Contact Us
-                  </Link>
-
-                  <Link
-                    to="/announcements"
-                    className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Bell className="w-4 h-4 mr-2" />
-                    Announcements
-                  </Link>
-
-                  {(accountType === 'producer' || isAdmin) && (
-                    <Link
-                      to="/chat"
-                      className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Internal Chat
+                  
+                  {/* Client-specific menu items */}
+                  {(accountType === 'client' || !user) && (
+                    <Link to={user ? "/custom-sync-request" : "/pricing"} className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                      <FileText className="w-4 h-4 mr-2" />Custom Sync Request
                     </Link>
                   )}
-
-                  {user ? (
+                  
+                  {/* Admin-specific menu items */}
+                  {isAdmin && (
                     <>
-                      {isAdmin && (
-                        <>
-                          <Link
-                            to="/admin/invite-producer"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <UserCog className="w-4 h-4 mr-2" />
-                            Invite Producer
-                          </Link>
-                          <Link
-                            to="/admin/banking"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Producer Payments
-                          </Link>
-                        </>
-                      )}
-                      <Link
-                        to={getDashboardLink()}
-                        className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {getDashboardIcon()}
-                        {getDashboardLabel()}
+                      <Link to="/open-sync-briefs" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <Briefcase className="w-4 h-4 mr-2" />Open Sync Briefs
                       </Link>
-                      {accountType === 'producer' && (
-                        <>
-                          <Link
-                            to="/producer/upload"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Track
-                          </Link>
-                          <Link
-                            to="/producer/banking"
-                            className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Earnings & Payments
-                          </Link>
-                        </>
-                      )}
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </button>
+                      <Link to="/custom-sync-request" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <FileText className="w-4 h-4 mr-2" />Custom Sync Request
+                      </Link>
                     </>
+                  )}
+                  
+                  {/* Common menu items continued */}
+                  <Link to="/pricing" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <CreditCard className="w-4 h-4 mr-2" />Pricing Plans
+                  </Link>
+                  
+                  <div className="border-t border-blue-500/20 my-1"></div>
+                  
+                  <Link to="/about" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Info className="w-4 h-4 mr-2" />About Us
+                  </Link>
+                  
+                  <Link to="/contact" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Mail className="w-4 h-4 mr-2" />Contact Us
+                  </Link>
+                  
+                  <Link to="/announcements" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Bell className="w-4 h-4 mr-2" />Announcements
+                  </Link>
+                  
+                  {/* Producer and Admin specific items */}
+                  {(accountType === 'producer' || isAdmin) && (
+                    <Link to="/chat" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                      <MessageSquare className="w-4 h-4 mr-2" />Internal Chat
+                    </Link>
+                  )}
+                  
+                  {/* Admin specific items */}
+                  {isAdmin && (
+                    <>
+                      <Link to="/admin/invite-producer" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <UserCog className="w-4 h-4 mr-2" />Invite Producer
+                      </Link>
+                      <Link to="/admin/banking" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <DollarSign className="w-4 h-4 mr-2" />Producer Payments
+                      </Link>
+                    </>
+                  )}
+                  
+                  {/* Producer specific items */}
+                  {accountType === 'producer' && (
+                    <>
+                      <Link to="/producer/banking" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <DollarSign className="w-4 h-4 mr-2" />Earnings & Payments
+                      </Link>
+                      <Link to="/producer/upload" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <Upload className="w-4 h-4 mr-2" />Upload Track
+                      </Link>
+                    </>
+                  )}
+                  
+                  {/* Dashboard links */}
+                  {user && (
+                    <Link to={getDashboardLink()} className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                      {getDashboardIcon()}
+                      {getDashboardLabel()}
+                    </Link>
+                  )}
+                  
+                  {/* Authentication links */}
+                  {user ? (
+                    <button onClick={handleSignOut} className="w-full flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50">
+                      <LogOut className="w-4 h-4 mr-2" />Sign Out
+                    </button>
                   ) : (
                     <>
-                      <a
-                        href="#"
-                        onClick={handleCreateAccount}
-                        className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                      >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Create Account
+                      <a href="#" onClick={handleCreateAccount} className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50">
+                        <UserPlus className="w-4 h-4 mr-2" />Create Account
                       </a>
-                      <Link
-                        to="/login"
-                        className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <LogIn className="w-4 h-4 mr-2" />
-                        Client Login
+                      <Link to="/login" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <LogIn className="w-4 h-4 mr-2" />Client Login
                       </Link>
-                      <Link
-                        to="/producer/login"
-                        className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <LogIn className="w-4 h-4 mr-2" />
-                        Producer Login
+                      <Link to="/producer/login" className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                        <LogIn className="w-4 h-4 mr-2" />Producer Login
                       </Link>
                     </>
                   )}
