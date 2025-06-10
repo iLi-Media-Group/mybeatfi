@@ -840,10 +840,10 @@ export function ClientDashboard() {
                             />
                           )}
                           <button
-                            onClick={() => handleLicenseClick(track)}
+                            onClick={() => navigate(`/track/${track.id}`)}
                             className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded transition-colors"
                           >
-                            License
+                            View Track
                           </button>
                           <button
                             onClick={() => handleRemoveFavorite(track.id)}
@@ -916,10 +916,10 @@ export function ClientDashboard() {
                             />
                           )}
                           <button
-                            onClick={() => handleLicenseClick(track)}
+                            onClick={() => navigate(`/track/${track.id}`)}
                             className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded transition-colors"
                           >
-                            License
+                            View Track
                           </button>
                         </div>
                       </div>
