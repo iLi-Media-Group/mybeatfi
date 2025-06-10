@@ -6,9 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 interface ClientProfileProps {
   isOpen: boolean;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
+export function ClientProfile({ isOpen, onClose, onUpdate }: ClientProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -134,6 +135,9 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
       if (error) throw error;
 
       setSuccess(true);
+      if (onUpdate) {
+        onUpdate();
+      }
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
@@ -148,8 +152,8 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Edit Profile</h2>
           <button
@@ -177,7 +181,7 @@ export function ClientProfile({ isOpen, onClose }: ClientProfileProps) {
                 <p className="text-green-400 text-center">Profile updated successfully!</p>
               </div>
             )}
-            
+
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-800 border-2 border-blue-500/20">
