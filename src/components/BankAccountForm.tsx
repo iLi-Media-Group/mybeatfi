@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, DollarSign, Mail, Building, Hash, Bitcoin } from 'lucide-react';
+import { X, Building, Hash, Bitcoin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -16,7 +16,6 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
-  const [paypalEmail, setPaypalEmail] = useState('');
   const [cryptoAddress, setCryptoAddress] = useState('');
   const [cryptoType, setCryptoType] = useState('USDC');
   const [isPrimary, setIsPrimary] = useState(existingAccounts.length === 0);
@@ -38,10 +37,6 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
         if (!bankName.trim() || !accountNumber.trim() || !routingNumber.trim()) {
           throw new Error('Please fill in all bank account fields');
         }
-      } else if (accountType === 'paypal') {
-        if (!paypalEmail.trim()) {
-          throw new Error('Please enter your PayPal email');
-        }
       } else if (accountType === 'crypto') {
         if (!cryptoAddress.trim() || !cryptoType) {
           throw new Error('Please enter your crypto wallet address and select a currency');
@@ -54,9 +49,6 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
           bank_name: bankName.trim(),
           account_number: accountNumber.trim(),
           routing_number: routingNumber.trim()
-        }),
-        ...(accountType === 'paypal' && {
-          paypal_email: paypalEmail.trim()
         }),
         ...(accountType === 'crypto' && {
           crypto_address: cryptoAddress.trim(),
@@ -135,18 +127,6 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
               </button>
               <button
                 type="button"
-                onClick={() => setAccountType('paypal')}
-                className={`p-3 rounded-lg flex flex-col items-center justify-center transition-colors ${
-                  accountType === 'paypal'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                <DollarSign className="w-6 h-6 mb-2" />
-                <span className="text-sm">PayPal</span>
-              </button>
-              <button
-                type="button"
                 onClick={() => setAccountType('crypto')}
                 className={`p-3 rounded-lg flex flex-col items-center justify-center transition-colors ${
                   accountType === 'crypto'
@@ -215,24 +195,6 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
             </>
           )}
 
-          {accountType === 'paypal' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                PayPal Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={paypalEmail}
-                  onChange={(e) => setPaypalEmail(e.target.value)}
-                  className="w-full pl-10"
-                  placeholder="Enter PayPal email"
-                  required
-                />
-              </div>
-            </div>
-          )}
 
           {accountType === 'crypto' && (
             <>
@@ -246,11 +208,10 @@ export function BankAccountForm({ isOpen, onClose, onSave, existingAccounts }: B
                   className="w-full"
                   required
                 >
-                  <option value="USDC">USDC</option>
-                  <option value="USDT">USDT</option>
-                  <option value="ETH">Ethereum</option>
-                  <option value="BTC">Bitcoin</option>
-                  <option value="SOL">Solana</option>
+                  <option value="USDC">USDC (Solana)</option>
+                  <option value="USDT">USDT (Solana)</option>
+                  <option value="SOL">Solana (SOL)</option>
+                  <option value="USDC-POLYGON">USDC (Polygon)</option>
                 </select>
               </div>
 

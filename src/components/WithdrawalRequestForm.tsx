@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, DollarSign, AlertCircle, Loader2, Building, Bitcoin } from 'lucide-react';
+import { X, DollarSign, AlertCircle, Loader2, Building, Bitcoin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -122,8 +122,6 @@ export function WithdrawalRequestForm({
   const getPaymentMethodLabel = (method: any) => {
     if (method.account_type === 'bank') {
       return `${method.account_details.bank_name} (****${method.account_details.account_number.slice(-4)})`;
-    } else if (method.account_type === 'paypal') {
-      return `PayPal (${method.account_details.paypal_email})`;
     } else {
       return `${method.account_details.crypto_type} (${method.account_details.crypto_address.slice(0, 6)}...${method.account_details.crypto_address.slice(-4)})`;
     }
@@ -225,7 +223,6 @@ export function WithdrawalRequestForm({
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center space-x-3">
                         {method.account_type === 'bank' && <Building className="w-5 h-5 text-blue-400" />}
-                        {method.account_type === 'paypal' && <DollarSign className="w-5 h-5 text-blue-400" />}
                         {method.account_type === 'crypto' && <Bitcoin className="w-5 h-5 text-blue-400" />}
                         <span className="text-white">{getPaymentMethodLabel(method)}</span>
                       </div>

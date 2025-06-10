@@ -289,12 +289,10 @@ export function ProducerBankingPage() {
                       <div>
                         <p className="text-white font-medium">
                           {account.account_type === 'bank' && account.account_details.bank_name}
-                          {account.account_type === 'paypal' && 'PayPal'}
                           {account.account_type === 'crypto' && account.account_details.crypto_type}
                         </p>
                         <p className="text-sm text-gray-400">
                           {account.account_type === 'bank' && `****${account.account_details.account_number?.slice(-4)}`}
-                          {account.account_type === 'paypal' && account.account_details.paypal_email}
                           {account.account_type === 'crypto' && `${account.account_details.crypto_address?.slice(0, 6)}...${account.account_details.crypto_address?.slice(-4)}`}
                         </p>
                       </div>

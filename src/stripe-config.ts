@@ -26,7 +26,8 @@ export const PRODUCTS: StripeProduct[] = [
       'Priority support',
       'No time limit on track usage'
     ],
-    popular: false
+    popular: false,
+    cryptoEnabled: true
   },
   {
     id: 'prod_SQOiS7N3ApTh7C',
@@ -44,7 +45,8 @@ export const PRODUCTS: StripeProduct[] = [
       'Priority support',
       '3 year usage limit'
     ],
-    popular: true
+    popular: true,
+    cryptoEnabled: true
   },
   {
     id: 'prod_SQOhLQJIM6Rji8',
@@ -62,7 +64,8 @@ export const PRODUCTS: StripeProduct[] = [
       'Email support',
       '1 year usage limit'
     ],
-    popular: false
+    popular: false,
+    cryptoEnabled: true
   },
   {
     id: 'prod_SQOgYj7gpZae0k',
@@ -80,6 +83,7 @@ export const PRODUCTS: StripeProduct[] = [
       'Basic support',
       '1 year usage limit'
     ],
-    popular: false
+    popular: false,
+    cryptoEnabled: true
   }
 ];

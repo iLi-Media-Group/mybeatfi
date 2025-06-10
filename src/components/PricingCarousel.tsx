@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PRODUCTS } from '../stripe-config';
 import { createCheckoutSession, getUserSubscription } from '../lib/stripe';
+import { CryptoPaymentButton } from './CryptoPaymentButton';
 
 interface EmailCheckDialogProps {
   isOpen: boolean;
@@ -269,20 +270,19 @@ export function PricingCarousel() {
                   )}
                 </button>
                 
-                <button
-                  onClick={() => handleSubscribe(product)}
-                  disabled={loading || (currentSubscription?.subscription_id && currentSubscription?.status === 'active')}
-                  className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-blue-900/60 text-white font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingProductId === product.id ? (
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  ) : (
-                    <>
-                      <Coins className="w-5 h-5" />
-                      <span>Subscribe with Crypto</span>
-                    </>
-                  )}
-                </button>
+                {product.cryptoEnabled && (
+                  <CryptoPaymentButton
+                    productId={product.id}
+                    productName={product.name}
+                    productDescription={product.description}
+                    price={product.price / 100}
+                    disabled={loading || (currentSubscription?.subscription_id && currentSubscription?.status === 'active')}
+                    metadata={{
+                      product_type: 'subscription',
+                      price_id: product.priceId
+                    }}
+                  />
+                )}
 
                 <p className="text-center text-sm text-gray-400 mt-4">
                   Accepts USDC, USDT, and Solana

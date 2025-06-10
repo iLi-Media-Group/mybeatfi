@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Music, Calendar, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getUserSubscription, getUserOrders, formatCurrency, formatDate, getMembershipPlanFromPriceId } from '../lib/stripe';
+import { getUserSubscription, getUserOrders, formatCurrency, formatDate, getMembershipPlanFromPriceId } from '../lib/stripe'; 
+import { getHelioPaymentStatus } from '../lib/helio';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -16,11 +17,13 @@ export function CheckoutSuccessPage() {
   const [licenseCreated, setLicenseCreated] = useState(false);
 
   const sessionId = searchParams.get('session_id');
+  const paymentMethod = searchParams.get('payment_method');
+  const helioPaymentId = searchParams.get('payment_id');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!sessionId) {
+        if (!sessionId && !helioPaymentId) {
           navigate('/dashboard');
           return;
         }
@@ -32,25 +35,51 @@ export function CheckoutSuccessPage() {
           await refreshMembership();
         }
 
-        // Get subscription details
-        const subscription = await getUserSubscription();
-        setSubscription(subscription);
+        if (paymentMethod === 'crypto' && helioPaymentId) {
+          // Handle Helio payment
+          const paymentStatus = await getHelioPaymentStatus(helioPaymentId);
+          
+          if (paymentStatus.status === 'completed') {
+            // Check if a license was created for this payment
+            if (user) {
+              const { data: cryptoPayment } = await supabase
+                .from('crypto_payments')
+                .select('track_id')
+                .eq('payment_id', helioPaymentId)
+                .single();
+                
+              if (cryptoPayment?.track_id) {
+                const result = await supabase
+                  .from('sales')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('transaction_id', helioPaymentId);
+                
+                setLicenseCreated(result.count !== null && result.count > 0);
+              }
+            }
+          }
+        } else {
+          // Handle Stripe payment
+          // Get subscription details
+          const subscription = await getUserSubscription();
+          setSubscription(subscription);
 
-        // Get order details
-        const orders = await getUserOrders();
-        const matchingOrder = orders.find(o => o.checkout_session_id === sessionId);
-        
-        if (matchingOrder) {
-          setOrder(matchingOrder);
+          // Get order details
+          const orders = await getUserOrders();
+          const matchingOrder = orders.find(o => o.checkout_session_id === sessionId);
+          
+          if (matchingOrder) {
+            setOrder(matchingOrder);
 
-          // Check if a license was created for this order
-          if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
-            const result = await supabase
-              .from('sales')
-              .select('*', { count: 'exact', head: true })
-              .eq('transaction_id', matchingOrder.payment_intent_id);
-            
-            setLicenseCreated(result.count !== null && result.count > 0);
+            // Check if a license was created for this order
+            if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
+              const result = await supabase
+                .from('sales')
+                .select('*', { count: 'exact', head: true })
+                .eq('transaction_id', matchingOrder.payment_intent_id);
+              
+              setLicenseCreated(result.count !== null && result.count > 0);
+            }
           }
         }
       } catch (error) {
@@ -94,7 +123,37 @@ export function CheckoutSuccessPage() {
           <div className="bg-white/5 rounded-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-white mb-4">Order Summary</h2>
             
-            {subscription && (
+            {paymentMethod === 'crypto' ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <Music className="w-5 h-5 text-purple-400 mr-2" />
+                    <span className="text-white">Payment Method:</span>
+                  </div>
+                  <span className="text-white font-medium">
+                    Cryptocurrency
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 text-purple-400 mr-2" />
+                    <span className="text-white">Date:</span>
+                  </div>
+                  <span className="text-white font-medium">
+                    {new Date().toLocaleDateString()}
+                  </span>
+                </div>
+                
+                {licenseCreated && (
+                  <div className="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-green-400 text-sm">
+                      Your license has been created successfully. You can view it in your dashboard.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : subscription && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">

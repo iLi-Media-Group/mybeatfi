@@ -74,10 +74,6 @@ function WithdrawalDetail({ isOpen, onClose, withdrawal, onApprove, onReject }: 
           <p><strong>Routing Number:</strong> {account_details.routing_number}</p>
         </>
       );
-    } else if (account_type === 'paypal') {
-      return (
-        <p><strong>PayPal Email:</strong> {account_details.paypal_email}</p>
-      );
     } else {
       return (
         <>

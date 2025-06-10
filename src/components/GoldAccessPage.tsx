@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../stripe-config';
 import { createCheckoutSession } from '../lib/stripe';
+import { CryptoPaymentButton } from './CryptoPaymentButton';
 import { supabase } from '../lib/supabase';
 
 interface EmailCheckDialogProps {
@@ -253,6 +254,26 @@ export function GoldAccessPage() {
                   'Unlock Gold Access'
                 )}
               </button>
+              
+              <div className="mt-4">
+                <div className="relative flex items-center py-2">
+                  <div className="flex-grow border-t border-gray-600"></div>
+                  <span className="flex-shrink mx-4 text-gray-400">or</span>
+                  <div className="flex-grow border-t border-gray-600"></div>
+                </div>
+                
+                <CryptoPaymentButton
+                  productId="prod_SQOhLQJIM6Rji8"
+                  productName="Gold Access Membership"
+                  productDescription="Monthly subscription with 10 tracks per month"
+                  price={34.99}
+                  disabled={loading}
+                  metadata={{
+                    product_type: 'subscription',
+                    price_id: 'price_1RVXu9Ikn3xpidKHqxoSb6bC'
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

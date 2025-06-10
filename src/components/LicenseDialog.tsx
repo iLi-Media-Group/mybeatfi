@@ -6,6 +6,7 @@ import { Track } from '../types';
 import { LicenseTermsSummary } from './LicenseTermsSummary';
 import { sendLicenseEmail } from '../lib/email';
 import { LicenseConfirmationDialog } from './LicenseConfirmationDialog';
+import { CryptoPaymentButton } from './CryptoPaymentButton';
 
 interface LicenseDialogProps {
   isOpen: boolean;
@@ -215,6 +216,29 @@ export function LicenseDialog({
             >
               Upgrade Now
             </a>
+            
+            {/* Add crypto payment option for Single Track licenses */}
+            {membershipType === 'Single Track' && (
+              <div className="mt-4">
+                <div className="relative flex items-center py-2">
+                  <div className="flex-grow border-t border-gray-600"></div>
+                  <span className="flex-shrink mx-4 text-gray-400">or</span>
+                  <div className="flex-grow border-t border-gray-600"></div>
+                </div>
+                
+                <CryptoPaymentButton
+                  productId={track.id}
+                  productName={`License for ${track.title}`}
+                  productDescription={`Single Track License for ${track.title}`}
+                  price={9.99}
+                  disabled={loading}
+                  metadata={{
+                    track_id: track.id,
+                    license_type: 'Single Track'
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
