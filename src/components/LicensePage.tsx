@@ -83,6 +83,7 @@ export function LicensePage() {
           vocalsUsageType: trackData.vocals_usage_type || 'normal',
           isOneStop: trackData.is_one_stop || false,
           hasSting: trackData.has_sting_ending || false,
+          producerId: trackData.producer_id, // Add producer_id to the mapped track
           fileFormats: [], // Default empty array for file formats
           pricing: [], // Default empty array for pricing
           leaseAgreementUrl: '', // Default empty string for lease agreement URL
@@ -129,34 +130,9 @@ export function LicensePage() {
       return;
     }
     
-    if (membershipPlan === 'Single Track') {
-      try {
-        setCheckoutLoading(true);
-        
-        // Find the Single Track product
-        const singleTrackProduct = PRODUCTS.find(p => p.name === 'Single Track License');
-        
-        if (!singleTrackProduct) {
-          throw new Error('Single Track product not found');
-        }
-        
-        // Create checkout session
-        const checkoutUrl = await createCheckoutSession(
-          singleTrackProduct.priceId, 
-          singleTrackProduct.mode
-        );
-        
-        // Redirect to checkout
-        window.location.href = checkoutUrl;
-      } catch (error) {
-        console.error('Error creating checkout session:', error);
-      } finally {
-        setCheckoutLoading(false);
-      }
-    } else {
-      // For subscription users, show the license dialog
-      setShowLicenseDialog(true);
-    }
+    // Show the license dialog for all users
+    // The LicenseTermsSummary component will handle the Stripe checkout if needed
+    setShowLicenseDialog(true);
   };
 
   if (loading) {

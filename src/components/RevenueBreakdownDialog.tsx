@@ -1,18 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, DollarSign, Download, PieChart, Calendar, FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
-export interface RevenueBreakdownDialogProps {
+interface RevenueBreakdownDialogProps {
   isOpen: boolean;
   onClose: () => void;
   producerId?: string; // Optional - if provided, shows only this producer's revenue
-  stats?: {
-    totalRevenue: number;
-    totalSales: number;
-    monthlyRevenue: number;
-  };
 }
 
 interface RevenueSource {
@@ -30,8 +25,7 @@ interface MonthlyRevenue {
 export function RevenueBreakdownDialog({
   isOpen,
   onClose,
-  producerId,
-  stats
+  producerId
 }: RevenueBreakdownDialogProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +34,6 @@ export function RevenueBreakdownDialog({
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [timeframe, setTimeframe] = useState<'month' | 'quarter' | 'year' | 'all'>('month');
   const [pdfGenerating, setPdfGenerating] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,22 +41,6 @@ export function RevenueBreakdownDialog({
     }
   }, [isOpen, producerId, timeframe]);
 
-  // Handle click outside to close dialog
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
   const fetchRevenueBreakdown = async () => {
     try {
       setLoading(true);
@@ -212,13 +189,10 @@ export function RevenueBreakdownDialog({
       // Calculate total revenue
       const total = allSources.reduce((sum, source) => sum + source.amount, 0);
 
-      // If stats are provided, use those values instead
-      const finalTotal = stats?.totalRevenue || total;
-
       // Calculate percentages
       const sourcesWithPercentage = allSources.map(source => ({
         ...source,
-        percentage: finalTotal > 0 ? (source.amount / finalTotal) * 100 : 0
+        percentage: total > 0 ? (source.amount / total) * 100 : 0
       }));
 
       // Sort by amount descending
@@ -288,7 +262,7 @@ export function RevenueBreakdownDialog({
 
       setRevenueSources(sortedSources);
       setMonthlyRevenue(monthlyData);
-      setTotalRevenue(finalTotal);
+      setTotalRevenue(total);
     } catch (err) {
       console.error('Error fetching revenue breakdown:', err);
       setError('Failed to load revenue data');
@@ -301,22 +275,6 @@ export function RevenueBreakdownDialog({
     try {
       setPdfGenerating(true);
       
-      // Fetch producer details if we have a producerId
-      let producerDetails = null;
-      if (producerId) {
-        const { data: producerData, error: producerError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, email, producer_number')
-          .eq('id', producerId)
-          .single();
-
-        if (producerError) {
-          console.error('Error fetching producer details:', producerError);
-        } else {
-          producerDetails = producerData;
-        }
-      }
-      
       // Create a new PDF document
       const doc = new jsPDF();
       
@@ -324,29 +282,6 @@ export function RevenueBreakdownDialog({
       doc.setFontSize(20);
       doc.setTextColor(40, 40, 40);
       doc.text('Revenue Report', 105, 15, { align: 'center' });
-      
-      // Add producer info if we have it
-      if (producerDetails) {
-          doc.setFontSize(14);
-          doc.setTextColor(60, 60, 60);
-
-          // Add producer details with proper spacing
-          const firstName = producerDetails.first_name || '';
-          const lastName = producerDetails.last_name || '';
-          const producerName = `${firstName} ${lastName}`.trim() || 'Unknown';
-          
-          let yPos = 25;
-          doc.text(`Producer: ${producerName}`, 14, yPos);
-          yPos += 7;
-          doc.text(`Email: ${producerDetails.email || 'N/A'}`, 14, yPos);
-          yPos += 7;
-          if (producerDetails.producer_number) {
-            doc.text(`Producer Number: ${producerDetails.producer_number}`, 14, yPos);
-            yPos += 7;
-          }
-          doc.text(`Producer ID: ${producerDetails.id}`, 14, yPos);
-          yPos += 7;
-      }
       
       // Add date range
       doc.setFontSize(12);
@@ -362,20 +297,18 @@ export function RevenueBreakdownDialog({
       } else {
         dateRangeText = 'All Time';
       }
-
-      // Adjust vertical position based on whether we have producer details
-      const yPos = producerDetails ? 53 : 25;
-      doc.text(`Time Period: ${dateRangeText}`, 105, yPos + 5, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos + 12, { align: 'center' });
+      
+      doc.text(`Time Period: ${dateRangeText}`, 105, 25, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
       
       // Add total revenue
       doc.setFontSize(16);
       doc.setTextColor(40, 40, 40);
-      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, yPos + 22, { align: 'center' });
+      doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 105, 40, { align: 'center' });
       
       // Add revenue sources table
       doc.setFontSize(14);
-      doc.text('Revenue by Source', 14, yPos + 25);
+      doc.text('Revenue by Source', 14, 50);
       
       const sourceTableData = revenueSources.map(source => [
         source.source,
@@ -384,8 +317,8 @@ export function RevenueBreakdownDialog({
         `${source.percentage.toFixed(1)}%`
       ]);
       
-      autoTable(doc, {
-        startY: yPos + 30,
+      (doc as any).autoTable({
+        startY: 55,
         head: [['Source', 'Amount', 'Count', 'Percentage']],
         body: sourceTableData,
         theme: 'grid',
@@ -403,7 +336,7 @@ export function RevenueBreakdownDialog({
         `$${item.amount.toFixed(2)}`
       ]);
       
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: tableEndY + 5,
         head: [['Month', 'Revenue']],
         body: monthlyTableData,
@@ -426,7 +359,7 @@ export function RevenueBreakdownDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div ref={dialogRef} className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <DollarSign className="w-6 h-6 text-green-500 mr-2" />
@@ -621,5 +554,3 @@ export function RevenueBreakdownDialog({
     </div>
   );
 }
-
-export default RevenueBreakdownDialog;

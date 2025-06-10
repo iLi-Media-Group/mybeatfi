@@ -13,44 +13,45 @@ export function CheckoutSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
   const [order, setOrder] = useState<any>(null);
+  const [licenseCreated, setLicenseCreated] = useState(false);
+
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    if (!sessionId) {
-      navigate('/');
-      return;
-    }
-
     const fetchData = async () => {
       try {
-        setLoading(true);
-        
-        // Try to fetch subscription first
-        const subscriptionData = await getUserSubscription();
-        if (subscriptionData) {
-          setSubscription(subscriptionData);
-          
-          // Update user's membership plan in the database based on subscription
-          if (user) {
-            const membershipPlan = getMembershipPlanFromPriceId(subscriptionData.price_id);
-            await supabase
-              .from('profiles')
-              .update({ membership_plan: membershipPlan })
-              .eq('id', user.id);
-              
-            // Refresh the membership in the auth context
-            await refreshMembership();
-          }
-          
-          setLoading(false);
+        if (!sessionId) {
+          navigate('/dashboard');
           return;
         }
-        
-        // If no subscription, try to fetch order
+
+        let licenseCreated = false;
+
+        // Refresh membership status
+        if (user) {
+          await refreshMembership();
+        }
+
+        // Get subscription details
+        const subscription = await getUserSubscription();
+        setSubscription(subscription);
+
+        // Get order details
         const orders = await getUserOrders();
         const matchingOrder = orders.find(o => o.checkout_session_id === sessionId);
+        
         if (matchingOrder) {
           setOrder(matchingOrder);
+
+          // Check if a license was created for this order
+          if (user && matchingOrder.amount_total === 999) { // $9.99 single track price
+            const result = await supabase
+              .from('sales')
+              .select('*', { count: 'exact', head: true })
+              .eq('transaction_id', matchingOrder.payment_intent_id);
+            
+            setLicenseCreated(result.count !== null && result.count > 0);
+          }
         }
       } catch (error) {
         console.error('Error fetching checkout data:', error);
@@ -87,7 +88,7 @@ export function CheckoutSuccessPage() {
           <p className="text-xl text-gray-300 mb-8">
             {subscription 
               ? 'Your membership has been successfully activated. You now have access to all the features of your plan.'
-              : 'Your payment has been processed successfully. Thank you for your purchase!'}
+              : `Your payment has been processed successfully. ${licenseCreated ? 'Your license has been created and is ready to use.' : ''}`}
           </p>
 
           <div className="bg-white/5 rounded-lg p-6 mb-8">
@@ -162,6 +163,14 @@ export function CheckoutSuccessPage() {
                     {new Date(order.order_date).toLocaleDateString()}
                   </span>
                 </div>
+                
+                {licenseCreated && (
+                  <div className="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-green-400 text-sm">
+                      Your license has been created successfully. You can view it in your dashboard.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

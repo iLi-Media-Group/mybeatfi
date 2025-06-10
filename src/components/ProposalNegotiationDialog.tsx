@@ -173,7 +173,7 @@ export function ProposalNegotiationDialog({
       setCounterTerms('');
       setSelectedFile(null);
 
-      // Refresh messages
+      // Refresh messages - fetch the updated list instead of manually adding
       await fetchNegotiationHistory();
     } catch (err) {
       console.error('Error submitting negotiation:', err);

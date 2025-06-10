@@ -11,6 +11,7 @@ const DEMO_CLIENTS: Client[] = [
     link_url: 'https://example.com/tech-review',
     created_at: new Date().toISOString()
   },
+
   {
     id: '2',
     name: 'Nature Documentary Series',
@@ -18,6 +19,7 @@ const DEMO_CLIENTS: Client[] = [
     link_url: 'https://example.com/nature-docs',
     created_at: new Date().toISOString()
   },
+
   {
     id: '3',
     name: 'Fitness Journey Podcast',
@@ -25,6 +27,7 @@ const DEMO_CLIENTS: Client[] = [
     link_url: 'https://example.com/fitness-podcast',
     created_at: new Date().toISOString()
   },
+
   {
     id: '4',
     name: 'Cooking with Chef Maria',
@@ -32,6 +35,7 @@ const DEMO_CLIENTS: Client[] = [
     link_url: 'https://example.com/cooking-show',
     created_at: new Date().toISOString()
   },
+
   {
     id: '5',
     name: 'Travel Diaries',
@@ -39,6 +43,7 @@ const DEMO_CLIENTS: Client[] = [
     link_url: 'https://example.com/travel',
     created_at: new Date().toISOString()
   },
+
   {
     id: '6',
     name: 'Gaming Reviews Channel',
@@ -58,30 +63,36 @@ export function ClientsCarousel() {
     let mounted = true;
 
     const fetchClients = async () => {
+      if (!supabase) {
+        setError('Database connection not available');
+        setClients(DEMO_CLIENTS);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const { data, error } = await supabase
+        const { data, error: supabaseError } = await supabase
           .from('clients')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(6);
 
-        if (error) throw error;
+        if (supabaseError) {
+          console.error('Supabase error:', supabaseError);
+          throw new Error(supabaseError.message);
+        }
 
-        if (mounted) {
-          if (data && data.length > 0) {
-            setClients(data);
-            setError(null);
-          } else {
-            // Keep using demo data if no database entries
-            setClients(DEMO_CLIENTS);
-            setError('Using demo showcase data');
-          }
+        if (!mounted) return;
+
+        if (data && data.length > 0) {
+          setClients(data);
+          setError(null);
+        } else {
+          setClients(DEMO_CLIENTS);
+          setError('Using demo showcase data');
         }
       } catch (err) {
-        console.error('Error fetching clients:', err);
         if (mounted) {
-          // Fallback to demo data on error
-          setClients(DEMO_CLIENTS);
           setError('Using demo showcase data');
         }
       } finally {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Music } from 'lucide-react';
+import { Music, ListMusic } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -28,6 +28,14 @@ export function Footer() {
               <li>
                 <Link to="/vocals" className="text-gray-400 hover:text-white transition-colors">
                   Full Tracks with Vocals
+                </Link>
+              </li>
+              <li>
+                <Link to="/playlists" className="text-gray-400 hover:text-white transition-colors">
+                  <div className="flex items-center">
+                    <ListMusic className="w-4 h-4 mr-1" />
+                    <span>Playlists</span>
+                  </div>
                 </Link>
               </li>
               <li>

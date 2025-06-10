@@ -183,7 +183,7 @@ BEGIN
     ON sync_proposals 
     FOR SELECT 
     TO public 
-    USING (auth.uid() = client_id);
+    USING (uid() = client_id);
   END IF;
   
   -- Update client update policy if it exists
@@ -197,9 +197,9 @@ BEGIN
     ON sync_proposals 
     FOR UPDATE 
     TO public 
-    USING (auth.uid() = client_id)
+    USING (uid() = client_id)
     WITH CHECK (
-      (auth.uid() = client_id) AND 
+      (uid() = client_id) AND 
       (
         (status = 'pending') OR 
         (status = 'accepted' AND client_status IN ('pending', 'accepted', 'rejected'))
@@ -211,9 +211,9 @@ BEGIN
     ON sync_proposals 
     FOR UPDATE 
     TO public 
-    USING (auth.uid() = client_id)
+    USING (uid() = client_id)
     WITH CHECK (
-      (auth.uid() = client_id) AND 
+      (uid() = client_id) AND 
       (
         (status = 'pending') OR 
         (status = 'accepted' AND client_status IN ('pending', 'accepted', 'rejected'))
