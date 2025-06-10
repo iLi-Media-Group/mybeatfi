@@ -283,9 +283,9 @@ export function PricingCarousel() {
                     }}
                   />
                 )}
-
+                
                 <p className="text-center text-sm text-gray-400 mt-4">
-                  Accepts USDC, USDT, and Solana
+                  Accepts USDC and Solana
                 </p>
               </div>
             )}

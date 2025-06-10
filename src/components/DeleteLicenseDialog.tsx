@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 
 interface DeleteLicenseDialogProps {
-  isOpen: boolean;
   onClose: () => void;
   license: {
     track: {
@@ -13,11 +12,9 @@ interface DeleteLicenseDialogProps {
   onConfirm: () => Promise<void>;
 }
 
-export function DeleteLicenseDialog({ isOpen, onClose, license, onConfirm }: DeleteLicenseDialogProps) {
+export function DeleteLicenseDialog({ onClose, license, onConfirm }: DeleteLicenseDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  if (!isOpen) return null;
 
   const handleDelete = async () => {
     try {

@@ -44,7 +44,7 @@ export function AudioPlayer({ src, title, isPlaying = false, onPlay, onPause, cl
 
     const handleError = () => {
       setError('Failed to load audio');
-      setIsPlaying(false);
+      setInternalIsPlaying(false);
     };
 
     audio.addEventListener('timeupdate', updateProgress);

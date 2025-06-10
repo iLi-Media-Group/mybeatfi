@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { X, Loader2, Calendar } from 'lucide-react'; 
 
 interface EditRequestDialogProps {
-  isOpen: boolean;
   onClose: () => void;
   request: {
     project_title: string;
@@ -12,7 +11,7 @@ interface EditRequestDialogProps {
     genre: string;
     sub_genres: string[];
   };
-  onSave: (updatedRequest: Partial<{
+  onUpdate: (updatedRequest: Partial<{
     project_title: string;
     project_description: string;
     sync_fee: number;
@@ -22,7 +21,7 @@ interface EditRequestDialogProps {
   }>) => Promise<void>;
 }
 
-export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequestDialogProps) {
+export function EditRequestDialog({ onClose, request, onUpdate }: EditRequestDialogProps) {
   const [title, setTitle] = useState(request.project_title);
   const [description, setDescription] = useState(request.project_description);
   const [syncFee, setSyncFee] = useState(request.sync_fee.toString());
@@ -32,15 +31,13 @@ export function EditRequestDialog({ isOpen, onClose, request, onSave }: EditRequ
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError('');
 
-      await onSave({
+      await onUpdate({
         project_title: title,
         project_description: description,
         sync_fee: parseFloat(syncFee),

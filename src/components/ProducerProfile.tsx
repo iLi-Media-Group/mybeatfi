@@ -4,11 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProducerProfileProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
+export function ProducerProfile({ onClose }: ProducerProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -30,17 +29,17 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (isOpen && user) {
+    if (user) {
       fetchProfile();
     }
-  }, [isOpen, user]);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, ipi_number, performing_rights_org, usdc_address')
+        .select('*, ipi_number, performing_rights_org, usdc_address, company_name')
         .eq('id', user?.id)
         .single();
 
@@ -50,6 +49,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setEmail(data.email || '');
+        setCompanyName(data.company_name || '');
         setCompanyName(data.company_name || '');
         setProducerNumber(data.producer_number || '');
         setPhoneNumber(data.phone_number || '');
@@ -85,6 +85,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           company_name: companyName.trim() || null,
+          company_name: companyName.trim() || null,
           phone_number: phoneNumber.trim() || null,
           street_address: streetAddress.trim() || null,
           city: city.trim() || null,
@@ -112,11 +113,9 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Producer Profile</h2>
           <button
@@ -222,7 +221,7 @@ export function ProducerProfile({ isOpen, onClose }: ProducerProfileProps) {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full pl-10"
-                  placeholder="Optional"
+                  placeholder="Your publishing company or label name"
                 />
               </div>
             </div>
