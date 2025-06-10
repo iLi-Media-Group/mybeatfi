@@ -16,7 +16,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
   const { user, accountType, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com'].includes(user.email);
+  const isAdmin = user?.email && ['knockriobeats@gmail.com', 'info@mybeatfi.io', 'derykbanks@yahoo.com', 'knockriobeats2@gmail.com'].includes(user.email);
 
 
   useEffect(() => {
