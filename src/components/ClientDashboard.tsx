@@ -719,4 +719,279 @@ export function ClientDashboard() {
                           >
                             {license.track.title}
                           </button>
-                          <div
+                          <div className="flex items-center space-x-2 mt-2 md:mt-0">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              expiryStatus === 'expired' ? 'bg-red-500/20 text-red-400' :
+                              expiryStatus === 'expiring-soon' ? 'bg-yellow-500/20 text-yellow-400' :
+                              'bg-green-500/20 text-green-400'
+                            }`}>
+                              {expiryStatus === 'expired' ? 'Expired' :
+                               expiryStatus === 'expiring-soon' ? 'Expiring Soon' :
+                               'Active'}
+                            </span>
+                            <button
+                              onClick={() => handleViewLicenseAgreement(license.id)}
+                              className="p-1 text-gray-400 hover:text-white transition-colors"
+                              title="View License Agreement"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setSelectedLicenseToDelete(license)}
+                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                              title="Delete License"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="text-sm text-gray-400">
+                            {license.track.producer?.first_name} {license.track.producer?.last_name}
+                          </span>
+                          <span className="text-sm text-gray-400">•</span>
+                          <span className="text-sm text-purple-400">{license.license_type}</span>
+                          <span className="text-sm text-gray-400">•</span>
+                          <span className="text-sm text-gray-400">
+                            Expires: {new Date(license.expiry_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {license.track.genres.map((genre, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs"
+                            >
+                              {genre}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Your Favorites</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleSort('title')}
+                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                    title="Sort by title"
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {favorites.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No favorites yet</p>
+                  <Link
+                    to="/catalog"
+                    className="inline-block mt-2 text-purple-400 hover:text-purple-300 text-sm"
+                  >
+                    Browse tracks to add favorites
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sortedAndFilteredFavorites.slice(0, 5).map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/10"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <button
+                            onClick={() => navigate(`/track/${track.id}`)}
+                            className="text-sm font-semibold text-white hover:text-blue-400 transition-colors text-left block truncate"
+                          >
+                            {track.title}
+                          </button>
+                          <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs text-purple-400">{track.genres[0]}</span>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-gray-400">{track.bpm} BPM</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <AudioPlayer
+                            src={track.audioUrl}
+                            isPlaying={currentlyPlayingFavorite === track.id}
+                            onToggle={() => togglePlayFavorite(track.id)}
+                            size="sm"
+                          />
+                          <button
+                            onClick={() => handleLicenseClick(track)}
+                            className="p-1 text-gray-400 hover:text-purple-400 transition-colors"
+                            title="License track"
+                          >
+                            <DollarSign className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveFavorite(track.id)}
+                            disabled={removingFavorite === track.id}
+                            className="p-1 text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                            title="Remove from favorites"
+                          >
+                            {removingFavorite === track.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <X className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {favorites.length > 5 && (
+                    <Link
+                      to="/catalog?favorites=true"
+                      className="block text-center text-purple-400 hover:text-purple-300 text-sm mt-3"
+                    >
+                      View all {favorites.length} favorites
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+              <h3 className="text-xl font-bold text-white mb-4">New Tracks</h3>
+              
+              {newTracks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Music className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No new tracks available</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {newTracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-purple-500/10"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={track.image}
+                          alt={track.title}
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer"
+                          onClick={() => navigate(`/track/${track.id}`)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <button
+                            onClick={() => navigate(`/track/${track.id}`)}
+                            className="text-sm font-semibold text-white hover:text-blue-400 transition-colors text-left block truncate"
+                          >
+                            {track.title}
+                          </button>
+                          <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs text-purple-400">{track.genres[0]}</span>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-gray-400">{track.bpm} BPM</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <AudioPlayer
+                            src={track.audioUrl}
+                            isPlaying={currentlyPlayingNew === track.id}
+                            onToggle={() => togglePlayNew(track.id)}
+                            size="sm"
+                          />
+                          <button
+                            onClick={() => handleLicenseClick(track)}
+                            className="p-1 text-gray-400 hover:text-purple-400 transition-colors"
+                            title="License track"
+                          >
+                            <DollarSign className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Link
+                    to="/catalog"
+                    className="block text-center text-purple-400 hover:text-purple-300 text-sm mt-3"
+                  >
+                    Browse all tracks
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dialogs */}
+      {showProfileDialog && (
+        <ClientProfile
+          onClose={() => setShowProfileDialog(false)}
+          onUpdate={fetchDashboardData}
+        />
+      )}
+
+      {selectedRequest && showEditDialog && (
+        <EditRequestDialog
+          request={selectedRequest}
+          onClose={() => {
+            setShowEditDialog(false);
+            setSelectedRequest(null);
+          }}
+          onUpdate={handleUpdateRequest}
+        />
+      )}
+
+      {selectedLicenseToDelete && (
+        <DeleteLicenseDialog
+          license={selectedLicenseToDelete}
+          onClose={() => setSelectedLicenseToDelete(null)}
+          onConfirm={handleDeleteLicense}
+        />
+      )}
+
+      {showLicenseDialog && selectedTrackToLicense && (
+        <LicenseDialog
+          track={selectedTrackToLicense}
+          onClose={() => {
+            setShowLicenseDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          onSuccess={() => {
+            setShowLicenseDialog(false);
+            setSelectedTrackToLicense(null);
+            fetchDashboardData();
+          }}
+        />
+      )}
+
+      {showProposalDialog && selectedTrackToLicense && (
+        <SyncProposalDialog
+          track={selectedTrackToLicense}
+          onClose={() => {
+            setShowProposalDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+          onSuccess={() => {
+            setShowProposalDialog(false);
+            setSelectedTrackToLicense(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
