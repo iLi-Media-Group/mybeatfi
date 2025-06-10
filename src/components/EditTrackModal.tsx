@@ -173,7 +173,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
                   disabled={loading}
                 />
                 <label className="text-gray-300">
-                  Full Track With Vocals
+                  Full Track With Vocals/Sync Only (Click Here For the Sync Only Option)
                 </label>
               </div>
             </div>
