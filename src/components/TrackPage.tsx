@@ -6,9 +6,8 @@ import { supabase } from '../lib/supabase';
 import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
-import { SyncProposalDialog } from './SyncProposalDialog';
 import { ProducerProfileDialog } from './ProducerProfileDialog';
-import { AddToPlaylistButton } from './AddToPlaylistButton';
+import { SyncProposalDialog } from './SyncProposalDialog';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
 
@@ -362,10 +361,6 @@ export function TrackPage() {
               )}
 
               <div className="flex flex-wrap gap-4">
-                {user && (
-                  <AddToPlaylistButton trackId={track.id} />
-                )}
-                
                 <button
                   onClick={handleActionClick}
                   disabled={checkoutLoading}

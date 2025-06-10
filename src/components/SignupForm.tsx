@@ -3,8 +3,6 @@ import { Mail, Lock, User, X, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { PRODUCTS } from '../stripe-config';
-import { createCheckoutSession } from '../lib/stripe';
 
 interface SignupFormProps {
   onClose: () => void;
@@ -20,6 +18,8 @@ export function SignupForm({ onClose }: SignupFormProps) {
   const [accountType, setAccountType] = useState<'client' | 'producer'>('client');
   const [ageVerified, setAgeVerified] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
+  const [ipiNumber, setIpiNumber] = useState('');
+  const [performingRightsOrg, setPerformingRightsOrg] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
@@ -56,6 +56,15 @@ export function SignupForm({ onClose }: SignupFormProps) {
         if (!invitationCode.trim()) {
           throw new Error('Producer invitation code is required');
         }
+        
+        // Validate IPI number and PRO for producers
+        if (!ipiNumber.trim()) {
+          throw new Error('IPI Number is required for producers');
+        }
+        
+        if (!performingRightsOrg) {
+          throw new Error('Performing Rights Organization is required for producers');
+        }
 
         // Validate the invitation code
         const { data: isValid, error: validationError } = await supabase
@@ -79,9 +88,11 @@ export function SignupForm({ onClose }: SignupFormProps) {
           first_name: firstName,
           last_name: lastName,
           company_name: companyName.trim() || null,
-          account_type: accountType,
-          age_verified: ageVerified,
-          invitation_code: accountType === 'producer' ? invitationCode : null
+          account_type: accountType, 
+          age_verified: ageVerified, 
+          invitation_code: accountType === 'producer' ? invitationCode : null,
+          ipi_number: accountType === 'producer' ? ipiNumber.trim() : null,
+          performing_rights_org: accountType === 'producer' ? performingRightsOrg : null
         })
         .eq('email', email);
 
@@ -227,6 +238,62 @@ export function SignupForm({ onClose }: SignupFormProps) {
               </p>
             </div>
           )}
+            
+            {accountType === 'producer' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    IPI Number <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Music className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={ipiNumber}
+                      onChange={(e) => setIpiNumber(e.target.value)}
+                      className={`w-full pl-10 ${!ipiNumber.trim() ? 'border-red-500' : ''}`}
+                      required
+                      disabled={loading}
+                      placeholder="Enter your IPI number"
+                    />
+                  </div>
+                  {!ipiNumber.trim() && (
+                    <p className="mt-1 text-sm text-red-400">IPI Number is required</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Performing Rights Organization <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Info className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <select
+                      value={performingRightsOrg}
+                      onChange={(e) => setPerformingRightsOrg(e.target.value)}
+                      className={`w-full pl-10 ${!performingRightsOrg ? 'border-red-500' : ''}`}
+                      required
+                      disabled={loading}
+                    >
+                      <option value="">Select your PRO</option>
+                      <option value="ASCAP">ASCAP</option>
+                      <option value="BMI">BMI</option>
+                      <option value="SESAC">SESAC</option>
+                      <option value="GMR">Global Music Rights</option>
+                      <option value="PRS">PRS for Music (UK)</option>
+                      <option value="SOCAN">SOCAN (Canada)</option>
+                      <option value="APRA">APRA AMCOS (Australia/NZ)</option>
+                      <option value="SACEM">SACEM (France)</option>
+                      <option value="GEMA">GEMA (Germany)</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                  {!performingRightsOrg && (
+                    <p className="mt-1 text-sm text-red-400">PRO is required</p>
+                  )}
+                </div>
+              </>
+            )}
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
