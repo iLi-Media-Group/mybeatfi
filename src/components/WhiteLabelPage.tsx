@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Music, Zap, Brain, Globe, Shield, DollarSign, Mail, User, MessageSquare, Wallet } from 'lucide-react';
+import { Music, Zap, Brain, Globe, Shield, DollarSign, Mail, User, MessageSquare, Wallet, Check } from 'lucide-react';
 
 export function WhiteLabelPage() {
   const [formData, setFormData] = useState({
@@ -105,16 +105,16 @@ export function WhiteLabelPage() {
               <p className="text-gray-400 mb-4">For indie creators and small teams</p>
               <p className="text-3xl font-bold text-white mb-4">$999 <span className="text-lg text-gray-400">+ $49/mo</span></p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
-                <li className="flex items-center"><Zap className="w-4 h-4 text-blue-400 mr-2" /> Basic licensing tools</li>
-                <li className="flex items-center"><DollarSign className="w-4 h-4 text-blue-400 mr-2" /> Stripe payout</li>
-                <li className="flex items-center"><Shield className="w-4 h-4 text-blue-400 mr-2" /> Custom branding</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Basic licensing tools</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Stripe payout</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Custom branding</li>
               </ul>
               <a href="#contact" className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                 Start Now
               </a>
             </div>
             
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border-2 border-purple-500/40 text-center transform scale-105 shadow-xl shadow-purple-500/10">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border-2 border-purple-500/40 text-center transform scale-105 shadow-xl shadow-purple-500/10 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
                 Most Popular
               </div>
@@ -122,10 +122,10 @@ export function WhiteLabelPage() {
               <p className="text-gray-400 mb-4">For boutique sync agencies</p>
               <p className="text-3xl font-bold text-white mb-4">$5,000 <span className="text-lg text-gray-400">+ $299/mo</span></p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
-                <li className="flex items-center"><Zap className="w-4 h-4 text-purple-400 mr-2" /> All Starter features</li>
-                <li className="flex items-center"><Wallet className="w-4 h-4 text-purple-400 mr-2" /> USDC on Solana</li>
-                <li className="flex items-center"><Brain className="w-4 h-4 text-purple-400 mr-2" /> AI metadata tagging</li>
-                <li className="flex items-center"><DollarSign className="w-4 h-4 text-purple-400 mr-2" /> Advanced reports</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-purple-400 mr-2" /> All Starter features</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-purple-400 mr-2" /> USDC on Solana</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-purple-400 mr-2" /> AI metadata tagging</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-purple-400 mr-2" /> Advanced reports</li>
               </ul>
               <a href="#contact" className="block w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
                 Get Pro
@@ -137,10 +137,10 @@ export function WhiteLabelPage() {
               <p className="text-gray-400 mb-4">For full-scale licensing businesses</p>
               <p className="text-3xl font-bold text-white mb-4">$25,000+ <span className="text-lg text-gray-400">+ custom</span></p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
-                <li className="flex items-center"><Zap className="w-4 h-4 text-blue-400 mr-2" /> All Pro features</li>
-                <li className="flex items-center"><Shield className="w-4 h-4 text-blue-400 mr-2" /> Custom SLAs</li>
-                <li className="flex items-center"><MessageSquare className="w-4 h-4 text-blue-400 mr-2" /> Dedicated support</li>
-                <li className="flex items-center"><Shield className="w-4 h-4 text-blue-400 mr-2" /> Licensing compliance tools</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> All Pro features</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Custom SLAs</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Dedicated support</li>
+                <li className="flex items-center"><Check className="w-4 h-4 text-blue-400 mr-2" /> Licensing compliance tools</li>
               </ul>
               <a href="#contact" className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                 Contact Us
