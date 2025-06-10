@@ -37,10 +37,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching account type:', error);
-        // Default to client if there's an error
-        setAccountType('client');
-        return;
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: email,
+              account_type: 'client', // Default to client
+              membership_plan: 'Single Track'
+            });
+            
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            setAccountType('client');
+            return;
+          }
+          
+          setAccountType('client');
+          setMembershipPlan('Single Track');
+          return;
+        } else {
+          console.error('Error fetching account type:', error);
+          // Default to client if there's an error
+          setAccountType('client');
+          return;
+        }
       }
       
       if (data) {
