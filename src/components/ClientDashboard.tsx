@@ -40,7 +40,7 @@ Here's the fixed version with all missing closing brackets added:
                           </div>
                           <div className="flex items-center justify-between mt-3">
                             <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
+                              <span className={\`px-2 py-1 rounded-full text-xs ${
                                 expiryStatus === 'expired' ? 'bg-red-500/20 text-red-400' :
                                 expiryStatus === 'expiring-soon' ? 'bg-yellow-500/20 text-yellow-400' :
                                 'bg-green-500/20 text-green-400'
