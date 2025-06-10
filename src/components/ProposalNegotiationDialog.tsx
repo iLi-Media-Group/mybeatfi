@@ -6,10 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProposalNegotiationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
-  currentOffer: number;
-  clientName: string;
-  trackTitle: string;
+  proposal: any;
+  onNegotiationSent: () => void;
 }
 
 interface NegotiationMessage {
@@ -25,14 +23,7 @@ interface NegotiationMessage {
   created_at: string;
 }
 
-export function ProposalNegotiationDialog({
-  isOpen,
-  onClose,
-  proposalId,
-  currentOffer,
-  clientName,
-  trackTitle
-}: ProposalNegotiationDialogProps) {
+export function ProposalNegotiationDialog({ isOpen, onClose, proposal, onNegotiationSent }: ProposalNegotiationDialogProps) {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [counterOffer, setCounterOffer] = useState('');
@@ -43,10 +34,10 @@ export function ProposalNegotiationDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && proposal?.id) {
       fetchNegotiationHistory();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposal?.id]);
 
   const fetchNegotiationHistory = async () => {
     try {
@@ -64,7 +55,7 @@ export function ProposalNegotiationDialog({
             email
           )
         `)
-        .eq('proposal_id', proposalId)
+        .eq('proposal_id', proposal.id)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -109,7 +100,7 @@ export function ProposalNegotiationDialog({
       const { data: negotiation, error: negotiationError } = await supabase
         .from('proposal_negotiations')
         .insert({
-          proposal_id: proposalId,
+          proposal_id: proposal.id,
           sender_id: user.id,
           message,
           counter_offer: counterOffer ? parseFloat(counterOffer) : null,
@@ -159,11 +150,11 @@ export function ProposalNegotiationDialog({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          proposalId,
+          proposalId: proposal.id,
           senderId: user.id,
           message,
           counterOffer: counterOffer ? parseFloat(counterOffer) : null,
-          counterTerms: counterTerms.trim() || null
+          recipientEmail: proposal.client.email
         })
       });
 
@@ -174,7 +165,7 @@ export function ProposalNegotiationDialog({
       setSelectedFile(null);
 
       // Refresh messages - fetch the updated list instead of manually adding
-      await fetchNegotiationHistory();
+      onNegotiationSent();
     } catch (err) {
       console.error('Error submitting negotiation:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit negotiation');
@@ -190,9 +181,9 @@ export function ProposalNegotiationDialog({
       <div className="bg-white/5 backdrop-blur-md p-8 rounded-xl border border-purple-500/20 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Negotiate Proposal</h2>
+            <h2 className="text-2xl font-bold text-white">Negotiate Proposal for "{proposal?.track?.title}"</h2>
             <p className="text-gray-400">
-              {trackTitle} - {clientName}
+              Client: {proposal?.client?.first_name} {proposal?.client?.last_name}
             </p>
           </div>
           <button
@@ -271,7 +262,7 @@ export function ProposalNegotiationDialog({
                   className="w-full pl-10"
                   placeholder="0.00"
                   step="0.01"
-                  min="0"
+                  defaultValue={proposal?.sync_fee?.toString()}
                 />
               </div>
             </div>

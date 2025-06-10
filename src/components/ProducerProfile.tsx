@@ -4,10 +4,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProducerProfileProps {
+  isOpen: boolean;
   onClose: () => void;
+  onProfileUpdated?: () => void;
 }
 
-export function ProducerProfile({ onClose }: ProducerProfileProps) {
+export function ProducerProfile({ isOpen, onClose, onProfileUpdated }: ProducerProfileProps) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -104,6 +106,9 @@ export function ProducerProfile({ onClose }: ProducerProfileProps) {
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
+        if (onProfileUpdated) {
+          onProfileUpdated();
+        }
       }, 3000);
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -112,6 +117,8 @@ export function ProducerProfile({ onClose }: ProducerProfileProps) {
       setSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>

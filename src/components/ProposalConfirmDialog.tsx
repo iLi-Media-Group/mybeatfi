@@ -4,10 +4,9 @@ import { X, AlertTriangle, Check, XCircle, Loader2 } from 'lucide-react';
 interface ProposalConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: () => void;
   action: 'accept' | 'reject';
-  trackTitle: string;
-  clientName: string;
+  proposal: any;
 }
 
 export function ProposalConfirmDialog({
@@ -15,8 +14,7 @@ export function ProposalConfirmDialog({
   onClose,
   onConfirm,
   action,
-  trackTitle,
-  clientName
+  proposal
 }: ProposalConfirmDialogProps) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -60,7 +58,7 @@ export function ProposalConfirmDialog({
         )}
 
         <p className="text-gray-300 mb-6">
-          Are you sure you want to {action} the sync proposal for "{trackTitle}" from {clientName}?
+          Are you sure you want to {action} the sync proposal for "{proposal?.track?.title}" from {proposal?.client?.first_name} {proposal?.client?.last_name}?
           {action === 'reject' && (
             <span className="block mt-2 text-yellow-400">
               This action cannot be undone.
