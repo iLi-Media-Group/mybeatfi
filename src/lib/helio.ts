@@ -1,25 +1,30 @@
 import { supabase } from './supabase';
 
-interface HelioCheckoutOptions {
+export async function createHelioCheckout({
+  productId,
+  name,
+  description,
+  price,
+  successUrl,
+  cancelUrl,
+  metadata
+}: {
   productId: string;
-  price: number;
   name: string;
   description: string;
+  price: number;
   successUrl: string;
   cancelUrl: string;
   metadata?: Record<string, string>;
-}
-
-export async function createHelioCheckout(options: HelioCheckoutOptions): Promise<string> {
+}) {
   try {
-    // Get the current session
+    // Get the current session - this implicitly handles refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !session) {
       throw new Error('You must be logged in to make a purchase');
     }
 
-    // Call our edge function to create a Helio checkout
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/helio-checkout`, {
       method: 'POST',
       headers: {
@@ -27,16 +32,13 @@ export async function createHelioCheckout(options: HelioCheckoutOptions): Promis
         'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        product_id: options.productId,
-        price: options.price,
-        name: options.name,
-        description: options.description,
-        success_url: options.successUrl,
-        cancel_url: options.cancelUrl,
-        metadata: {
-          user_id: session.user.id,
-          ...options.metadata
-        }
+        product_id: productId,
+        name,
+        description,
+        price,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata
       }),
     });
 
@@ -45,27 +47,23 @@ export async function createHelioCheckout(options: HelioCheckoutOptions): Promis
       throw new Error(errorData.error || 'Failed to create Helio checkout');
     }
 
-    const { url } = await response.json();
-    return url;
+    const { checkout_url } = await response.json();
+    return checkout_url;
   } catch (error) {
     console.error('Error creating Helio checkout:', error);
     throw error;
   }
 }
 
-export async function getHelioPaymentStatus(paymentId: string): Promise<{
-  status: 'pending' | 'completed' | 'failed';
-  transactionId?: string;
-}> {
+export async function getHelioPaymentStatus(sessionId: string) {
   try {
-    // Get the current session
+    // Get the current session - this implicitly handles refresh
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !session) {
       throw new Error('You must be logged in to check payment status');
     }
 
-    // Call our edge function to check payment status
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/helio-payment-status`, {
       method: 'POST',
       headers: {
@@ -73,16 +71,17 @@ export async function getHelioPaymentStatus(paymentId: string): Promise<{
         'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        payment_id: paymentId
+        session_id: sessionId
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to check payment status');
+      throw new Error(errorData.error || 'Failed to retrieve payment status');
     }
 
-    return await response.json();
+    const paymentStatus = await response.json();
+    return paymentStatus;
   } catch (error) {
     console.error('Error checking Helio payment status:', error);
     throw error;

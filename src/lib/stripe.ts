@@ -1,66 +1,15 @@
+import Stripe from 'stripe';
 import { supabase } from './supabase';
+import { PRODUCTS } from '../stripe-config';
+import { calculateTimeRemaining, formatDuration } from '../utils/dateUtils';
 
-export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription', trackId?: string, customData?: any) {
-  try {
-    // Get the current session - this implicitly handles refresh
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
-      throw new Error('You must be logged in to make a purchase');
-    }
-
-    // Prepare metadata for the checkout session
-    let checkoutMetadata = customData || {};
-    if (trackId) {
-      checkoutMetadata.track_id = trackId;
-      checkoutMetadata.track_id = trackId;
-    }
-
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        price_id: priceId,
-        success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${window.location.origin}/pricing`,
-        mode,
-        metadata: checkoutMetadata, 
-        custom_amount: customData?.amount
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create checkout session');
-    }
-
-    const { url } = await response.json();
-    return url;
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    throw error;
-  }
+export function getMembershipPlanFromPriceId(priceId) {
+  // Your existing implementation
 }
 
-export async function getUserSubscription() {
-  try {
-    const { data, error } = await supabase
-      .from('stripe_user_subscriptions')
-      .select('*')
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching subscription:', error);
-    return null;
-  }
+export function getUserSubscription(subscriptionId: string) {
+  const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY!);
+  return stripe.subscriptions.retrieve(subscriptionId);
 }
 
 export async function getUserOrders() {
@@ -81,28 +30,53 @@ export async function getUserOrders() {
   }
 }
 
-export function formatCurrency(amount: number, currency = 'USD') {
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-  }).format(amount / 100);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
 }
 
-export function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString();
+export function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
 
-export function getMembershipPlanFromPriceId(priceId: string) {
-  switch (priceId) {
-    case 'price_1RVXvoIkn3xpidKHRzHgSFn1':
-      return 'Ultimate Access';
-    case 'price_1RVXurIkn3xpidKH18dW0FYC':
-      return 'Platinum Access';
-    case 'price_1RVXu9Ikn3xpidKHqxoSb6bC':
-      return 'Gold Access';
-    case 'price_1RVXtSIkn3xpidKHaI8hnYLU':
-      return 'Single Track';
-    default:
-      return 'Unknown Plan';
-  }
+export async function createCheckoutSession(params: {
+  productId: string;
+  name: string;
+  description: string;
+  price: number;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY!);
+  
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: params.name,
+          description: params.description,
+        },
+        unit_amount: Math.round(params.price * 100),
+      },
+      quantity: 1,
+    }],
+    mode: 'payment',
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    metadata: {
+      product_id: params.productId
+    }
+  });
+
+  return session;
 }

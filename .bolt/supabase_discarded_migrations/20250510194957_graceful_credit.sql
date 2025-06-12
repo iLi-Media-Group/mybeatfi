@@ -1,4 +1,3 @@
-```sql
 /*
   # Add Custom Sync Requests
 
@@ -122,4 +121,3 @@ CREATE INDEX idx_custom_sync_requests_preferred_producer_id ON custom_sync_reque
 CREATE INDEX idx_custom_sync_requests_status ON custom_sync_requests(status);
 CREATE INDEX idx_custom_sync_requests_created_at ON custom_sync_requests(created_at DESC);
 CREATE INDEX idx_custom_sync_requests_end_date ON custom_sync_requests(end_date);
-```

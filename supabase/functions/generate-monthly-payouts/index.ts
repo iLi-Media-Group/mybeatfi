@@ -94,24 +94,6 @@ serve(async (req) => {
       );
     }
 
-    // Get compensation settings
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('compensation_settings')
-      .select('*')
-      .single();
-
-    if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
-
-    // Default settings if none found
-    const compensationSettings = settings || {
-      standard_rate: 70,
-      exclusive_rate: 80,
-      sync_fee_rate: 85,
-      no_sales_bucket_rate: 2,
-      growth_bonus_rate: 5,
-      no_sale_bonus_rate: 3
-    };
-
     // Process results
     const results = [];
     let totalPayouts = 0;
@@ -144,11 +126,13 @@ serve(async (req) => {
         // Create payout record
         const { data: payout, error: payoutError } = await supabaseClient
           .from('producer_payouts')
-          .insert({
+          .upsert({
             producer_id: producer.id,
             amount_usdc: amount,
             month,
             status
+          }, {
+            onConflict: ['producer_id', 'month']
           })
           .select()
           .single();

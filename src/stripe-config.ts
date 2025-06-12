@@ -16,7 +16,7 @@ export const PRODUCTS: StripeProduct[] = [
     description: 'Unlimited lifetime access',
     priceId: 'price_1RVXvoIkn3xpidKHRzHgSFn1',
     mode: 'subscription',
-    price: 49900,
+    price: 499.00,
     features: [
       'Unlimited track downloads',
       'Non-exclusive license',
@@ -35,7 +35,7 @@ export const PRODUCTS: StripeProduct[] = [
     description: 'Unlimited, non-exclusive track use',
     priceId: 'price_1RVXurIkn3xpidKH18dW0FYC',
     mode: 'subscription',
-    price: 5999,
+    price: 59.99,
     features: [
       'Unlimited track downloads',
       'Non-exclusive license',
@@ -54,7 +54,7 @@ export const PRODUCTS: StripeProduct[] = [
     description: '10 tracks per month',
     priceId: 'price_1RVXu9Ikn3xpidKHqxoSb6bC',
     mode: 'subscription',
-    price: 3499,
+    price: 34.99,
     features: [
       '10 track downloads per month',
       'Non-exclusive license',
@@ -73,7 +73,7 @@ export const PRODUCTS: StripeProduct[] = [
     description: 'Pay per track',
     priceId: 'price_1RVXtSIkn3xpidKHaI8hnYLU',
     mode: 'payment',
-    price: 999,
+    price: 9.99,
     features: [
       'Single track download',
       'Non-exclusive license',
