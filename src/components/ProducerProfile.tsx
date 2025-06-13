@@ -52,7 +52,6 @@ export function ProducerProfile({ isOpen, onClose, onProfileUpdated }: ProducerP
         setLastName(data.last_name || '');
         setEmail(data.email || '');
         setCompanyName(data.company_name || '');
-        setCompanyName(data.company_name || '');
         setProducerNumber(data.producer_number || '');
         setPhoneNumber(data.phone_number || '');
         setStreetAddress(data.street_address || '');

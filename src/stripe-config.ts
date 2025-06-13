@@ -7,16 +7,18 @@ export interface StripeProduct {
   price: number;
   features: string[];
   popular?: boolean;
+  interval: string;
 }
 
 export const PRODUCTS: StripeProduct[] = [
   {
     id: 'prod_SQOjd8nu1u5xMc',
-    name: 'Ultimate Membership',
-    description: 'Unlimited lifetime access',
+    name: 'Ultimate Access',
+    description: 'Unlimited annual subscription',
     priceId: 'price_1RVXvoIkn3xpidKHRzHgSFn1',
     mode: 'subscription',
-    price: 499.00,
+    price: 499.99,
+    interval: 'year',
     features: [
       'Unlimited track downloads',
       'Non-exclusive license',
@@ -31,11 +33,12 @@ export const PRODUCTS: StripeProduct[] = [
   },
   {
     id: 'prod_SQOiS7N3ApTh7C',
-    name: 'Platinum Membership',
-    description: 'Unlimited, non-exclusive track use',
+    name: 'Platinum Access',
+    description: 'Unlimited track use',
     priceId: 'price_1RVXurIkn3xpidKH18dW0FYC',
     mode: 'subscription',
     price: 59.99,
+    interval: 'month',
     features: [
       'Unlimited track downloads',
       'Non-exclusive license',
@@ -50,11 +53,12 @@ export const PRODUCTS: StripeProduct[] = [
   },
   {
     id: 'prod_SQOhLQJIM6Rji8',
-    name: 'Gold Membership',
+    name: 'Gold Access',
     description: '10 tracks per month',
     priceId: 'price_1RVXu9Ikn3xpidKHqxoSb6bC',
     mode: 'subscription',
     price: 34.99,
+    interval: 'month',
     features: [
       '10 track downloads per month',
       'Non-exclusive license',
@@ -69,11 +73,12 @@ export const PRODUCTS: StripeProduct[] = [
   },
   {
     id: 'prod_SQOgYj7gpZae0k',
-    name: 'Single Track License',
+    name: 'Single Track',
     description: 'Pay per track',
     priceId: 'price_1RVXtSIkn3xpidKHaI8hnYLU',
     mode: 'payment',
     price: 9.99,
+    interval: 'track',
     features: [
       'Single track download',
       'Non-exclusive license',

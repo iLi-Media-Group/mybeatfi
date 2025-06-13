@@ -1,20 +1,17 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import Unocss from 'unocss/vite'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    Unocss(), // add UnoCSS here
+  ],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
   server: {
-    port: 5173,
-    host: true,
-    strictPort: true,
     historyApiFallback: true,
   },
-  preview: {
-    port: 5173,
-    host: true,
-    strictPort: true,
-  }
-});
+})

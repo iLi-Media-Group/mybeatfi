@@ -106,8 +106,8 @@ export function ProducerProfileDialog({ isOpen, onClose, producerId }: ProducerP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-purple-500/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Producer Profile</h2>
           <button
@@ -160,25 +160,25 @@ export function ProducerProfileDialog({ isOpen, onClose, producerId }: ProducerP
             </div>
 
             {profile.bio && (
-              <div className="bg-gray-800 rounded-lg p-4">
+              <div className="bg-white/5 rounded-lg p-4">
                 <p className="text-gray-300 whitespace-pre-wrap">{profile.bio}</p>
               </div>
             )}
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gray-800 rounded-lg p-4 text-center">
+              <div className="bg-white/5 rounded-lg p-4 text-center">
                 <Music className="w-6 h-6 text-purple-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">{profile.stats?.totalTracks}</p>
                 <p className="text-sm text-gray-400">Tracks</p>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4 text-center">
+              <div className="bg-white/5 rounded-lg p-4 text-center">
                 <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">{profile.stats?.totalSales}</p>
                 <p className="text-sm text-gray-400">Sales (30d)</p>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4 text-center">
+              <div className="bg-white/5 rounded-lg p-4 text-center">
                 <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">{profile.stats?.avgRating}</p>
                 <p className="text-sm text-gray-400">Rating</p>
