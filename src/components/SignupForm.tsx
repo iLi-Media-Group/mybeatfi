@@ -138,6 +138,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+					aria-label="Close dialog"
         >
           <X className="w-5 h-5" />
         </button>

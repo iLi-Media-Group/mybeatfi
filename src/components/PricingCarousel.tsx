@@ -58,6 +58,7 @@ function EmailCheckDialog({ isOpen, onClose, onContinue, product }: EmailCheckDi
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
+						aria-label="Close dialog"
           >
             <X className="w-6 h-6" />
           </button>
