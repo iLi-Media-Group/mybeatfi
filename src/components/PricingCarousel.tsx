@@ -231,9 +231,9 @@ export function PricingCarousel() {
             <div className="mt-auto pt-8">
               {!product.mode.includes('subscription') && (
                 <button
-                  onClick={() => handleSubscribe(product)}
+                  onClick={() => navigate('/catalog')}
                   disabled={loading}
-                  className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-blue-900/60 text-white font-semibold transition-all flex items-center justify-center"
+                  className="w-full py-3 px-6 rounded-lg bg-green-200/40 hover:bg-purple-500/60 text-white font-semibold transition-all flex items-center justify-center"
                 >
                   {loadingProductId === product.id ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -267,7 +267,7 @@ export function PricingCarousel() {
                   <button
                     onClick={() => handleSubscribe(product)}
                     disabled={loading || (currentSubscription?.subscription_id && currentSubscription?.status === 'active')}
-                    className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-blue-900/60 text-white font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 px-6 rounded-lg bg-green-200/40 hover:bg-purple-500/60 text-white font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingProductId === product.id ? (
                       <Loader2 className="w-5 h-5 animate-spin mr-2" />
