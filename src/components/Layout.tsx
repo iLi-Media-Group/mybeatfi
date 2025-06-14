@@ -130,7 +130,17 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
                   
                   {/* Client-specific menu items */}
                   {(accountType === 'client' || !user) && (
-                    <Link to={user ? "/custom-sync-request" : "/pricing"} className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" onClick={() => setIsMenuOpen(false)}>
+                    <Link 
+                      to={user ? "/custom-sync-request" : "#"} 
+                      className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-800/50" 
+                      onClick={(e) => {
+                        setIsMenuOpen(false);
+                        if (!user) {
+                          e.preventDefault();
+                          alert('Log In is required to access this feature. Please sign in or create an account.');
+                          navigate('/login');
+                        }
+                      }}>
                       <FileText className="w-4 h-4 mr-2" />Custom Sync Request
                     </Link>
                   )}

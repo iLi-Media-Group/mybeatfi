@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PRODUCTS } from '../stripe-config';
 import { createCheckoutSession, getUserSubscription } from '../lib/stripe';
-import { createHelioCheckout } from '../lib/helio';
 
 interface EmailCheckDialogProps {
   isOpen: boolean;
@@ -58,7 +57,6 @@ function EmailCheckDialog({ isOpen, onClose, onContinue, product }: EmailCheckDi
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
-						aria-label="Close dialog"
           >
             <X className="w-6 h-6" />
           </button>
@@ -144,126 +142,46 @@ export function PricingCarousel() {
   };
 
   const handleSubscribe = async (product: typeof PRODUCTS[0]) => {
-    if (!user) {
+    if (user) {
+      proceedWithSubscription(product);
+    } else {
       setSelectedProduct(product);
       setShowEmailCheck(true);
-      return;
-    }
-
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('account_type')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        setError('Error checking your account type.');
-        return;
-      }
-
-      const accountType = profile?.account_type;
-
-      if (accountType === 'producer') {
-        navigate('/producer-dashboard');
-        return;
-      }
-
-      if (accountType === 'admin') {
-        navigate('/admin-dashboard');
-        return;
-      }
-
-      proceedWithSubscription(product);
-    } catch (err) {
-      console.error('Error during subscription check:', err);
-      setError('Unexpected error. Please try again.');
     }
   };
 
-  const handleEmailContinue = async (email: string, exists: boolean) => {
+  const handleEmailContinue = (email: string, exists: boolean) => {
     setShowEmailCheck(false);
-
+    
     if (exists) {
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('account_type')
-          .eq('email', email.toLowerCase().trim())
-          .single();
-
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          navigate(`/login?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
-          return;
-        }
-
-        const accountType = profile?.account_type;
-
-        if (accountType === 'producer') {
-          navigate('/producer-dashboard');
-          return;
-        }
-
-        if (accountType === 'admin') {
-          navigate('/admin-dashboard');
-          return;
-        }
-
-        navigate(`/login?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
-      } catch (err) {
-        console.error('Error checking account type after email check:', err);
-        navigate(`/login?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
-      }
+      navigate(`/login?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
     } else {
-      navigate(`/signup?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
+     navigate(`/signup?email=${encodeURIComponent(email)}&redirect=pricing&product=${selectedProduct?.id}`);
+
     }
   };
 
-const proceedWithSubscription = async (product: typeof PRODUCTS[0]) => {
-  try {
-    setLoading(true);
-    setLoadingProductId(product.id);
-    setError(null);
+  const proceedWithSubscription = async (product: typeof PRODUCTS[0]) => {
+    try {
+      setLoading(true);
+      setLoadingProductId(product.id);
+      setError(null);
 
-    // If user already has subscription and product is subscription type, redirect
-    if (currentSubscription?.subscription_id && product.mode === 'subscription') {
-      navigate('/dashboard');
-      return;
+      if (currentSubscription?.subscription_id && product.mode === 'subscription') {
+        navigate('/dashboard');
+        return;
+      }
+
+      const checkoutUrl = await createCheckoutSession(product.priceId, product.mode);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error('Error creating checkout session:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create checkout session');
+    } finally {
+      setLoading(false);
+      setLoadingProductId(null);
     }
-
-    // If product is crypto payment (Helio)
-    if (product.mode === 'crypto') {
-      if (!user) throw new Error('User not logged in');
-
-      const helioUrl = await createHelioCheckout({
-        productId: product.id,
-        price: product.price,
-        name: product.name,
-        description: product.description,
-        successUrl: `${window.location.origin}/dashboard?payment=success`,
-        cancelUrl: `${window.location.origin}/pricing?payment=cancel`,
-        metadata: { user_id: user.id }
-      });
-
-      window.location.href = helioUrl;
-      return;
-    }
-
-    // Else, handle normal checkout session (Stripe or other)
-    const checkoutUrl = await createCheckoutSession(product.priceId, product.mode);
-    window.location.href = checkoutUrl;
-
-  } catch (err) {
-    console.error('Error in subscription:', err);
-    setError(err instanceof Error ? err.message : 'Failed to create checkout session');
-  } finally {
-    setLoading(false);
-    setLoadingProductId(null);
-  }
-};
-
+  };
 
   return (
     <>
@@ -278,8 +196,9 @@ const proceedWithSubscription = async (product: typeof PRODUCTS[0]) => {
           <div
             key={product.id}
             className={`bg-white/5 backdrop-blur-sm rounded-2xl border ${
-              product.popular ? 'border-purple-500/40' : 'border-blue-500/20'
-            } p-8 h-full hover:border-blue-500/40 transition-colors relative flex flex-col`}
+  product.popular ? 'border-purple-500/40' : 'border-blue-500/20'
+} p-8 h-full hover:border-blue-500/40 transition-colors relative flex flex-col`}
+
           >
             {product.popular && (
               <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm font-medium">
@@ -312,9 +231,9 @@ const proceedWithSubscription = async (product: typeof PRODUCTS[0]) => {
             <div className="mt-auto pt-8">
               {!product.mode.includes('subscription') && (
                 <button
-                  onClick={() => navigate('/catalog')}
+                  onClick={() => handleSubscribe(product)}
                   disabled={loading}
-                  className="w-full py-3 px-6 rounded-lg bg-green-200/40 hover:bg-purple-500/60 text-white font-semibold transition-all flex items-center justify-center"
+                  className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-green-600/60 text-white font-semibold transition-all flex items-center justify-center"
                 >
                   {loadingProductId === product.id ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -348,7 +267,7 @@ const proceedWithSubscription = async (product: typeof PRODUCTS[0]) => {
                   <button
                     onClick={() => handleSubscribe(product)}
                     disabled={loading || (currentSubscription?.subscription_id && currentSubscription?.status === 'active')}
-                    className="w-full py-3 px-6 rounded-lg bg-green-200/40 hover:bg-purple-500/60 text-white font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-green-600/60 text-white font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingProductId === product.id ? (
                       <Loader2 className="w-5 h-5 animate-spin mr-2" />
