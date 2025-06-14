@@ -790,7 +790,7 @@ export function ProducerDashboard() {
             setSelectedTrack(null);
           }}
           track={selectedTrack}
-          onTrackUpdated={fetchDashboardData}
+          onUpdate={fetchDashboardData}
         />
       )}
     </div>

@@ -18,14 +18,11 @@ interface EditTrackModalProps {
 }
 
 export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackModalProps) {
-  // Normalize initial genres to match the format in GENRES
   const normalizeGenre = (genre: string) => genre.toLowerCase().replace(/\s+/g, '');
-  
-  // Initialize with only valid genres from the GENRES list
-  const initialGenres = (track.genres || []).filter(genre => 
+
+  const initialGenres = (track.genres || []).filter(genre =>
     GENRES.some(g => normalizeGenre(g) === normalizeGenre(genre))
   ).map(genre => {
-    // Find the matching genre from GENRES list to ensure consistent formatting
     return GENRES.find(g => normalizeGenre(g) === normalizeGenre(genre)) || genre;
   });
 
@@ -38,21 +35,16 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError(null);
 
-      // Validate genres
       if (selectedGenres.length === 0) {
         throw new Error('At least one genre is required');
       }
 
-      // Since selectedGenres already contains valid genres from the GENRES list,
-      // we don't need to filter them again - just use them directly
       const formattedGenres = selectedGenres;
-
-      // Only filter moods to ensure they're valid, but don't transform them
       const validMoods = selectedMoods.filter(mood => MOODS.includes(mood));
 
       const { error: updateError } = await supabase
@@ -61,7 +53,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
           genres: formattedGenres,
           moods: validMoods,
           has_vocals: hasVocals,
-          vocals_usage_type: hasVocals && isSyncOnly ? 'sync_only' : 'normal',
+          vocals_usage_type: isSyncOnly ? 'sync_only' : 'normal',
           updated_at: new Date().toISOString()
         })
         .eq('id', track.id);
@@ -103,6 +95,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Genres */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-4">
               Genres
@@ -129,6 +122,7 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
             </div>
           </div>
 
+          {/* Moods */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-4">
               Moods
@@ -162,40 +156,33 @@ export function EditTrackModal({ isOpen, onClose, track, onUpdate }: EditTrackMo
             </div>
           </div>
 
+          {/* Has Vocals */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={hasVocals}
-                  onChange={(e) => setHasVocals(e.target.checked)}
-                  className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                  disabled={loading}
-                />
-                <label className="text-gray-300">
-                  Full Track With Vocals/Sync Only (Click Here For the Sync Only Option)
-                </label>
-              </div>
+              <input
+                type="checkbox"
+                checked={hasVocals}
+                onChange={(e) => setHasVocals(e.target.checked)}
+                className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                disabled={loading}
+              />
+              <label className="text-gray-300">Full Track With Vocals</label>
             </div>
 
-            {hasVocals && (
-              <div className="pl-6">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={isSyncOnly}
-                    onChange={(e) => setIsSyncOnly(e.target.checked)}
-                    className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                    disabled={loading}
-                  />
-                  <label className="text-gray-300">
-                    Sync Only (Only allow for sync briefs)
-                  </label>
-                </div>
-              </div>
-            )}
+            {/* Sync Only */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={isSyncOnly}
+                onChange={(e) => setIsSyncOnly(e.target.checked)}
+                className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                disabled={loading}
+              />
+              <label className="text-gray-300">Sync Only (Only allow for sync briefs)</label>
+            </div>
           </div>
 
+          {/* Buttons */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"
