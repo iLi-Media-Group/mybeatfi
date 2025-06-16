@@ -3,7 +3,7 @@ import { X, Clock, DollarSign, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Track } from '../types';
-import { CryptoPaymentButton } from './CryptoPaymentButton';
+
 
 interface SyncProposalDialogProps {
   isOpen: boolean;
@@ -291,21 +291,7 @@ export function SyncProposalDialog({ isOpen, onClose, track }: SyncProposalDialo
               <span className="flex-shrink mx-4 text-gray-400">or</span>
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
-            
-            <CryptoPaymentButton
-              productId={track.id}
-              productName={`Sync Proposal for ${track.title}`}
-              productDescription={`Sync Proposal for ${track.title} - ${projectType.substring(0, 50)}...`}
-              price={parseFloat(syncFee)}
-              disabled={loading || !projectType.trim() || !duration.trim() || !syncFee.trim() || !expirationDate}
-              metadata={{
-                track_id: track.id,
-                proposal_type: 'sync',
-                is_exclusive: isExclusive ? 'true' : 'false',
-                payment_terms: paymentTerms
-              }}
-            />
-          </div>
+                        
         </form>
       </div>
     </div>
