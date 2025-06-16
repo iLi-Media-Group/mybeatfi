@@ -238,7 +238,7 @@ export function PricingCarousel() {
                   {loadingProductId === product.id ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
                   ) : (
-                    <>Browse Tracks</>
+                    <>Get Started</>
                   )}
                 </button>
               )}
