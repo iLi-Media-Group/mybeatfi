@@ -64,7 +64,7 @@ export function ContactPage() {
               <div className="space-y-4">
                 <div className="flex items-center text-gray-300">
                   <Mail className="w-5 h-5 mr-3 text-blue-400" />
-                  <span>mybeatfisync@gmail.com</span>
+                  <span>contactmybeatfi@gmail.com</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
