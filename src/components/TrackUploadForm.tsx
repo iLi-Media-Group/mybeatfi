@@ -414,7 +414,7 @@ export function TrackUploadForm() {
                 onChange={(e) => setIsSyncOnly(e.target.checked)}
                 className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
               />
-              <span>Sync Only (Will appear in both Music Catalog and Tracks with Full Vocals)</span>
+              <span>Sync Only</span>
             </div>
 
             <div className="flex items-center space-x-2 text-gray-300">
