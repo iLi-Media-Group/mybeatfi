@@ -77,7 +77,7 @@ export function Layout({ children, onSignupClick }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex flex-col">
-      <header className="py-4 px-4 bg-blue-900/80 backdrop-blur-sm border-b border-blue-500/20 sticky top-0 z-50">
+      <header className="py-4 px-4 bg-blue-900/80 backdrop-solid-sm border-b border-blue-500/20 sticky top-0 z-50">
         <nav className="container mx-auto flex justify-between items-center relative">
           <div className="flex items-center w-1/3">
             <Link to="/" className="flex items-center">
