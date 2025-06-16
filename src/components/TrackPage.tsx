@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign, ListMusic } from 'lucide-react';
+import { Music, Download, Shield, Loader2, Tag, Clock, Hash, FileMusic, Layers, Mic, Star, User, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Track } from '../types';
 import { AudioPlayer } from './AudioPlayer';
 import { LicenseDialog } from './LicenseDialog';
-import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { SyncProposalDialog } from './SyncProposalDialog';
+import { ProducerProfileDialog } from './ProducerProfileDialog';
 import { createCheckoutSession } from '../lib/stripe';
 import { PRODUCTS } from '../stripe-config';
 
@@ -290,7 +290,7 @@ export function TrackPage() {
               )}
 
               <div className="mb-6">
-                <AudioPlayer src={track.audioUrl} title={track.title} />
+                <AudioPlayer url={track.audioUrl} title={track.title} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
