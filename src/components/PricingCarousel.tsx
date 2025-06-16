@@ -292,7 +292,9 @@ export function PricingCarousel() {
       {selectedProduct && (
         <EmailCheckDialog
           isOpen={showEmailCheck}
-          onClose={() => setShowEmailCheck(false)}
+          onClose={() => setShowEmailCheck(false);
+          setSelectedProduct(null);  // Optional: clear product on close
+          }}
           onContinue={handleEmailContinue}
           product={selectedProduct}
         />
