@@ -35,7 +35,7 @@ serve(async (req) => {
 
     // Send email notification to company email
     const { error: emailError } = await supabaseClient.auth.admin.sendRawEmail({
-      email: 'mybeatfisync@gmail.com',
+      email: 'contactmybeatfi@gmail.com',
       subject: `New Contact Form: ${subject}`,
       template: `
         <h2>New Contact Form Submission</h2>
