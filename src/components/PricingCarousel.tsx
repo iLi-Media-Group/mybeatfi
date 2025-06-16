@@ -233,7 +233,7 @@ export function PricingCarousel() {
                 <button
                   onClick={() => handleSubscribe(product)}
                   disabled={loading}
-                  className="w-full py-3 px-6 rounded-lg bg-blue-900/40 hover:bg-green-600/60 text-white font-semibold transition-all flex items-center justify-center"
+                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:bg-green-600/60 text-white font-semibold transition-all flex items-center justify-center"
                 >
                   {loadingProductId === product.id ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
