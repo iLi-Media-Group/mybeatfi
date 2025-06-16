@@ -291,6 +291,7 @@ export function SyncProposalDialog({ isOpen, onClose, track }: SyncProposalDialo
               <span className="flex-shrink mx-4 text-gray-400">or</span>
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
+						</div>
                         
         </form>
       </div>
