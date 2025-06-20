@@ -14,25 +14,16 @@ serve(async (req) => {
   }
 
   try {
-    const {
-      clientName,
-      clientEmail,
-      trackName,
-      licenseTier,
-      licenseDate,
-      expirationDate,
-      pdfUrl
-    } = await req.json();
+    const { producerName, producerEmail, primaryGenre } = await req.json();
 
     const emailBody = `
-      <p>Hey ${clientName},</p>
-      <p>Thanks for licensing "<strong>${trackName}</strong>" with MyBeatFi Sync! 🎧</p>
-      <p><strong>License Tier:</strong> ${licenseTier}<br/>
-      <strong>Start Date:</strong> ${new Date(licenseDate).toLocaleDateString()}<br/>
-      <strong>Expiration:</strong> ${expirationDate ? new Date(expirationDate).toLocaleDateString() : 'Perpetual (Ultimate Access)'}</p>
-      <p><a href="${pdfUrl}">📄 Download Your License PDF</a></p>
+      <p>Hi ${producerName},</p>
+      <p>Congratulations! You've been approved for the MyBeatFi Sync producer roster based on your application.</p>
+      <p><strong>Next Steps:</strong>  
+      You're currently in our onboarding queue. We will notify you as soon as a new onboarding phase opens, or if we urgently need more music in your genre (<strong>${primaryGenre}</strong>).</p>
+      <p>Stay tuned for further updates.</p>
       <hr/>
-      <p>Need help? <a href="${siteUrl}/contact">Contact Us</a></p>
+      <p>If you have questions, you can <a href="${siteUrl}/contact">contact our team here</a>.</p>
     `;
 
     const resendRes = await fetch("https://api.resend.com/emails", {
@@ -43,15 +34,15 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "MyBeatFi Sync <noreply@yourdomain.com>",
-        to: clientEmail,
-        subject: `Your MyBeatFi Sync License for "${trackName}"`,
+        to: producerEmail,
+        subject: `You're Approved! Next Steps for Joining MyBeatFi Sync`,
         html: emailBody,
       }),
     });
 
-    if (!resendRes.ok) throw new Error('Failed to send license email');
+    if (!resendRes.ok) throw new Error('Failed to send producer approval email');
 
-    return new Response(JSON.stringify({ message: 'License email sent successfully' }), {
+    return new Response(JSON.stringify({ message: 'Producer email sent successfully' }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
 
