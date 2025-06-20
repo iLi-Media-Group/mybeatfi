@@ -39,8 +39,12 @@ import { ProducerPayoutsPage } from './components/ProducerPayoutsPage';
 import { TrackPage } from './components/TrackPage';
 import { WelcomePage } from './components/WelcomePage';
 import { WhiteLabelPage } from './components/WhiteLabelPage';
+import ProducerLandingPage from './components/ProducerLandingPage';
+import ProducerApplicationForm from './components/ProducerApplicationForm';
+import ProducerApplicationsAdmin from './components/ProducerApplicationsAdmin';
 
-function App() {
+
+const App = () => {
   const [searchParams] = useSearchParams();
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const { user } = useAuth();
@@ -163,6 +167,10 @@ function App() {
         <Route path="/welcome" element={<LayoutWrapper><WelcomePage /></LayoutWrapper>} />
         <Route path="/track/:trackId" element={<LayoutWrapper><TrackPage /></LayoutWrapper>} />
         <Route path="/white-label" element={<LayoutWrapper><WhiteLabelPage /></LayoutWrapper>} />
+        <Route path="/producers" element={<LayoutWrapper><ProducerLandingPage /></LayoutWrapper>} />
+				<Route path="/producer-application" element={<LayoutWrapper><ProducerApplicationForm /></LayoutWrapper>} />
+        <Route path="/producer-applications-admin" element={<LayoutWrapper><ProducerApplicationsAdmin /></LayoutWrapper>} />
+        
 
         <Route path="/chat" element={
           <ProtectedRoute>
@@ -291,6 +299,13 @@ function App() {
             </LayoutWrapper>
           </ProtectedRoute>
         } />
+			<Route path="/admin/producer-applications" element={
+        <ProtectedRoute requiresAdmin>
+           <LayoutWrapper>
+              <ProducerApplicationsAdmin />
+           </LayoutWrapper>
+          </ProtectedRoute>
+} />
 
         <Route path="*" element={
           <LayoutWrapper>
@@ -310,6 +325,6 @@ function App() {
       />
     </>
   );
-}
+};
 
 export default App;

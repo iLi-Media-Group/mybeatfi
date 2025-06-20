@@ -47,8 +47,8 @@ export function Footer() {
             <h3 className="text-white font-semibold mb-4">For Producers</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/producer/login" className="text-gray-400 hover:text-white transition-colors">
-                  Producer Login
+                <Link to="/producers" className="text-gray-400 hover:text-white transition-colors">
+                  Become a Sync Producer
                 </Link>
               </li>
               <li>

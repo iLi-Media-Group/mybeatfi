@@ -1,1 +1,1 @@
- supabase functions deploy export-producer-applications-pdf
+supabase functions deploy export-producer-applications-pdf

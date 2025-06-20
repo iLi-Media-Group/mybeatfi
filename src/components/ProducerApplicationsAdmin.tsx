@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
+import { supabase } from '../lib/supabase';
+import { Button } from '../components/ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 type Application = {
   id: string;
@@ -23,175 +25,152 @@ type Application = {
   status: string;
   disqualification_reason: string | null;
   review_score: number | null;
+  tier: string | null;
 };
 
 export default function ProducerApplicationsAdmin() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>('All');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [bulkLoading, setBulkLoading] = useState(false);
+  const [search, setSearch] = useState<string>('');
 
   useEffect(() => {
     fetchApplications();
-  }, [filter]);
+  }, [filter, search]);
 
   const fetchApplications = async () => {
     setLoading(true);
-
     let query = supabase.from('producer_applications').select('*').order('created_at', { ascending: false });
-    if (filter !== 'All') query = query.eq('status', filter);
+
+    if (filter === 'Pending') query = query.eq('status', 'Pending');
+    if (filter === 'Qualified') query = query.eq('status', 'Qualified');
+    if (filter === 'Disqualified') query = query.eq('status', 'Disqualified');
+    if (['Tier 1', 'Tier 2', 'Tier 3'].includes(filter)) query = query.eq('tier', filter);
 
     const { data, error } = await query;
     if (error) console.error('Error fetching applications:', error);
-    else setApplications(data as Application[]);
-
+    else {
+      let filtered = data as Application[];
+      if (search.trim()) {
+        const lower = search.toLowerCase();
+        filtered = filtered.filter(app => app.name.toLowerCase().includes(lower) || app.email.toLowerCase().includes(lower));
+      }
+      setApplications(filtered);
+    }
     setLoading(false);
   };
 
-  const updateStatus = async (id: string, status: string, reason: string | null = null, score: number | null = null) => {
-    const { error } = await supabase
-      .from('producer_applications')
-      .update({ status, disqualification_reason: reason, review_score: score })
-      .eq('id', id);
+  const evaluateAndScore = async (app: Application) => {
+    let status = 'Qualified';
+    let reason: string | null = null;
+    let score = 0;
+    let tier = '';
 
-    if (error) console.error('Error updating status:', error);
-    else fetchApplications();
-  };
-
-  const autoDisqualify = async (app: Application) => {
     if (app.sample_use === 'Yes' || app.loop_use === 'Yes') {
-      await updateStatus(app.id, 'Disqualified', 'Disqualified due to sample/loop use');
-    } else if (app.splice_use === 'Yes') {
-      await updateStatus(app.id, 'Tier 2 Review', 'Used Splice - Needs manual review');
+      status = 'Disqualified';
+      reason = 'Uses samples or loops';
+      score = 0;
+      tier = 'Disqualified';
+    } else {
+      if (app.team_type.toLowerCase().includes('one')) score += 40;
+      if (app.instruments && app.instruments.length > 3) score += 20;
+      const years = parseInt(app.years_experience);
+      if (!isNaN(years)) {
+        if (years >= 5) score += 30;
+        else if (years >= 2) score += 15;
+      }
+      if (app.business_entity.toLowerCase().includes('llc') || app.business_entity.toLowerCase().includes('corp')) score += 10;
+
+      if (app.splice_use === 'Yes') tier = 'Tier 2';
+      else if (score >= 80) tier = 'Tier 1';
+      else if (score >= 50) tier = 'Tier 2';
+      else tier = 'Tier 3';
     }
+
+    await supabase
+      .from('producer_applications')
+      .update({ review_score: score, status, disqualification_reason: reason, tier })
+      .eq('id', app.id);
   };
 
   const runAutoDisqualificationForAll = async () => {
-    setBulkLoading(true);
-    for (const app of filteredApps) {
-      if (app.status === 'Pending') await autoDisqualify(app);
+    for (const app of applications) {
+      if (app.status === 'Pending') await evaluateAndScore(app);
     }
-    setBulkLoading(false);
+    fetchApplications();
   };
 
-  const sendProducerApprovalEmail = async (app: Application) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-producer-approval-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          producerName: app.name,
-          producerEmail: app.email,
-          primaryGenre: app.primary_genre,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Approval email failed:', error);
-      } else {
-        console.log(`Approval email sent to ${app.email}`);
-      }
-    } catch (err) {
-      console.error('Error sending approval email:', err);
-    }
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text('Producer Applications Report', 10, 10);
+    const rows = applications.map(app => [
+      app.name,
+      app.email,
+      app.status,
+      app.tier,
+      app.review_score,
+      app.disqualification_reason || '',
+    ]);
+    doc.autoTable({
+      head: [['Name', 'Email', 'Status', 'Tier', 'Score', 'Disqualification Reason']],
+      body: rows,
+    });
+    doc.save('producer_applications_report.pdf');
   };
 
-  const bulkSendApprovalEmails = async () => {
-    setBulkLoading(true);
-    for (const app of filteredApps) {
-      if (app.status === 'Qualified') await sendProducerApprovalEmail(app);
-    }
-    setBulkLoading(false);
+  const updateStatus = async (id: string, status: string, reason: string | null = null, score: number | null = null) => {
+    await supabase
+      .from('producer_applications')
+      .update({ status, disqualification_reason: reason, review_score: score })
+      .eq('id', id);
+    fetchApplications();
   };
-
-  const exportToPDF = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-producer-applications-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          applications: filteredApps,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('PDF export failed:', error);
-      } else {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'producer_applications.pdf';
-        link.click();
-      }
-    } catch (err) {
-      console.error('Error exporting PDF:', err);
-    }
-  };
-
-  const filteredApps = applications.filter(app =>
-    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="max-w-7xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Producer Applications Dashboard</h1>
 
-      <div className="flex flex-wrap space-x-2 mb-4">
+      <div className="flex space-x-2 mb-4">
         <Button onClick={() => setFilter('All')}>All</Button>
         <Button onClick={() => setFilter('Pending')}>Pending</Button>
         <Button onClick={() => setFilter('Qualified')}>Qualified</Button>
         <Button onClick={() => setFilter('Disqualified')}>Disqualified</Button>
-        <Button onClick={() => setFilter('Tier 2 Review')}>Tier 2 Review</Button>
+        <Button onClick={() => setFilter('Tier 1')}>Tier 1</Button>
+        <Button onClick={() => setFilter('Tier 2')}>Tier 2</Button>
+        <Button onClick={() => setFilter('Tier 3')}>Tier 3</Button>
+        <Button variant="destructive" onClick={runAutoDisqualificationForAll}>
+          Run Auto-Disqualify & Score
+        </Button>
+        <Button variant="outline" onClick={exportPDF}>
+          Export PDF
+        </Button>
       </div>
 
       <input
         type="text"
-        placeholder="Search by name or email"
-        className="border p-2 mb-4 w-full md:w-1/2 rounded"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search by name or email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="border p-2 mb-4 w-full max-w-sm"
       />
-
-      <div className="flex space-x-2 mb-6">
-        <Button variant="destructive" onClick={runAutoDisqualificationForAll} disabled={bulkLoading}>
-          {bulkLoading ? 'Running Auto-Disqualify...' : 'Run Auto-Disqualify'}
-        </Button>
-        <Button variant="outline" onClick={bulkSendApprovalEmails} disabled={bulkLoading}>
-          {bulkLoading ? 'Sending Emails...' : 'Send Approval Emails'}
-        </Button>
-        <Button variant="secondary" onClick={exportToPDF} disabled={bulkLoading}>
-          Export to PDF
-        </Button>
-      </div>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
-        filteredApps.map(app => (
+        applications.map(app => (
           <div key={app.id} className="border p-4 mb-4 rounded shadow-sm">
             <div className="flex justify-between">
               <div>
                 <p><strong>{app.name}</strong> – {app.email}</p>
                 <p>Status: <span className="font-semibold">{app.status}</span></p>
+                {app.tier && <p>Tier: <span className="font-semibold">{app.tier}</span></p>}
                 {app.disqualification_reason && <p className="text-red-500">Reason: {app.disqualification_reason}</p>}
                 {app.review_score !== null && <p>Score: {app.review_score}</p>}
               </div>
               <div className="space-x-2">
                 <Button variant="outline" onClick={() => updateStatus(app.id, 'Qualified', null, 100)}>Approve</Button>
-                <Button variant="destructive" onClick={() => updateStatus(app.id, 'Disqualified', 'Manual disqualify')}>Disqualify</Button>
-                <Button variant="secondary" onClick={() => updateStatus(app.id, app.status, null, 50)}>Score 50</Button>
-                <Button variant="secondary" onClick={() => sendProducerApprovalEmail(app)}>Send Email</Button>
+                <Button variant="destructive" onClick={() => updateStatus(app.id, 'Disqualified', 'Manual review disqualified')}>Disqualify</Button>
+                <Button onClick={() => updateStatus(app.id, app.status, null, 50)}>Score 50</Button>
               </div>
             </div>
 
