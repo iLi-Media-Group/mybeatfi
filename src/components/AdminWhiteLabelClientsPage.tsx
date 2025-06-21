@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { AdminPasswordPrompt } from "./AdminPasswordPrompt";
 
 interface WhiteLabelClient {
   id: string;
@@ -12,10 +13,14 @@ export default function AdminWhiteLabelClientsPage() {
   const [clients, setClients] = useState<WhiteLabelClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiToken, setApiToken] = useState<string | null>(null);
+  const [saving, setSaving] = useState<string | null>(null); // clientId currently saving
 
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (apiToken) {
+      fetchClients();
+    }
+  }, [apiToken]);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -36,23 +41,50 @@ export default function AdminWhiteLabelClientsPage() {
   };
 
   const toggleAIRecommendation = async (clientId: string, enabled: boolean) => {
-    const { error } = await supabase
-      .from("white_label_clients")
-      .update({ ai_recommendation_enabled: enabled })
-      .eq("id", clientId);
+    if (!apiToken) return;
 
-    if (error) {
-      console.error("Error updating client feature:", error);
-    } else {
-      setClients((prev) =>
-        prev.map((client) =>
-          client.id === clientId
-            ? { ...client, ai_recommendation_enabled: enabled }
-            : client
-        )
+    setSaving(clientId);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_FUNCTION_URL}/update_white_label_feature`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiToken}`,
+          },
+          body: JSON.stringify({
+            clientId,
+            field: "ai_recommendation_enabled",
+            value: enabled,
+          }),
+        }
       );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setClients((prev) =>
+          prev.map((client) =>
+            client.id === clientId
+              ? { ...client, ai_recommendation_enabled: enabled }
+              : client
+          )
+        );
+      } else {
+        console.error("API Error:", data.error || "Unknown error");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setSaving(null);
     }
   };
+
+  if (!apiToken) {
+    return <AdminPasswordPrompt onPasswordSet={setApiToken} />;
+  }
 
   if (loading) return <p className="text-white">Loading clients...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -84,14 +116,31 @@ export default function AdminWhiteLabelClientsPage() {
                     onChange={(e) =>
                       toggleAIRecommendation(client.id, e.target.checked)
                     }
+                    disabled={saving === client.id}
                   />
-                  <span>{client.ai_recommendation_enabled ? "Enabled" : "Disabled"}</span>
+                  <span>
+                    {saving === client.id
+                      ? "Saving..."
+                      : client.ai_recommendation_enabled
+                      ? "Enabled"
+                      : "Disabled"}
+                  </span>
                 </label>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <button
+        onClick={() => {
+          localStorage.removeItem("adminApiToken");
+          setApiToken(null);
+        }}
+        className="mt-6 text-sm text-blue-400 underline"
+      >
+        Clear Admin Password
+      </button>
     </div>
   );
 }
