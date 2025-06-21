@@ -11,6 +11,12 @@ import { DeleteLicenseDialog } from './DeleteLicenseDialog';
 import { EditRequestDialog } from './EditRequestDialog';
 import { LicenseDialog } from './LicenseDialog';
 import { SyncProposalDialog } from './SyncProposalDialog';
+import AIRecommendationWidget from './AIRecommendationWidget';
+
+// Inside your page component:
+<AIRecommendationWidget />
+
+
 
 interface License {
   id: string;

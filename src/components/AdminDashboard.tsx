@@ -333,7 +333,8 @@ export function AdminDashboard() {
             { id: 'clients', label: 'Clients', icon: null },
             { id: 'payouts', label: 'USDC Payouts', icon: <Wallet className="w-4 h-4 mr-2" /> },
             { id: 'announcements', label: 'Announcements', icon: <Bell className="w-4 h-4 mr-2" /> },
-            { id: 'compensation', label: 'Compensation', icon: <Percent className="w-4 h-4 mr-2" /> }
+            { id: 'compensation', label: 'Compensation', icon: <Percent className="w-4 h-4 mr-2" /> },
+			      { id: 'white_label', label: 'White Label Clients', icon: null },
           ].map(tab => (
             <button
               key={tab.id}
@@ -532,6 +533,17 @@ export function AdminDashboard() {
           <CompensationSettings />
         )}
       </div>
+			 {activeTab === 'white_label' && (
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-purple-500/20 p-6">
+         <Link
+         to="/admin/white-label-clients"
+         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors inline-block"
+          >
+       Manage White Label Clients
+      </Link>
+  </div>
+)}
+
 
       {/* Producer Analytics Modal */}
       {selectedProducer && (

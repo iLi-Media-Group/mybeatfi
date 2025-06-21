@@ -6,6 +6,11 @@ import { supabase } from '../lib/supabase';
 import { SearchBox } from './SearchBox';
 import { TrackCard } from './TrackCard';
 import { Track, GENRES, MOODS } from '../types';
+import AIRecommendationWidget from './AIRecommendationWidget';
+
+// Inside your page component:
+<AIRecommendationWidget />
+
 
 const TRACKS_PER_PAGE = 20;
 

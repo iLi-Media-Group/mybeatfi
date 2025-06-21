@@ -75,11 +75,7 @@ export function Footer() {
                   Privacy Policy
                 </Link>
               </li>
-              <li>
-                <Link to="/white-label" className="text-gray-400 hover:text-white transition-colors">
-                  White Label
-                </Link>
-              </li>
+              
             </ul>
           </div>
         </div>

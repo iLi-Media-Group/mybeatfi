@@ -42,6 +42,7 @@ import { WhiteLabelPage } from './components/WhiteLabelPage';
 import ProducerLandingPage from './components/ProducerLandingPage';
 import ProducerApplicationForm from './components/ProducerApplicationForm';
 import ProducerApplicationsAdmin from './components/ProducerApplicationsAdmin';
+import AdminWhiteLabelClientsPage from './components/AdminWhiteLabelClientsPage';
 
 
 const App = () => {
@@ -170,6 +171,7 @@ const App = () => {
         <Route path="/producers" element={<LayoutWrapper><ProducerLandingPage /></LayoutWrapper>} />
 				<Route path="/producer-application" element={<LayoutWrapper><ProducerApplicationForm /></LayoutWrapper>} />
         <Route path="/producer-applications-admin" element={<LayoutWrapper><ProducerApplicationsAdmin /></LayoutWrapper>} />
+				<Route path="/admin/white-label-clients" element={<AdminWhiteLabelClientsPage />} />
         
 
         <Route path="/chat" element={
